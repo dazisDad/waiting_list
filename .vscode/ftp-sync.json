@@ -1,0 +1,32 @@
+{
+    "remotePath": "public_html/waitlist/",
+    "host": "www.donkaslab.com",
+    "username": "donkasla",
+    "password": "Ok9C[Pp0H7;lb0",
+    "port": 21,
+    "secure": false,
+    "protocol": "ftp",
+    "uploadOnSave": true,
+    "passive": false,
+    "debug": false,
+    "privateKeyPath": null,
+    "passphrase": null,
+    "agent": null,
+    "allow": [],
+    "ignore": [
+        "\\.vscode",
+        "\\.git",
+        "\\.DS_Store",
+        "\\error_log",
+        "\\.xls",
+        "\\.xlsx",
+        "vendor",
+        "composer*"
+    ],
+    "generatedFiles": {
+        "extensionsToInclude": [
+            ""
+        ],
+        "path": ""
+    }
+}
