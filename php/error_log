@@ -1,0 +1,752 @@
+[18-Jul-2025 11:50:42 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 11:55:48 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:30:01 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:30:21 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:30:22 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[18-Jul-2025 12:30:22 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[18-Jul-2025 12:31:38 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[18-Jul-2025 12:31:38 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[18-Jul-2025 12:31:52 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:31:57 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:36:02 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:36:02 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[18-Jul-2025 12:36:02 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[18-Jul-2025 12:36:08 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:37:10 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:38:28 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:38:28 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[18-Jul-2025 12:38:28 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[18-Jul-2025 12:38:33 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:38:37 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:38:43 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:39:33 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:39:33 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[18-Jul-2025 12:39:33 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[18-Jul-2025 12:39:36 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:42:45 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:43:27 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:43:41 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:43:48 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[18-Jul-2025 12:43:48 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[18-Jul-2025 12:44:05 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:44:10 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:45:03 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:45:28 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:45:29 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:45:58 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:45:59 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:46:58 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:47:49 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:47:53 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:49:24 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 12:50:09 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:07:35 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:12:27 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:12:28 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[18-Jul-2025 13:12:28 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[18-Jul-2025 13:13:20 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:18:47 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[18-Jul-2025 13:18:47 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[18-Jul-2025 13:18:58 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:19:01 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:19:13 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[18-Jul-2025 13:19:13 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[18-Jul-2025 13:19:21 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:19:42 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[18-Jul-2025 13:19:42 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[18-Jul-2025 13:19:50 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:23:42 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:24:24 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:25:18 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:26:32 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[18-Jul-2025 13:26:32 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[18-Jul-2025 13:26:39 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:26:41 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:34:21 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:35:50 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:36:24 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[18-Jul-2025 13:36:24 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[18-Jul-2025 13:36:33 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:37:55 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[18-Jul-2025 13:37:55 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[18-Jul-2025 13:38:03 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:38:04 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:38:27 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[18-Jul-2025 13:38:27 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[18-Jul-2025 13:38:36 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:38:44 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:39:30 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:40:38 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:40:50 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:41:15 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:42:21 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:44:06 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 13:44:08 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 14:37:39 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[18-Jul-2025 14:37:39 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[18-Jul-2025 14:37:44 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 14:37:48 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 15:17:15 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 19:57:09 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[18-Jul-2025 21:15:16 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:32:13 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 12:32:13 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 12:32:32 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:32:45 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:32:59 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 12:32:59 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 12:33:07 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:33:36 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 12:33:36 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 12:33:43 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:33:54 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:33:56 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:34:07 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 12:34:07 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 12:34:24 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:34:31 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:34:38 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:35:07 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:35:09 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:36:00 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:36:24 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:38:17 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:39:36 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 12:39:36 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 12:39:42 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:39:50 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:40:54 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 12:40:54 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 12:41:05 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:41:28 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:41:55 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 12:41:55 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 12:42:08 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:42:10 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:42:47 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:42:56 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 12:42:56 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 12:43:08 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:43:20 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:45:21 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 12:45:21 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 12:45:26 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:45:31 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:45:53 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:46:30 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:46:38 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:47:17 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 12:47:17 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 12:47:30 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:47:42 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:48:34 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:49:01 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:50:47 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:57:34 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 12:59:00 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 12:59:00 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 12:59:17 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:01:20 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 13:01:20 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 13:01:27 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:01:35 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:01:39 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:03:14 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:03:31 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:03:46 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:04:42 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:04:42 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 13:04:42 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 13:05:15 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:05:34 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:05:47 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:06:14 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:06:40 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:07:33 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 13:07:33 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 13:07:49 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:07:53 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:07:54 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:07:54 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:07:56 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:07:57 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:07:58 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:08:04 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:08:51 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:09:03 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:09:20 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:09:41 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:10:32 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:22:06 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 13:22:06 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 13:22:11 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:22:19 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:22:39 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:26:09 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:29:53 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 13:29:53 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 13:30:02 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:30:09 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 13:30:09 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 13:30:17 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:30:24 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:30:39 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:31:20 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:31:23 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:36:04 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 13:36:04 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 13:36:12 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:42:12 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 13:42:12 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 13:42:19 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:42:35 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:44:35 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:44:39 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:44:39 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 13:44:39 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 13:45:48 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:46:21 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:47:16 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:48:11 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:48:41 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:49:00 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:50:23 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:51:19 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:51:35 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 13:52:47 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:06:26 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:06:26 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 14:06:26 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 14:06:38 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:06:40 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:06:41 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:07:13 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:07:13 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 14:07:13 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 14:07:40 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:07:40 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 14:07:40 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 14:09:37 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:10:21 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:17:08 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:18:28 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 14:18:28 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 14:18:39 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:18:44 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:19:04 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:19:16 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:20:30 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:22:20 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:23:17 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:23:28 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:25:27 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:35:45 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:35:45 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 14:35:45 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 14:35:51 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:41:04 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:43:59 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:43:59 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 14:43:59 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 14:44:49 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:47:26 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 14:47:28 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:20:58 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 18:20:58 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 18:21:07 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:22:28 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:22:51 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 18:22:51 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 18:23:00 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:24:42 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 18:24:42 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 18:24:51 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:25:14 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 18:25:14 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 18:25:17 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:25:18 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:25:19 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:25:20 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:25:31 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:26:59 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:27:36 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:29:02 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:32:29 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:33:17 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:33:46 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 18:33:46 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 18:33:55 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:34:05 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:34:47 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:35:30 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:36:00 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:40:36 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:43:23 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:45:58 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 18:45:58 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 18:46:05 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:48:28 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:48:31 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:48:33 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:52:39 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 18:52:39 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 18:52:49 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:52:53 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:54:32 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 18:54:32 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 18:54:45 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 18:57:28 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 18:57:28 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 18:57:38 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:00:57 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:00:57 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:01:06 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:01:09 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:01:12 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:01:15 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:01:31 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:01:31 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:01:49 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:02:17 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:02:17 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:02:41 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:03:15 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:03:22 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:03:44 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:03:44 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:03:55 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:04:04 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:04:16 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:04:17 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:04:17 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:04:38 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:05:04 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:05:35 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:05:35 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:05:42 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:06:13 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:06:13 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:06:22 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:06:27 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:07:14 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:07:49 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:07:53 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:08:18 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:09:24 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:09:24 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:10:00 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:10:11 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:10:40 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:12:56 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:12:56 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:13:18 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:13:24 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:13:25 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:13:40 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:16:33 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:16:58 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:18:33 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:18:35 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:19:00 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:19:26 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:19:26 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:19:26 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:20:13 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:21:09 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:21:36 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:22:00 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:22:16 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:22:16 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:22:16 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:22:48 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:24:52 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:24:52 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:25:07 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:25:32 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:25:37 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:25:37 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:25:47 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:26:50 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:27:27 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:27:40 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:28:02 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:28:17 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:29:15 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:29:26 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:29:26 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:29:26 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:30:18 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:30:18 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:30:18 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:32:03 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:33:08 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:33:08 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:33:08 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:34:07 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:34:10 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:34:31 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:34:55 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:35:03 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:35:25 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:35:25 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:35:25 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:35:38 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:36:05 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:37:39 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:37:42 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:37:59 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:38:49 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:38:50 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:39:06 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:39:06 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:39:15 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:39:17 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:39:35 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:39:45 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:40:19 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:40:19 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:40:19 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:40:40 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:40:40 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:40:40 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:40:55 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:42:00 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:42:53 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:42:53 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:43:08 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:43:46 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:43:46 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:43:46 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:43:56 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:44:12 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:44:12 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:44:12 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:48:09 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:48:09 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:48:09 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:48:43 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:48:43 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:48:43 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:49:14 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:49:14 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 19:49:14 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 19:49:33 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:49:51 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:50:03 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:50:29 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:50:42 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:50:51 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:51:10 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:51:45 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:51:50 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:51:54 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:53:18 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:53:50 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:54:10 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:54:41 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:55:26 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:55:33 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:56:12 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:57:27 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:58:20 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:58:40 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:58:56 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:59:32 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:59:33 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 19:59:50 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:00:16 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:00:38 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:00:47 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:01:11 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:02:25 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:02:25 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 20:02:25 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 20:02:45 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:02:48 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:03:09 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:03:09 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 20:03:09 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 20:03:14 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:03:26 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:03:50 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:03:54 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:04:31 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:04:40 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:04:58 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:05:37 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:08:04 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:09:36 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:09:51 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:09:51 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:09:56 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:10:36 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 20:10:36 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 20:10:59 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:11:21 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:11:33 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:12:05 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:12:07 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:12:15 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:14:08 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:19:26 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 20:19:26 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 20:20:55 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:40:06 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 20:40:06 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 20:40:16 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:40:28 Asia/Kuala_Lumpur] PHP Warning:  Undefined array key "isSkipSecond" in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 7
+[19-Jul-2025 20:40:28 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Call to undefined function mysqli_fetch_all() in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php:12
+Stack trace:
+#0 {main}
+  thrown in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_sms.php on line 12
+[19-Jul-2025 20:40:37 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:46:08 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:46:34 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:46:43 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:47:28 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:47:51 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:50:39 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
+[19-Jul-2025 20:51:25 Asia/Kuala_Lumpur] PHP Warning:  Undefined variable $fetchedData in /home/donkasla/public_html/admin/waitinglist_ver3.2/php/ajax_alterData.php on line 51
