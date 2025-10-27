@@ -27,7 +27,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
         alert("Please grant permission manually to receive notifications.");
     }
-    syncDatabase(); // 페이지 로딩 시 즉시 호출
     notify('New Order Monitoring','Start');
 });
 
@@ -54,7 +53,6 @@ evtSource.onopen = function() {
 
 evtSource.onmessage = function(e) {
     handleNewMessage(e.data);
-    syncDatabase();
 };
 
 evtSource.onerror = function() {
@@ -97,22 +95,7 @@ function formatDate(date) {
 }
 
 
-let syncInterval;
-let syncInterval_sec = 30000;
-let historyEntries = [];
-
-function syncDatabase() {
-    $.ajax({
-        url: 'standAlone_sync.php', // PHP 파일의 경로
-        method: 'GET',
-        dataType: 'json',
-        success: function(response) {
-            console.log(response);
-        },
-        error: function() {
-            console.log('ERROR');
-        }
-    });
-}
+// Sync functionality removed: server-side sync endpoint and periodic client sync
+// were intentionally deleted. Notifications and SSE handling remain intact.
 
 
