@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Webhook Monitor</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;margin:16px}
+    #log{white-space:pre-wrap;margin-top:8px}
+    ul{padding-left:20px}
+    button{margin-right:8px}
+  </style>
+</head>
+<body>
+  <h3>Webhook Monitor</h3>
+  <p>이 페이지는 <code>/webhook/last_event.json</code> 를 주기 폴링하여 변경을 감지합니다.</p>
+  <div>
+    <button id="start">Start Polling</button>
+    <button id="stop" disabled>Stop Polling</button>
+  </div>
+
+  <ul id="events"></ul>
+  <div id="log"></div>
+
+  <script src="notification.js"></script>
+</body>
+</html>
