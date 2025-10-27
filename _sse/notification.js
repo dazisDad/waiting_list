@@ -42,7 +42,7 @@ function notify(title, bodyText) {
 }
 
 let button = document.querySelector('button');
-let evtSource = new EventSource('sse.php?tableName=history_bill');
+let evtSource = new EventSource('sse.php?tableName=bookingDB');
 let eventList = document.querySelector('ul');
 
 evtSource.onopen = function() {
@@ -69,17 +69,18 @@ button.onclick = function() {
 
 async function handleNewMessage(data) {
     let obj = JSON.parse(data);
+    console.log('Update detected:', obj);
     
     const date = new Date();
     let currentTime = formatDate(date);
 
     // Update UI
     let newElement = document.createElement("li");
-    newElement.textContent = `#${obj.order_no} / RM${obj.bill_amount} / ${obj.time} (Pushed @ ${currentTime})`;
+    newElement.textContent = `Booking Number: ${obj.booking_number} @ ${currentTime}`;
     eventList.appendChild(newElement);
 
     // Notify user
-    notify("New Order Received", "Last Bill Amount: RM" + obj.bill_amount);
+    notify("Update Detected", "Booking Number:" + obj.booking_number);
 
 }
 
