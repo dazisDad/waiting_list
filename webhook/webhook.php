@@ -4,8 +4,11 @@
 // Verifies HMAC signature (X-WEBHOOK-SIGNATURE: sha256=...) and writes payload
 // to last_event.json in the same folder.
 
-// Configuration - replace the shared secret with a strong value and keep it secret
-$secret = 'REPLACE_WITH_A_STRONG_SECRET';
+// Configuration
+// This endpoint now requires HTTP Basic Auth. Set the expected credentials here.
+// WARNING: credentials are set as requested; in production prefer environment vars.
+$expected_user = 'dlwebhook';
+$expected_pass = 'dHfeih237ssdf23JFHFds';
 
 // Destination file (relative to this script)
 $dest = __DIR__ . '/last_event.json';
@@ -21,21 +24,39 @@ if ($body === false || $body === '') {
     exit;
 }
 
-// Signature header (expected format: sha256=<hex>)
-$signature = isset($_SERVER['HTTP_X_WEBHOOK_SIGNATURE']) ? $_SERVER['HTTP_X_WEBHOOK_SIGNATURE'] : '';
-if (!$signature) {
-    http_response_code(403);
-    echo json_encode(['ok' => false, 'error' => 'missing_signature']);
-    exit;
+// Require HTTP Basic Auth
+$auth_user = null;
+$auth_pass = null;
+if (isset($_SERVER['PHP_AUTH_USER'])) {
+    $auth_user = $_SERVER['PHP_AUTH_USER'];
+    $auth_pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
+} else {
+    // Fallback: some servers place header in HTTP_AUTHORIZATION
+    $authHeader = '';
+    if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+        $authHeader = $_SERVER['HTTP_AUTHORIZATION'];
+    } elseif (function_exists('getallheaders')) {
+        $h = getallheaders();
+        if (isset($h['Authorization'])) $authHeader = $h['Authorization'];
+        if (isset($h['authorization'])) $authHeader = $h['authorization'];
+    }
+    if ($authHeader && stripos($authHeader, 'basic ') === 0) {
+        $decoded = base64_decode(substr($authHeader, 6));
+        if ($decoded !== false) {
+            $parts = explode(':', $decoded, 2);
+            if (count($parts) === 2) {
+                $auth_user = $parts[0];
+                $auth_pass = $parts[1];
+            }
+        }
+    }
 }
 
-// Compute expected signature
-$expected = 'sha256=' . hash_hmac('sha256', $body, $secret);
-
-// Use hash_equals to mitigate timing attacks
-if (!hash_equals($expected, $signature)) {
-    http_response_code(403);
-    echo json_encode(['ok' => false, 'error' => 'invalid_signature']);
+// Validate credentials
+if ($auth_user === null || !hash_equals($expected_user, $auth_user) || !hash_equals($expected_pass, $auth_pass ?? '')) {
+    header('WWW-Authenticate: Basic realm="Webhook"');
+    http_response_code(401);
+    echo json_encode(['ok' => false, 'error' => 'auth_failed']);
     exit;
 }
 
