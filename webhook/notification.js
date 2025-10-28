@@ -1,61 +1,61 @@
-// webhook/notification.js
-// Polls /webhook/last_event.json every 3 seconds and shows notification when changed.
+// Cleaned webhook notification client (console-only logging)
 
-const startBtn = document.getElementById('start');
-const stopBtn = document.getElementById('stop');
-const eventsList = document.getElementById('events');
-const logEl = document.getElementById('log');
+// Expects these globals from index.html: startBtn, stopBtn, eventsList, appSelect
 
 let pollTimer = null;
 let lastText = null;
 let swRegistration = null;
 const POLL_INTERVAL = 3000; // ms
 
-function addLog(msg) {
-  const t = new Date().toLocaleString();
-  logEl.textContent += `[${t}] ${msg}\n`;
-}
-
 async function registerSW() {
+  console.log('registerSW: start');
   if ('serviceWorker' in navigator) {
     try {
       swRegistration = await navigator.serviceWorker.register('sw.js');
-      addLog('ServiceWorker registered');
+      console.log('ServiceWorker registered', swRegistration);
     } catch (e) {
-      addLog('ServiceWorker register failed: ' + e.message);
+      console.log('registerSW: failed', e);
     }
+  } else {
+    console.log('registerSW: serviceWorker not supported');
   }
 }
 
 async function ensureNotificationPermission() {
   if (!('Notification' in window)) {
-    addLog('This browser does not support Notification API');
+    console.log('ensureNotificationPermission: Notification API not supported');
     return false;
   }
+  console.log('ensureNotificationPermission: current permission=', Notification.permission);
   if (Notification.permission === 'granted') return true;
   const p = await Notification.requestPermission();
+  console.log('ensureNotificationPermission: new permission=', p);
   return p === 'granted';
 }
 
 function showNotification(title, body) {
+  console.log('showNotification:', title, body);
   if (swRegistration && swRegistration.showNotification) {
     try {
-      swRegistration.showNotification(title, { body, icon: '' });
+      swRegistration.showNotification(title, { body });
+      console.log('showNotification: sent via service worker');
     } catch (e) {
-      // fallback
+      console.log('showNotification: service worker failed, fallback', e);
       if (Notification.permission === 'granted') new Notification(title, { body });
     }
   } else if (Notification.permission === 'granted') {
     new Notification(title, { body });
+    console.log('showNotification: sent via Notification API');
   } else {
-    addLog('Notification not permitted');
+    console.log('showNotification: not permitted');
   }
 }
 
 function handleNewEvent(obj) {
+  console.log('handleNewEvent: received', obj);
   const li = document.createElement('li');
   li.textContent = JSON.stringify(obj);
-  eventsList.insertBefore(li, eventsList.firstChild);
+  if (window.eventsList) window.eventsList.insertBefore(li, window.eventsList.firstChild);
 
   const title = obj && obj.Id ? `Row ${obj.Id} changed` : 'Webhook update';
   const body = JSON.stringify(obj);
@@ -64,26 +64,28 @@ function handleNewEvent(obj) {
 
 async function pollOnce() {
   try {
-    const resp = await fetch('last_event.json', { cache: 'no-store' });
+    const file = (window.appSelect && window.appSelect.value) ? window.appSelect.value : 'last_event.json';
+    console.log('pollOnce: fetching', file);
+    const resp = await fetch(file, { cache: 'no-store' });
     if (!resp.ok) {
-      addLog('poll fetch failed: ' + resp.status);
+      console.log('pollOnce: fetch failed', resp.status);
       return;
     }
     const text = await resp.text();
     if (!text) return;
 
-    // avoid parsing if identical
     if (text !== lastText) {
       lastText = text;
       try {
         const obj = JSON.parse(text);
+        console.log('pollOnce: parsed JSON', obj);
         handleNewEvent(obj);
       } catch (e) {
-        addLog('invalid JSON in last_event.json');
+        console.log('pollOnce: JSON parse error', e);
       }
     }
   } catch (e) {
-    addLog('poll error: ' + e.message);
+    console.log('pollOnce: error', e);
   }
 }
 
@@ -91,30 +93,16 @@ function startPolling() {
   if (pollTimer) return;
   pollOnce();
   pollTimer = setInterval(pollOnce, POLL_INTERVAL);
-  startBtn.disabled = true;
-  stopBtn.disabled = false;
-  addLog('Polling started');
+  console.log('startPolling: interval set, every', POLL_INTERVAL);
+  
 }
 
 function stopPolling() {
   if (!pollTimer) return;
   clearInterval(pollTimer);
   pollTimer = null;
-  startBtn.disabled = false;
-  stopBtn.disabled = true;
-  addLog('Polling stopped');
+  console.log('stopPolling: stopped');
 }
 
-startBtn.addEventListener('click', async () => {
-  await registerSW();
-  const ok = await ensureNotificationPermission();
-  if (!ok) {
-    addLog('Notification permission not granted');
-  }
-  startPolling();
-});
 
-stopBtn.addEventListener('click', stopPolling);
-
-// Auto-start if desired (commented out)
-// (async () => { await registerSW(); await ensureNotificationPermission(); startPolling(); })();
+console.log('notification.js loaded');
