@@ -230,6 +230,11 @@ if (!rename($temp, $dest)) {
     exit;
 }
 
+
+
+
+
+
 // Success - prepare structured response
 $return_json = [
     'success' => true,
