@@ -12,7 +12,7 @@
 //     ?prefix=<prefix>    -> optional filename prefix (sanitized)
 //     ?suffix=<suffix>    -> optional filename suffix (sanitized)
 // - Example:
-//     curl -u USER:PASS -X POST "https://donkaslab.com/webhook/webhook.php?app=n8n&isAppend=1&appendMax=5" -d '{"id":1}'
+//     curl -u USER:PASS -X POST "https://donkaslab.com/api/webhook/receiver.php?app=n8n&isAppend=1&appendMax=5" -d '{"id":1}'
 //
 // Behavior:
 // - Writes atomically (.tmp + rename) to avoid partial writes.
@@ -108,7 +108,7 @@ if (isset($_GET['suffix'])) {
     if ($s !== '') $filename_suffix = substr($s, 0, 32);
 }
 
-$dest = __DIR__ . '/' . $filename_prefix . $sanitizedApp . $filename_suffix . '.json';
+$dest = __DIR__ . '/received_json/' . $filename_prefix . $sanitizedApp . $filename_suffix . '.json';
 
 // Ensure we always respond with JSON
 header('Content-Type: application/json');
@@ -163,6 +163,16 @@ if (json_last_error() !== JSON_ERROR_NONE) {
     http_response_code(400);
     echo json_encode(['ok' => false, 'error' => 'invalid_json']);
     exit;
+}
+
+// Ensure destination directory exists
+$destDir = dirname($dest);
+if (!is_dir($destDir)) {
+    if (!mkdir($destDir, 0755, true)) {
+        http_response_code(500);
+        echo json_encode(['ok' => false, 'error' => 'directory_creation_failed', 'path' => $destDir]);
+        exit;
+    }
 }
 
 // Persist to file atomically with lock

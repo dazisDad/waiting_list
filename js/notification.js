@@ -1,17 +1,37 @@
-// Cleaned webhook notification client (console-only logging)
 
-// Expects these globals from index.html: startBtn, stopBtn, eventsList, appSelect
+/**
+ * notification.js
+ * Webhook 모니터링 및 브라우저 알림 클라이언트
+ * 
+ * 주요 기능:
+ * - 지정된 JSON 파일을 주기적으로 폴링하여 변경사항 감지
+ * - 파일 내용이 변경되면 브라우저 알림 표시
+ * - Service Worker를 통한 백그라운드 알림 지원
+ * - 웹 브라우저 Notification API 활용
+ * 
+ * 의존성:
+ * - polling_json.js 리소스 필요 (폴링 기능)
+ * 
+ * 사용법:
+ * 1. registerSW(): Service Worker 등록
+ * 2. ensureNotificationPermission(): 알림 권한 확인/요청
+ * 3. startPolling(): 폴링 시작
+ * 4. stopPolling(): 폴링 중지
+ * 
+ * 폴링 대상: webhook/received_json/ 폴더 내의 JSON 파일들
+ * 폴링 간격: 3초 (POLL_INTERVAL)
+ * 
+ * @author Donkas Lab
+ * @version 1.0
+ */
 
-let pollTimer = null;
-let lastText = null;
 let swRegistration = null;
-const POLL_INTERVAL = 3000; // ms
 
 async function registerSW() {
   console.log('registerSW: start');
   if ('serviceWorker' in navigator) {
     try {
-      swRegistration = await navigator.serviceWorker.register('sw.js');
+      swRegistration = await navigator.serviceWorker.register('js/sw.js');
       console.log('ServiceWorker registered', swRegistration);
     } catch (e) {
       console.log('registerSW: failed', e);
@@ -53,56 +73,9 @@ function showNotification(title, body) {
 
 function handleNewEvent(obj) {
   console.log('handleNewEvent: received', obj);
-  const li = document.createElement('li');
-  li.textContent = JSON.stringify(obj);
-  if (window.eventsList) window.eventsList.insertBefore(li, window.eventsList.firstChild);
-
   const title = obj && obj.Id ? `Row ${obj.Id} changed` : 'Webhook update';
   const body = JSON.stringify(obj);
   showNotification(title, body);
 }
-
-async function pollOnce() {
-  try {
-    const file = (window.appSelect && window.appSelect.value) ? window.appSelect.value : 'last_event.json';
-    console.log('pollOnce: fetching', file);
-    const resp = await fetch(file, { cache: 'no-store' });
-    if (!resp.ok) {
-      console.log('pollOnce: fetch failed', resp.status);
-      return;
-    }
-    const text = await resp.text();
-    if (!text) return;
-
-    if (text !== lastText) {
-      lastText = text;
-      try {
-        const obj = JSON.parse(text);
-        console.log('pollOnce: parsed JSON', obj);
-        handleNewEvent(obj);
-      } catch (e) {
-        console.log('pollOnce: JSON parse error', e);
-      }
-    }
-  } catch (e) {
-    console.log('pollOnce: error', e);
-  }
-}
-
-function startPolling() {
-  if (pollTimer) return;
-  pollOnce();
-  pollTimer = setInterval(pollOnce, POLL_INTERVAL);
-  console.log('startPolling: interval set, every', POLL_INTERVAL);
-  
-}
-
-function stopPolling() {
-  if (!pollTimer) return;
-  clearInterval(pollTimer);
-  pollTimer = null;
-  console.log('stopPolling: stopped');
-}
-
 
 console.log('notification.js loaded');

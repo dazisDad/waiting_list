@@ -18,3 +18,24 @@ node_modules/
 .vscode/ftp-sync.json
 # top-level ftp-sync file
 ftp-sync.json
+
+# Log and event files
+last_event.json
+webhook_waitlist_events.json
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+
+# PHP specific
+*.cache
+cache/
+sessions/
+
+# Backup files
+*.bak
+*.backup
+*~
