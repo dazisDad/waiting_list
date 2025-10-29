@@ -67,13 +67,13 @@ if ($expected_user === '' || $expected_pass === '') {
 
 // Append mode: when true, incoming JSON payloads are appended to an array in
 // last_event.json instead of overwriting the file. Default: false.
-$isAppend = false;
+$isAppend = true;
 // Optional quick override for testing: ?isAppend=1
 if (isset($_GET['isAppend'])) {
     $isAppend = filter_var($_GET['isAppend'], FILTER_VALIDATE_BOOLEAN);
 }
 // appendMax: when >0, limit stored array to the most recent N items
-$appendMax = 0; // 0 means unlimited (default)
+$appendMax = 10; // 0 means unlimited (default 10)
 if (isset($_GET['appendMax'])) {
     $appendMax = intval($_GET['appendMax']);
     if ($appendMax < 0) $appendMax = 0;
@@ -83,8 +83,8 @@ if (isset($_GET['appendMax'])) {
 // Allow selecting application name via ?app=<name>. The provided name is
 // sanitized to [A-Za-z0-9_-] and limited in length to avoid path traversal.
 // Application name (select output file). Normalize to lowercase and sanitize.
-$app = isset($_GET['app']) ? $_GET['app'] : '';
-$sanitizedApp = 'last_event';
+$app = isset($_GET['app']) ? $_GET['app'] : 'manychat';
+$sanitizedApp = 'manychat'; // default
 if ($app !== '') {
     // normalize to lowercase, remove disallowed chars
     $tmp = strtolower($app);
@@ -230,6 +230,14 @@ if (!rename($temp, $dest)) {
     exit;
 }
 
-// Success
-echo json_encode(['ok' => true]);
+// Success - prepare structured response
+$return_json = [
+    'success' => true,
+    'booking_ahead' => 1,
+    'estimate_waiting_time' => '1min',
+    'booking_loop' => 1,
+    'booking_number' => 101
+];
+
+echo json_encode($return_json);
 exit;

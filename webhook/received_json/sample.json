@@ -1,0 +1,26 @@
+[
+  {
+    "booking_flow": 1,
+    "booking_loop": 1,
+    "booking_from": "qr_wa",
+    "subscriber_id": 306159212,
+    "customer_name": "HB",
+    "customer_phone": 60123090372,
+    "pax": 5
+  },
+  {
+    "booking_flow": 2,
+    "subscriber_id": 306159212,
+    "customer_name": "HB",
+    "customer_phone": 60123090372
+  }
+]
+
+[
+  {
+    "booking_ahead": 1,
+    "estimate_waiting_time": "1min",
+    "booking_number": 101,
+    "is_booking_loop": 1,
+  }
+]
