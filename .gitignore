@@ -29,6 +29,7 @@ logs/
 *.tmp
 *.temp
 temp/
+dazis*
 
 # PHP specific
 *.cache
@@ -39,3 +40,4 @@ sessions/
 *.bak
 *.backup
 *~
+

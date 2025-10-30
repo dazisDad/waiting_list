@@ -26,7 +26,7 @@ function get_db_config() {
  *
  * Required environment variables: DB_USERNAME, DB_NAME. Optional: DB_SERVER_ADDRESS, DB_PASSWORD.
  */
-function get_booking_list() {
+function get_booking_list($store_id) {
     $cfg = get_db_config();
     if ($cfg['user'] === '' || $cfg['name'] === '') {
         throw new Exception('Database configuration incomplete: DB_USERNAME and DB_NAME are required');
@@ -39,7 +39,8 @@ function get_booking_list() {
     }
 
     // Only return rows that have not been cleared (time_cleared IS NULL)
-    $sql = 'SELECT * FROM booking_list WHERE time_cleared IS NULL';
+    // Ensure store_id is quoted so string store IDs (e.g. 'DL_01') aren't treated as column names
+    $sql = "SELECT * FROM booking_list WHERE time_cleared IS NULL AND store_id = '" . $mysqli->real_escape_string($store_id) . "' ORDER BY booking_list_id ASC";
     $result = $mysqli->query($sql);
     if ($result === false) {
         $err = $mysqli->error;
@@ -90,7 +91,7 @@ function generate_booking_number($pax, $nextId) {
  * Throws Exception on missing data, configuration, connection, or query errors.
  */
 function insert_to_booking_list(array $inputDataSet) {
-    $required = ['booking_from', 'subscriber_id', 'customer_name', 'customer_phone', 'pax'];
+    $required = ['store_id', 'booking_from', 'subscriber_id', 'customer_name', 'customer_phone', 'pax'];
     foreach ($required as $k) {
         if (!array_key_exists($k, $inputDataSet)) {
             throw new Exception('Missing required input: ' . $k);
@@ -107,7 +108,7 @@ function insert_to_booking_list(array $inputDataSet) {
         throw new Exception('DB connect error: ' . $mysqli->connect_error);
     }
 
-    $sql = 'INSERT INTO booking_list (booking_from, subscriber_id, customer_name, customer_phone, pax, time_created) VALUES (?,?,?,?,?,?)';
+    $sql = 'INSERT INTO booking_list (store_id, booking_from, subscriber_id, customer_name, customer_phone, pax, time_created) VALUES (?,?,?,?,?,?,?)';
     $stmt = $mysqli->prepare($sql);
     if ($stmt === false) {
         $err = $mysqli->error;
@@ -116,6 +117,7 @@ function insert_to_booking_list(array $inputDataSet) {
     }
 
     // Normalize and bind params
+    $store_id = strval($inputDataSet['store_id']);
     $booking_from = strval($inputDataSet['booking_from']);
     $subscriber_id = intval($inputDataSet['subscriber_id']);
     $customer_name = strval($inputDataSet['customer_name']);
@@ -123,8 +125,8 @@ function insert_to_booking_list(array $inputDataSet) {
     $pax = intval($inputDataSet['pax']);
     $time_created = date('Y-m-d H:i:s');
 
-    // types: s (booking_from), i (subscriber_id), s (customer_name), s (customer_phone), i (pax), s (time_created)
-    if (!$stmt->bind_param('sissis', $booking_from, $subscriber_id, $customer_name, $customer_phone, $pax, $time_created)) {
+    // types: s (store_id), s (booking_from), i (subscriber_id), s (customer_name), s (customer_phone), i (pax), s (time_created)
+    if (!$stmt->bind_param('ssissis', $store_id, $booking_from, $subscriber_id, $customer_name, $customer_phone, $pax, $time_created)) {
         $err = $stmt->error;
         $stmt->close();
         $mysqli->close();
@@ -336,32 +338,79 @@ function get_booking_detail($key, $value, $isToday = null) {
     return $rows;
 }
 
+
+/**
+ * calculate_booking_ahead
+ * Given an array of booking rows ($inputData) and a booking_list_id,
+ * return the index (0-based) of the element that has that booking_list_id.
+ * Returns -1 if not found.
+ *
+ * Example:
+ *   calculate_booking_ahead($rows, 34) => 1
+ */
+function calculate_booking_ahead(array $inputData, $booking_list_id) {
+    $target = strval($booking_list_id);
+    foreach ($inputData as $idx => $row) {
+        if (is_array($row) && array_key_exists('booking_list_id', $row)) {
+            if (strval($row['booking_list_id']) === $target) {
+                return intval($idx);
+            }
+        }
+    }
+    return -1;
+}
+
+function estimate_waiting_time($booking_ahead) {
+    // Simple estimation: 1 min per booking ahead
+    $estimate = $booking_ahead * 3; // minutes
+    return strval($estimate) . 'min';
+}
+
+function is_booking_loop($booking_ahead) {
+    return $booking_ahead > 0 ? 1 : 0;
+}
+
+
+
 function flow_execution ($inputDataSet) {
     $flow = $inputDataSet['booking_flow'];
+    $store_id = $inputDataSet['store_id'];
     switch ($flow) {
+          case 1.1:
+              // Check for duplicate booking
+              $retrieved_booking_detail = get_booking_detail('subscriber_id', $inputDataSet['subscriber_id'], true);
+              $return_json = [
+                  'success' => true,
+                  'is_booking_duplicate' => count($retrieved_booking_detail) > 0 ? 1 : 0,
+                  'booking_number' => count($retrieved_booking_detail) > 0 ? $retrieved_booking_detail[0]['booking_number'] : null
+              ];
+              return $return_json;
           case 1.2:
+              // New Booking
               $booking_list_id = insert_to_booking_list($inputDataSet);
-              $booking_list = get_booking_list();
+              $booking_list = get_booking_list($store_id);
               $booking_number = generate_booking_number($inputDataSet['pax'],$booking_list_id);
               update_booking_list($booking_list_id, 'booking_number', $booking_number);
+              $booking_ahead = count($booking_list) - 1; // 자료 입력단계에서만 이 방식으로 계산
 
-              // Success - prepare structured response
               $return_json = [
                   'success' => true,
                   'booking_list_id' => $booking_list_id,
-                  'booking_ahead' => count($booking_list) - 1,
-                  'estimate_waiting_time' => '1min',
-                  'is_booking_loop' => 1,
+                  'booking_ahead' => $booking_ahead,
+                  'estimate_waiting_time' => estimate_waiting_time($booking_ahead),
+                  'is_booking_loop' => is_booking_loop($booking_ahead),
                   'booking_number' => $booking_number
               ];
               return $return_json;
           case 2.1:
-              // booking_ahead 만 확인해서 is_booking_loop 응답
+              // Check Booking Status (Normal Loop)
+              $booking_list = get_booking_list($store_id);
+              $booking_ahead = calculate_booking_ahead($booking_list, $inputDataSet['booking_list_id']);
                $return_json = [
                   'success' => true,
-                  'booking_ahead' => 1,
-                  'estimate_waiting_time' => '2min',
-                  'is_booking_loop' => 1
+                  'booking_ahead' => $booking_ahead,
+                  'estimate_waiting_time' => estimate_waiting_time($booking_ahead),
+                  'is_booking_loop' => is_booking_loop($booking_ahead)
               ];
               return $return_json;
           case 2.2:

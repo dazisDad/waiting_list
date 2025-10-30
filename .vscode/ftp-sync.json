@@ -22,7 +22,8 @@
         "\\.xlsx",
         "vendor",
         "composer*",
-        "\\events.json"
+        "\\events.json",
+        "\\.bak"
     ],
     "generatedFiles": {
         "extensionsToInclude": [
