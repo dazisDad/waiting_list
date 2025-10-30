@@ -24,8 +24,14 @@
 // Configuration
 // Load .env file if present (simple loader). Values from environment variables
 // take precedence; .env is a convenience for shared hosting without env config.
+
+require_once 'processor.php';
+
 function load_dotenv($path) {
-    if (!file_exists($path)) return;
+    // Return an associative array of values loaded from the .env (for convenience).
+    // If the file doesn't exist, return an empty array.
+    $loaded = [];
+    if (!file_exists($path)) return $loaded;
     $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
         $line = trim($line);
@@ -44,17 +50,23 @@ function load_dotenv($path) {
             $_ENV[$name] = $value;
             $_SERVER[$name] = $value;
         }
+        // record what we loaded (or what was already present)
+        $loaded[$name] = getenv($name);
     }
+
+    return $loaded;
 }
 
-// Attempt to load .env in the same directory
-load_dotenv(__DIR__ . '/.env');
+// Attempt to load .env in the same directory and capture loaded values.
+$loaded_env = load_dotenv(__DIR__ . '/.env');
+
+
 
 // This endpoint requires HTTP Basic Auth. Read credentials from environment
 // variables to avoid hardcoding secrets in the repository.
 // Set WEBHOOK_USER and WEBHOOK_PASS in your hosting environment or in .env.
-$expected_user = trim(getenv('WEBHOOK_USER') ?: '');
-$expected_pass = trim(getenv('WEBHOOK_PASS') ?: '');
+$expected_user = trim(($loaded_env['WEBHOOK_USER'] ?? getenv('WEBHOOK_USER') ?: ''));
+$expected_pass = trim(($loaded_env['WEBHOOK_PASS'] ?? getenv('WEBHOOK_PASS') ?: ''));
 
 // Fail fast if credentials are not configured. This avoids relying on
 // hardcoded defaults and forces operators to set real secrets.
@@ -110,16 +122,41 @@ if (isset($_GET['suffix'])) {
 
 $dest = __DIR__ . '/received_json/' . $filename_prefix . $sanitizedApp . $filename_suffix . '.json';
 
-// Ensure we always respond with JSON
-header('Content-Type: application/json');
-
-// Read incoming body
+// Read incoming body and request method
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $body = file_get_contents('php://input');
-if ($body === false || $body === '') {
-    http_response_code(400);
-    echo json_encode(['ok' => false, 'error' => 'empty_body']);
+
+$isPreProd = true;
+// If the request is not a POST or no POST body was provided, show a simple
+// human-readable message for direct browser access and stop. API clients
+// should POST JSON to this endpoint.
+if ($method !== 'POST' || $body === false || $body === '') {
+  if (!$isPreProd) {
+    header('Content-Type: text/html; charset=utf-8');
+    echo '<!doctype html><meta charset="utf-8"><title>Invalid Request</title><h1>Invalid Request</h1>';
+  } else {
+    // PreProd 환경 모드
+    header('Content-Type: application/json');
+    //echo json_encode(['ok' => false, 'error' => 'invalid_request']);
+
+    $inputDataSet = [
+        'booking_flow' => 1.1,
+        'is_booking_loop' => 1,
+        'booking_from' => 'qr_wa',
+        'subscriber_id' => 306159212,
+        'customer_name' => 'HB',
+        'customer_phone' => 60123090372,
+        'pax' => 2
+    ];
+    $return_json = flow_execution($inputDataSet);
+    echo json_encode($return_json);
+
+  }
     exit;
 }
+
+// For valid POST requests, respond with JSON
+header('Content-Type: application/json');
 
 // Require HTTP Basic Auth
 $auth_user = null;
@@ -230,19 +267,8 @@ if (!rename($temp, $dest)) {
     exit;
 }
 
-
-
-
-
-
 // Success - prepare structured response
-$return_json = [
-    'success' => true,
-    'booking_ahead' => 1,
-    'estimate_waiting_time' => '1min',
-    'booking_loop' => 1,
-    'booking_number' => 101
-];
+$return_json = flow_execution($json);
 
 echo json_encode($return_json);
 exit;
