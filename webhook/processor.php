@@ -240,10 +240,106 @@ function update_booking_list($booking_list_id, $key, $value) {
     return intval($affected);
 }
 
+/**
+ * get_booking_detail
+ * Retrieve booking rows by a given key/value. Behaves similarly to get_booking_list()
+ * but allows filtering by arbitrary column (whitelisted) and optional "today" filter.
+ *
+ * Rules:
+ * - If key is 'booking_list_id', the function searches by id (no time_cleared filter applied by default).
+ * - For other keys, the query will include `time_cleared IS NULL` to return only active rows.
+ * - If isToday === true, the query will additionally filter rows whose DATE(time_created) = CURDATE().
+ *
+ * Returns an array of associative rows (may be empty). Throws Exception on errors.
+ */
+function get_booking_detail($key, $value, $isToday = null) {
+    // Whitelist allowed searchable columns to avoid injection via column name
+    $allowed = [
+        'booking_list_id','booking_from','subscriber_id','customer_name','customer_phone','pax','booking_number'
+    ];
+    if (!in_array($key, $allowed, true)) {
+        throw new Exception('Invalid search key: ' . $key);
+    }
+
+    $cfg = get_db_config();
+    if ($cfg['user'] === '' || $cfg['name'] === '') {
+        throw new Exception('Database configuration incomplete: DB_USERNAME and DB_NAME are required');
+    }
+
+    $mysqli = new mysqli($cfg['host'], $cfg['user'], $cfg['pass'], $cfg['name']);
+    if ($mysqli->connect_errno) {
+        throw new Exception('DB connect error: ' . $mysqli->connect_error);
+    }
+
+    // Build base SQL depending on whether searching by id
+    $col = '`' . $mysqli->real_escape_string($key) . '`';
+    $sql = "SELECT * FROM booking_list WHERE " . $col . " = ?";
+
+    // For non-id searches, only include non-cleared rows
+    if ($key !== 'booking_list_id') {
+        $sql .= ' AND time_cleared IS NULL';
+    }
+
+    // If isToday is truthy, filter to today's time_created (DATE equality)
+    if ($isToday) {
+        $sql .= ' AND DATE(time_created) = CURDATE()';
+    }
+
+    $stmt = $mysqli->prepare($sql);
+    if ($stmt === false) {
+        $err = $mysqli->error;
+        $mysqli->close();
+        throw new Exception('Prepare failed: ' . $err);
+    }
+
+    // Determine bind type for the search value
+    $intCols = ['subscriber_id','pax','booking_list_id'];
+    $type = in_array($key, $intCols, true) ? 'i' : 's';
+
+    if ($type === 'i') {
+        $val = intval($value);
+        if (!$stmt->bind_param('i', $val)) {
+            $err = $stmt->error;
+            $stmt->close();
+            $mysqli->close();
+            throw new Exception('Bind failed: ' . $err);
+        }
+    } else {
+        $val = strval($value);
+        if (!$stmt->bind_param('s', $val)) {
+            $err = $stmt->error;
+            $stmt->close();
+            $mysqli->close();
+            throw new Exception('Bind failed: ' . $err);
+        }
+    }
+
+    if (!$stmt->execute()) {
+        $err = $stmt->error;
+        $stmt->close();
+        $mysqli->close();
+        throw new Exception('Execute failed: ' . $err);
+    }
+
+    $result = $stmt->get_result();
+    if ($result === false) {
+        $err = $stmt->error;
+        $stmt->close();
+        $mysqli->close();
+        throw new Exception('Getting result failed: ' . $err);
+    }
+
+    $rows = $result->fetch_all(MYSQLI_ASSOC);
+    $result->free();
+    $stmt->close();
+    $mysqli->close();
+    return $rows;
+}
+
 function flow_execution ($inputDataSet) {
     $flow = $inputDataSet['booking_flow'];
     switch ($flow) {
-          case 1.1:
+          case 1.2:
               $booking_list_id = insert_to_booking_list($inputDataSet);
               $booking_list = get_booking_list();
               $booking_number = generate_booking_number($inputDataSet['pax'],$booking_list_id);
@@ -259,16 +355,16 @@ function flow_execution ($inputDataSet) {
                   'booking_number' => $booking_number
               ];
               return $return_json;
-            case 2.1:
+          case 2.1:
               // booking_ahead 만 확인해서 is_booking_loop 응답
                $return_json = [
                   'success' => true,
-                  'booking_ahead' => 0,
+                  'booking_ahead' => 1,
                   'estimate_waiting_time' => '2min',
-                  'is_booking_loop' => 0
+                  'is_booking_loop' => 1
               ];
               return $return_json;
-            case 2.2:
+          case 2.2:
               // Change Pax
                $return_json = [
                   'success' => true,
@@ -277,7 +373,7 @@ function flow_execution ($inputDataSet) {
                   'is_booking_loop' => 0
               ];
               return $return_json;
-            case 2.3:
+          case 2.3:
               // Cancel Booking
                $return_json = [
                   'success' => true,

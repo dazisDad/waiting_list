@@ -141,6 +141,7 @@ if ($method !== 'POST' || $body === false || $body === '') {
 
     $inputDataSet = [
         'booking_flow' => 1.1,
+        'store_id' => 'DL_01',
         'is_booking_loop' => 1,
         'booking_from' => 'qr_wa',
         'subscriber_id' => 306159212,
