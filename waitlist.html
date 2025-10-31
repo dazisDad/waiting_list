@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waitlist Manager</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Inter font application and base style */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7;
+        }
+        
+        /* Status Colors for Icon (used via getStatusIconAndClass) */
+        .status-waiting { color: #f97316; } /* Orange for ◎ icon */
+        .status-called { color: #f59e0b; }  /* Amber (will use ◎) */
+        .status-checkedin { color: #10b981; } /* Emerald for ✔ icon */
+        .status-cancelled { color: #ef4444; } /* Red for ✗ icon */
+        
+        .action-button {
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        .action-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+    <!-- Reduced padding on the main container -->
+    <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-2xl p-4 sm:p-6">
+        <header class="mb-6 border-b pb-3">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-800 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 text-indigo-500 mr-3"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M2 22h20"/><path d="M2 17h20"/></svg>
+                Waitlist Management System
+            </h1>
+            <p class="text-gray-500 mt-1">Real-time queue status and customer service management</p>
+        </header>
+        
+        <!-- Scroll to Active Button -->
+        <div class="mb-4 flex justify-end">
+            <!-- Button calls the unified scroll handler -->
+            <!-- Initial state is disabled, the logic will update the text and class -->
+            <button id="scroll-to-active-btn" onclick="handleScrollToActive()" disabled
+                class="action-button px-4 py-2 text-sm font-semibold rounded-lg transition duration-150 bg-gray-300 text-gray-500 cursor-not-allowed">
+                Active Queue 위치 고정
+            </button>
+        </div>
+
+        <!-- Waitlist Table -->
+        <!-- Outer div maintains shadow and horizontal scroll for narrow screens -->
+        <div class="shadow-lg rounded-lg overflow-x-auto">
+            <!-- Inner container for vertical scrolling with fixed header -->
+            <div id="waitlist-container" class="max-h-[60vh] overflow-y-auto relative">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-indigo-50 sticky top-0 z-10">
+                        <tr>
+                            <!-- Reduced padding (px-2 py-2) and centered -->
+                            <th class="px-2 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-1/12">No.</th>
+                            <!-- Reduced padding (px-2 py-2) -->
+                            <th class="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-3/12">Name</th>
+                            <!-- Reduced padding (px-2 py-2) and centered -->
+                            <th class="px-2 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-1/12">Pax</th>
+                            <!-- Reduced padding (px-2 py-2) and centered -->
+                            <th class="px-2 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-2/12">Elapsed Time</th>
+                            <!-- Reduced padding (px-2 py-2) -->
+                            <th class="px-2 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-4/12">Action</th>
+                            <!-- Reduced padding (px-2 py-2) -->
+                            <th class="px-2 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-1/12">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="waitlist-body" class="bg-white divide-y divide-gray-100">
+                        <!-- Data will be injected here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <footer class="mt-6 text-center text-gray-400 text-sm">
+            <p>Data is generated as a mockup; production environments use Firestore.</p>
+        </footer>
+    </div>
+
+    <!-- Message Box for Alerts (replacing alert()) -->
+    <div id="message-box" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Notification</h3>
+            <p id="message-text" class="text-gray-600 mb-6"></p>
+            <div class="text-right">
+                <button onclick="closeMessageBox()" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition duration-150 action-button">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Create mock waitlist data based on current time
+        // Short list for testing dynamic scroll activation
+        const mockWaitlist = [
+            // Completed items (will be sorted to the top)
+            { id: 1005, name: "Haneul Jung", pax: 2, entryTime: Date.now() - 15 * 60 * 1000, status: "Cancelled" },
+            { id: 1008, name: "Jimin Lee", pax: 3, entryTime: Date.now() - 30 * 60 * 1000, status: "Check-In" }, 
+            
+            // Active items (Waiting/Called)
+            { id: 1001, name: "Minji Kim", pax: 4, entryTime: Date.now() - 25 * 60 * 1000, status: "Waiting" }, 
+            { id: 1002, name: "Juno Lee", pax: 2, entryTime: Date.now() - 15 * 60 * 1000, status: "Waiting" }, 
+            { id: 1003, name: "Seyeon Park", pax: 3, entryTime: Date.now() - 5 * 60 * 1000, status: "Called" },  
+            { id: 1004, name: "Eunwoo Choi", pax: 5, entryTime: Date.now() - 2 * 60 * 1000, status: "Waiting" },
+        ];
+
+        const waitlistBody = document.getElementById('waitlist-body');
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+        const scrollButton = document.getElementById('scroll-to-active-btn');
+        const waitlistContainer = document.getElementById('waitlist-container');
+        
+        // Define the Tailwind class for maximum height
+        const MAX_HEIGHT_CLASS = 'max-h-[60vh]';
+
+        // --- Global State Variables ---
+        let isInitialScrollDone = false; 
+        let initialScrollTop = 0; // 초기 스크롤 탑 값 저장 변수 (Active Queue의 시작 위치를 추적)
+        let rowHeight = 0; // 단일 행의 높이 (Check-In/Cancel 시 initialScrollTop 업데이트에 사용)
+
+
+        /**
+         * Converts elapsed time to 'm:ss' or 'h:mm:ss' format (no padding for minutes/hours).
+         */
+        function formatElapsedTime(entryTime) {
+            const elapsedMs = Date.now() - entryTime;
+            const totalSeconds = Math.floor(elapsedMs / 1000);
+            
+            let minutes = Math.floor(totalSeconds / 60);
+            const seconds = String(totalSeconds % 60).padStart(2, '0');
+            
+            if (minutes >= 60) {
+                const hours = Math.floor(minutes / 60);
+                const remainingMinutes = String(minutes % 60).padStart(2, '0');
+                return `${hours}:${remainingMinutes}:${seconds}`; 
+            }
+
+            return `${minutes}:${seconds}`; 
+        }
+
+        /**
+         * Returns the appropriate icon and CSS class based on the status string.
+         */
+        function getStatusIconAndClass(status) {
+            let icon = '';
+            let className = 'text-2xl font-bold';
+
+            switch (status) {
+                case 'Waiting':
+                case 'Called':
+                    icon = '◎'; 
+                    className += ' status-waiting';
+                    break;
+                case 'Check-In':
+                    icon = '✔'; 
+                    className += ' status-checkedin';
+                    break;
+                case 'Cancelled':
+                    icon = '✗'; 
+                    className += ' status-cancelled';
+                    break;
+                default:
+                    icon = '❔';
+                    className += ' text-gray-500';
+            }
+            return { icon, className };
+        }
+
+        /**
+         * Displays a message box (replacing alert()).
+         */
+        function showMessageBox(message) {
+            messageText.textContent = message;
+            messageBox.classList.remove('hidden');
+            messageBox.classList.add('flex');
+        }
+
+        /**
+         * Closes the message box.
+         */
+        function closeMessageBox() {
+            messageBox.classList.add('hidden');
+            messageBox.classList.remove('flex');
+        }
+
+        /**
+         * Handles customer actions. Renders the table after status change.
+         */
+        function handleCall(id, name) {
+            console.log(`ACTION: Calling customer ${name} (#${id}).`);
+            showMessageBox(`[${name}, #${id}] 고객님께 전화를 겁니다.`);
+            const item = mockWaitlist.find(item => item.id === id);
+            if (item) {
+                item.status = 'Called';
+            }
+            renderWaitlist(); // Re-render to update sorting/buttons
+        }
+
+        function handleAsk(id, name) {
+            console.log(`ACTION: Asking customer ${name} (#${id}).`);
+            showMessageBox(`[${name}, #${id}]에게 메시지/문의 창을 엽니다.`);
+        }
+        
+        /**
+         * Handles customer actions (Check-In). Updates initialScrollTop and performs scroll.
+         */
+        function handleCheckIn(id, name) {
+            console.log(`ACTION: Checking in customer ${name} (#${id}).`);
+            showMessageBox(`[${name}, #${id}] 체크인 완료되었습니다.`);
+            const item = mockWaitlist.find(item => item.id === id);
+            let shouldScroll = false;
+            
+            if (item) {
+                 // Check if item was active before status change (Waiting or Called)
+                const wasActive = item.status === 'Waiting' || item.status === 'Called';
+                item.status = 'Check-In';
+                
+                if (wasActive && rowHeight > 0) {
+                     // 1. Update initialScrollTop by one row's height
+                    initialScrollTop += rowHeight;
+                    console.log(`SCROLL_UPDATE: Check-In. Adding rowHeight (${rowHeight.toFixed(2)}px) to initialScrollTop.`);
+                    console.log(`SCROLL_UPDATE: New initialScrollTop: ${initialScrollTop.toFixed(2)}px`);
+                    shouldScroll = true;
+                }
+            }
+            // Rerender after action to update the table structure and sort order
+            renderWaitlist(); 
+
+            // IMPORTANT FIX: Scroll must happen AFTER the DOM is updated by renderWaitlist.
+            if (shouldScroll) {
+                requestAnimationFrame(() => {
+                    waitlistContainer.scrollTo({ top: initialScrollTop, behavior: 'smooth' }); 
+                    console.log(`SCROLL_ACTION_RAF: Scroll to initialScrollTop (${initialScrollTop.toFixed(2)}px) applied after re-render.`);
+                });
+            }
+        }
+
+        /**
+         * Handles customer actions (Cancel). Updates initialScrollTop and performs scroll.
+         */
+        function handleCancel(id, name) {
+            console.log(`ACTION: Cancelling customer ${name} (#${id}).`);
+            showMessageBox(`[${name}, #${id}] 예약이 취소되었습니다.`);
+            const item = mockWaitlist.find(item => item.id === id);
+            let shouldScroll = false;
+            
+            if (item) {
+                 // Check if item was active before status change (Waiting or Called)
+                const wasActive = item.status === 'Waiting' || item.status === 'Called';
+                item.status = 'Cancelled';
+                
+                if (wasActive && rowHeight > 0) {
+                     // 1. Update initialScrollTop by one row's height
+                    initialScrollTop += rowHeight;
+                    console.log(`SCROLL_UPDATE: Cancel. Adding rowHeight (${rowHeight.toFixed(2)}px) to initialScrollTop.`);
+                    console.log(`SCROLL_UPDATE: New initialScrollTop: ${initialScrollTop.toFixed(2)}px`);
+                    shouldScroll = true;
+                }
+            }
+            // Rerender after action to update the table structure and sort order
+            renderWaitlist(); 
+            
+            // IMPORTANT FIX: Scroll must happen AFTER the DOM is updated by renderWaitlist.
+            if (shouldScroll) {
+                requestAnimationFrame(() => {
+                    waitlistContainer.scrollTo({ top: initialScrollTop, behavior: 'smooth' }); 
+                    console.log(`SCROLL_ACTION_RAF: Scroll to initialScrollTop (${initialScrollTop.toFixed(2)}px) applied after re-render.`);
+                });
+            }
+        }
+
+        /**
+         * Helper function to determine sorting priority.
+         * Check-In and Cancelled should come first (lower number = higher priority).
+         * @returns {number} The sort priority (0 for completed/cancelled, 1 for active).
+         */
+        function getSortPriority(status) {
+            if (status === 'Check-In' || status === 'Cancelled') {
+                return 0; // Highest priority (comes first)
+            }
+            return 1; // Lower priority (comes after 0)
+        }
+        
+        /**
+         * The core logic for determining scroll target, dynamic height, and button state.
+         * 이 함수는 Active Queue 위치를 계산하고, 동적 높이 조절을 수행하며,
+         * 스크롤 위치에 따라 버튼의 활성화/비활성화 상태를 결정합니다.
+         * @returns {number} The scroll target position (total height of completed items).
+         */
+        function updateScrollAndButtonState() {
+            console.groupCollapsed("STATE_CHECK: Running updateScrollAndButtonState...");
+            const rows = waitlistBody.getElementsByTagName('tr');
+            if (!waitlistContainer || rows.length === 0 || !scrollButton) {
+                console.log("STATE_CHECK: Pre-requisites missing. Exiting.");
+                console.groupEnd();
+                return 0;
+            }
+
+            // 1. Determine the height to scroll past (completed items)
+            let totalHeightToScroll = 0;
+            const completedItemsCount = mockWaitlist.filter(item => getSortPriority(item.status) === 0).length;
+            const hasCompletedItems = completedItemsCount > 0;
+            
+            if (hasCompletedItems) {
+                // Calculate height of completed rows
+                for (let i = 0; i < completedItemsCount && i < rows.length; i++) {
+                    totalHeightToScroll += rows[i].offsetHeight;
+                }
+            }
+            
+            console.log(`--- Scroll/Height Calculation ---`);
+            console.log(`Completed items: ${completedItemsCount}`);
+            console.log(`Calculated scroll target (total height of completed items): ${totalHeightToScroll.toFixed(2)}px`);
+
+            // --- Dynamic Height/Scroll Activation ---
+            const isUsingMaxHeight = waitlistContainer.classList.contains(MAX_HEIGHT_CLASS);
+            // isNaturallyScrollable은 스크롤바가 자연스럽게 생겼는지 확인합니다.
+            const isNaturallyScrollable = waitlistContainer.scrollHeight > waitlistContainer.clientHeight && isUsingMaxHeight; 
+
+            if (hasCompletedItems && !isNaturallyScrollable) {
+                // Short list with history: Force height to enable scrollbar
+                console.log("HEIGHT: Short list with history. Forcing container height to enable scroll.");
+                let activeRowsHeight = 0;
+                for (let i = completedItemsCount; i < rows.length; i++) {
+                    activeRowsHeight += rows[i].offsetHeight;
+                }
+                const headerHeight = waitlistContainer.querySelector('thead').offsetHeight;
+                const forcedHeight = activeRowsHeight + headerHeight + 5; 
+                
+                waitlistContainer.classList.remove(MAX_HEIGHT_CLASS);
+                waitlistContainer.style.height = `${forcedHeight}px`;
+            } else {
+                // Long list or no history: Revert to max-height setup
+                console.log("HEIGHT: Long list or no history. Reverting to max-height.");
+                waitlistContainer.classList.add(MAX_HEIGHT_CLASS);
+                waitlistContainer.style.height = ''; 
+            }
+            
+            // Recalculate scroll state after potential height adjustments
+            const isNowScrollable = waitlistContainer.scrollHeight > waitlistContainer.clientHeight;
+            
+            // Check if the current position is the Active Queue position (tolerance of 5px)
+            const isScrolledToActive = totalHeightToScroll > 0 && 
+                                       waitlistContainer.scrollTop >= (totalHeightToScroll - 5) && 
+                                       waitlistContainer.scrollTop <= (totalHeightToScroll + 5); 
+            
+            console.log(`--- Current Scroll State ---`);
+            console.log(`isInitialScrollDone: ${isInitialScrollDone}`);
+            console.log(`hasCompletedItems: ${hasCompletedItems}`);
+            console.log(`isNowScrollable: ${isNowScrollable}`);
+            console.log(`Current ScrollTop: ${waitlistContainer.scrollTop.toFixed(2)}px`);
+            console.log(`initialScrollTop: ${initialScrollTop.toFixed(2)}px`); 
+            console.log(`isScrolledToActive: ${isScrolledToActive} (Is scroll position within +/- 5px of target)`);
+
+            
+            // 2. Button State Update (Dynamic)
+            
+            if (!isInitialScrollDone) {
+                 // 초기 로드 시에는 비활성화 상태 유지
+                 console.log(`--- BUTTON STATE DECISION ---`);
+                 console.log("BUTTON: DISABLED. Reason: Initial setup (isInitialScrollDone=false).");
+                 scrollButton.disabled = true;
+                 scrollButton.textContent = "Active Queue 위치 고정"; 
+                 scrollButton.classList.remove('bg-indigo-600', 'text-white', 'hover:bg-indigo-700');
+                 scrollButton.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                 console.groupEnd();
+                 return totalHeightToScroll; // Early exit during initial setup
+            }
+
+            // isInitialScrollDone = true 일 때의 동적 로직:
+            // Active Queue를 건너뛸 기록이 있고, 스크롤이 가능하며, 현재 Active Queue 위치에 있지 않은 경우 활성화
+            const shouldEnableScrollDown = hasCompletedItems && isNowScrollable && !isScrolledToActive;
+            
+            console.log(`--- BUTTON STATE DECISION (Dynamic) ---`);
+            console.log(`Should Enable? (hasHistory && isScrollable && !isAtActive): ${shouldEnableScrollDown}`);
+
+
+            if (shouldEnableScrollDown) {
+                // ENABLED: User has manually scrolled away.
+                console.log(`BUTTON: ENABLED. Reason: Active history exists, scrollable, and user is not at the Active Queue.`);
+                
+                scrollButton.disabled = false;
+                scrollButton.textContent = "Active Queue로 이동 (Scroll to Active)";
+                scrollButton.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                scrollButton.classList.add('bg-indigo-600', 'text-white', 'hover:bg-indigo-700');
+            } else {
+                // DISABLED: At the active queue, no history, or not scrollable.
+                
+                scrollButton.disabled = true;
+                
+                // Display appropriate text for the disabled state
+                if (isScrolledToActive) {
+                    console.log(`BUTTON: DISABLED. Reason: Already at the Active Queue position.`);
+                    scrollButton.textContent = "Active Queue 위치 고정"; 
+                } else if (!hasCompletedItems) {
+                    console.log(`BUTTON: DISABLED. Reason: No completed history to scroll past.`);
+                    scrollButton.textContent = "Active Queue로 이동 (Scroll to Active)";
+                } else if (!isNowScrollable) {
+                    console.log(`BUTTON: DISABLED. Reason: Container is not scrollable (list is short).`);
+                    scrollButton.textContent = "Active Queue로 이동 (Scroll to Active)";
+                } else {
+                    console.log(`BUTTON: DISABLED. Reason: Default disabled state.`);
+                    scrollButton.textContent = "Active Queue로 이동 (Scroll to Active)";
+                }
+
+                scrollButton.classList.remove('bg-indigo-600', 'text-white', 'hover:bg-indigo-700');
+                scrollButton.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+            }
+            
+            console.groupEnd(); // End STATE_CHECK group
+            return totalHeightToScroll;
+        }
+        
+        /**
+         * Button click handler: Scrolls DOWN to the Active Queue instantly.
+         */
+        function handleScrollToActive() {
+            console.log("ACTION: Scroll button clicked.");
+            // 이제 scrollTarget은 initialScrollTop이 아니라, DOM을 기준으로 재계산된 정확한 값입니다.
+            const totalHeightToScroll = updateScrollAndButtonState(); 
+
+            // 버튼이 활성화된 상태일 때만 스크롤을 수행합니다.
+            if (!scrollButton.disabled) { 
+                console.log(`SCROLL_ACTION: Performing scroll to ${totalHeightToScroll.toFixed(2)}px.`);
+                // 'auto'를 사용하여 즉시 이동하고, 스크롤 이벤트 발생을 최소화합니다.
+                waitlistContainer.scrollTo({ top: totalHeightToScroll, behavior: 'smooth' });
+                
+                // 스크롤 완료 후 버튼 상태를 즉시 업데이트하여 비활성화합니다.
+                requestAnimationFrame(updateScrollAndButtonState); 
+            } else {
+                console.log("SCROLL_ACTION: Scroll prevented, button is disabled.");
+            }
+        }
+
+
+        /**
+         * Renders the table based on the waitlist data. Called on initial load and on status change.
+         */
+        function renderWaitlist() {
+            console.log("RENDER: Starting table render.");
+
+            // 1. Sort the entire list: Completed items first, then Active items by entry time (oldest first).
+            mockWaitlist.sort((a, b) => {
+                const priorityA = getSortPriority(a.status);
+                const priorityB = getSortPriority(b.status);
+                if (priorityA !== priorityB) {
+                    return priorityA - priorityB;
+                }
+                return a.entryTime - b.entryTime;
+            });
+            
+            const completedItemsCount = mockWaitlist.filter(item => getSortPriority(item.status) === 0).length;
+            console.log(`RENDER: Sorted list. Total items: ${mockWaitlist.length}, Completed items count: ${completedItemsCount}`);
+
+            waitlistBody.innerHTML = ''; // Clear table content
+
+            let tableHTML = '';
+            mockWaitlist.forEach((item) => {
+                 const statusPriority = getSortPriority(item.status);
+                 const rowClass = statusPriority === 0 ? 'bg-gray-50 hover:bg-gray-100 transition duration-150' : 'hover:bg-indigo-50 transition duration-150';
+                 const statusData = getStatusIconAndClass(item.status);
+                 const timeClass = statusPriority === 0 ? 'text-gray-500' : 'text-red-600';
+                 
+                 // Action Button Styling and Disabling
+                 const disableAttribute = statusPriority === 0 ? 'disabled' : '';
+                 const baseClasses = "action-button px-2.5 py-1 border border-transparent text-xs font-medium rounded-full shadow-sm";
+                 
+                 const callClasses = `${baseClasses} text-white ${disableAttribute ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'}`;
+                 const askClasses = `${baseClasses} ${disableAttribute ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'text-gray-700 bg-gray-200 hover:bg-gray-300 focus:ring-indigo-500'}`;
+                 const checkInClasses = `${baseClasses} text-white ${disableAttribute ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'}`;
+                 const cancelClasses = `${baseClasses} text-white ${disableAttribute ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600 focus:ring-red-400'}`;
+
+
+                 tableHTML += `
+                    <tr class="${rowClass}">
+                        <td class="px-2 py-2 whitespace-nowrap text-sm font-medium text-gray-900 text-center">${item.id}</td>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-700">
+                            <div class="font-semibold text-gray-800">${item.name}</div>
+                            <div class="text-xs text-gray-400">#${item.id}</div>
+                        </td>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-700 font-bold text-center">${item.pax}</td>
+                        <td id="time-${item.id}" class="px-2 py-2 whitespace-nowrap text-sm font-mono tracking-wider text-center ${timeClass}">
+                            ${formatElapsedTime(item.entryTime)}
+                        </td>
+                        <td class="px-2 py-2 whitespace-nowrap text-center text-sm font-medium">
+                            <div class="flex justify-center flex-wrap gap-1">
+                                <button onclick="handleCall(${item.id}, '${item.name}')" ${disableAttribute} class="${callClasses}">Call</button>
+                                <button onclick="handleAsk(${item.id}, '${item.name}')" ${disableAttribute} class="${askClasses}">Ask</button>
+                                <button onclick="handleCheckIn(${item.id}, '${item.name}')" ${disableAttribute} class="${checkInClasses}">Check-In</button>
+                                <button onclick="handleCancel(${item.id}, '${item.name}')" ${disableAttribute} class="${cancelClasses}">Cancel</button>
+                            </div>
+                        </td>
+                        <td class="px-2 py-2 whitespace-nowrap text-center text-sm font-medium">
+                            <span class="${statusData.className}">${statusData.icon}</span>
+                        </td>
+                    </tr>
+                 `;
+            });
+            
+            waitlistBody.innerHTML = tableHTML;
+            console.log("RENDER: Table HTML injected into DOM.");
+            
+            // NOTE: 데이터가 변경되어 렌더링이 발생하면, 버튼 상태와 스크롤 타겟을 즉시 업데이트합니다.
+            updateScrollAndButtonState();
+        }
+
+        /**
+         * Updates the elapsed time for all items every second.
+         * Only changes the text content of the time cell.
+         */
+        function updateElapsedTimes() {
+            mockWaitlist.forEach(item => {
+                const timeElement = document.getElementById(`time-${item.id}`);
+                if (timeElement) {
+                    timeElement.textContent = formatElapsedTime(item.entryTime);
+                }
+            });
+        }
+
+        // --- Initial Setup ---
+
+        // 1. Initial rendering of the table content
+        renderWaitlist(); // This now calls updateScrollAndButtonState() once
+
+        // 2. Add scroll event listener. 
+        // 사용자가 스크롤을 시작하면 버튼 상태가 동적으로 업데이트됩니다.
+        waitlistContainer.addEventListener('scroll', updateScrollAndButtonState);
+
+        // 3. Initial scroll setup: Set position and initial button state immediately after render.
+        // requestAnimationFrame을 사용하여 DOM이 렌더링된 후 정확한 위치로 이동합니다.
+        requestAnimationFrame(() => {
+            console.log("INIT: DOM rendered. Starting initial scroll/state calculation.");
+
+            // 1. 초기 스크롤 목표 위치를 계산하고 동적 높이 설정을 업데이트합니다.
+            const scrollTarget = updateScrollAndButtonState(); 
+            const completedItemsCount = mockWaitlist.filter(item => getSortPriority(item.status) === 0).length;
+            
+            const rows = waitlistBody.getElementsByTagName('tr');
+            // NEW: Calculate row height based on a rendered row (must be done after render)
+            if (rows.length > 0) {
+                rowHeight = rows[0].offsetHeight;
+                console.log(`INIT: Measured single rowHeight for update: ${rowHeight.toFixed(2)}px`);
+            }
+            
+            console.log(`INIT: Calculated scrollTarget = ${scrollTarget.toFixed(2)}px. Completed items = ${completedItemsCount}`);
+
+            // 2. 건너뛸 기록이 있는 경우에만 초기 스크롤을 강제합니다.
+            if (completedItemsCount > 0) {
+                // 스크롤 위치를 즉시 설정합니다. (비헤이비어 'auto')
+                waitlistContainer.scrollTop = scrollTarget;
+                console.log(`INIT: Forced scroll to position: ${scrollTarget.toFixed(2)}px`);
+                
+                // 초기 스크롤 위치 저장 및 로깅
+                initialScrollTop = waitlistContainer.scrollTop;
+                console.log(`INIT: InitialScrollTop value recorded: ${initialScrollTop.toFixed(2)}px`);
+            } else {
+                initialScrollTop = 0; // Ensure it's 0 if no initial scroll occurred
+                console.log("INIT: No completed items, skipping initial forced scroll.");
+            }
+            
+            // 3. 스크롤 위치 설정 직후 버튼 상태를 업데이트하여 즉시 비활성화하고 텍스트를 변경합니다.
+            updateScrollAndButtonState(); 
+            console.log("INIT: Final button state check completed.");
+
+            // 4. 초기 설정이 완료되었음을 플래그로 표시합니다. 
+            isInitialScrollDone = true;
+            console.log("INIT: isInitialScrollDone set to TRUE. Enabling dynamic button logic.");
+        });
+
+        // 4. Set up the non-rendering interval:
+        // Updates elapsed times every second.
+        setInterval(updateElapsedTimes, 1000);
+        
+        // 5. Add window resize listener: Scrollability and height calculations change on resize.
+        // 창 크기가 변경될 때 버튼 상태를 업데이트합니다.
+        window.addEventListener('resize', updateScrollAndButtonState);
+    </script>
+</body>
+</html>
