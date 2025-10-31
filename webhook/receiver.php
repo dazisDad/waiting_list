@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('Asia/Kuala_Lumpur');
 // webhook.php
 // Simple webhook receiver and file writer.
 //
@@ -148,7 +149,6 @@ if ($method !== 'POST' || $body === false || $body === '') {
     $inputDataSet_1_2 = [
         'store_id' => 'DL_01',
         'booking_flow' => 1.2,
-        'is_booking_loop' => 1,
         'booking_from' => 'qr_wa',
         'subscriber_id' => 306159212,
         'customer_name' => 'HB',
@@ -158,12 +158,23 @@ if ($method !== 'POST' || $body === false || $body === '') {
     $inputDataSet_2_1 = [
         'store_id' => 'DL_01',
         'booking_flow' => 2.1,
-        'booking_list_id' => 52
+        'booking_list_id' => 56
+    ];
+    $inputDataSet_2_2 = [
+        'store_id' => 'DL_01',
+        'booking_flow' => 2.2,
+        'booking_list_id' => 56,
+        'pax_new' => 3
+    ];
+    $inputDataSet_2_3 = [
+        'store_id' => 'DL_01',
+        'booking_flow' => 2.3,
+        'booking_list_id' => 56,
     ];
     //$return_json = get_booking_detail('subscriber_id', $inputDataSet_1_1['subscriber_id'], true);
     
     //$return_json = get_booking_detail('booking_list_id',39);
-    $return_json = flow_execution($inputDataSet_2_1);
+    $return_json = flow_execution($inputDataSet_2_3);
     echo json_encode($return_json);
 
   }

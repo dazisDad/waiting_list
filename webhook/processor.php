@@ -26,7 +26,7 @@ function get_db_config() {
  *
  * Required environment variables: DB_USERNAME, DB_NAME. Optional: DB_SERVER_ADDRESS, DB_PASSWORD.
  */
-function get_booking_list($store_id) {
+function get_booking_list($store_id, $isToday = true, $dateSearch = null) {
     $cfg = get_db_config();
     if ($cfg['user'] === '' || $cfg['name'] === '') {
         throw new Exception('Database configuration incomplete: DB_USERNAME and DB_NAME are required');
@@ -38,9 +38,27 @@ function get_booking_list($store_id) {
         throw new Exception('DB connect error: ' . $mysqli->connect_error);
     }
 
-    // Only return rows that have not been cleared (time_cleared IS NULL)
-    // Ensure store_id is quoted so string store IDs (e.g. 'DL_01') aren't treated as column names
-    $sql = "SELECT * FROM booking_list WHERE time_cleared IS NULL AND store_id = '" . $mysqli->real_escape_string($store_id) . "' ORDER BY booking_list_id ASC";
+        // Only return rows that have not been cleared (time_cleared IS NULL)
+        // Ensure store_id is quoted so string store IDs (e.g. 'DL_01') aren't treated as column names
+        $sql = "SELECT * FROM booking_list WHERE time_cleared IS NULL AND store_id = '" . $mysqli->real_escape_string($store_id) . "'";
+
+        // Date filtering on time_created
+        // If $isToday is true (default), restrict to today's rows. If false and $dateSearch given,
+        // restrict to that date (expects YYYY-MM-DD). Otherwise no additional date filter.
+        if ($isToday) {
+            $sql .= " AND DATE(time_created) = CURDATE()";
+        } elseif ($dateSearch !== null) {
+            // Validate dateSearch format YYYY-MM-DD to avoid accidental injection or bad values
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateSearch)) {
+                $sql .= " AND DATE(time_created) = '" . $mysqli->real_escape_string($dateSearch) . "'";
+            } else {
+                // If invalid format, close connection and throw
+                $mysqli->close();
+                throw new Exception('Invalid dateSearch format, expected YYYY-MM-DD');
+            }
+        }
+
+        $sql .= " ORDER BY booking_list_id ASC";
     $result = $mysqli->query($sql);
     if ($result === false) {
         $err = $mysqli->error;
@@ -165,7 +183,7 @@ function update_booking_list($booking_list_id, $key, $value) {
     // Whitelist of allowed updatable columns to avoid SQL injection via column name
     $allowed = [
         'booking_from','subscriber_id','customer_name','customer_phone','pax',
-        'time_cleared','booking_number'
+        'time_cleared','booking_number','booking_status'
     ];
     if (!in_array($key, $allowed, true)) {
         throw new Exception('Invalid or disallowed column: ' . $key);
@@ -372,6 +390,130 @@ function is_booking_loop($booking_ahead) {
 
 
 
+/**
+ * change_pax
+ * Handle changing pax for a booking.
+ * Params:
+ *   - $booking_list_id (int)
+ *   - $new_pax (int)
+ * Returns an associative array (JSON-like) with keys:
+ *   - success (bool), false_reason (string), is_booking_loop (int), rows_affected (optional)
+ */
+function change_pax($booking_list_id, $new_pax) {
+    $id = intval($booking_list_id);
+
+    // Retrieve existing booking
+    $retrieved = get_booking_detail('booking_list_id', $id);
+    if (count($retrieved) === 0) {
+        return [
+            'success' => false,
+            'false_reason' => 'not_found',
+            'is_booking_loop' => 1
+        ];
+    }
+
+    $pax_current = intval($retrieved[0]['pax'] ?? 0);
+    $pax_new = intval($new_pax);
+
+    // Read allowed pax limit from env (or default to 10)
+    $allowedPaxLimit = 10;
+
+    // If pax is unchanged OR pax_new exceeds allowed limit, change is not allowed
+    $isChangePaxAllowed = !($pax_current === $pax_new || $pax_new > $allowedPaxLimit);
+    // Reject zero pax explicitly
+    if ($pax_new === 0) {
+        return [
+            'success' => false,
+            'false_reason' => 'Invalid number of pax entered.',
+            'is_booking_loop' => 1
+        ];
+    }
+    if (!$isChangePaxAllowed) {
+        $reason = ($pax_current === $pax_new) ? 'Same pax as before' : 'New pax exceeds allowed limit. Please contact staff for assistance.';
+        return [
+            'success' => false,
+            'false_reason' => $reason,
+            'is_booking_loop' => 1
+        ];
+    }
+
+    // Perform DB update
+    try {
+        $affected = update_booking_list($id, 'pax', $pax_new);
+        return [
+            'success' => true,
+            'false_reason' => '',
+            'is_booking_loop' => 1,
+        ];
+    } catch (Exception $e) {
+        return [
+            'success' => false,
+            'false_reason' => 'Database update error. Please contact staff for assistance.',
+            'error_message' => $e->getMessage(),
+            'is_booking_loop' => 1
+        ];
+    }
+}
+
+
+/**
+ * cancel_booking
+ * Cancel a booking by setting time_cleared to current timestamp.
+ * Params:
+ *   - $booking_list_id (int)
+ * Returns associative array response similar to change_pax()
+ */
+function cancel_booking($booking_list_id) {
+    $id = intval($booking_list_id);
+    if ($id <= 0) {
+        return [
+            'success' => false,
+            'false_reason' => 'invalid_booking_list_id',
+            'is_booking_loop' => 0
+        ];
+    }
+
+    // Ensure booking exists
+    $retrieved = get_booking_detail('booking_list_id', $id);
+    if (count($retrieved) === 0) {
+        return [
+            'success' => false,
+            'false_reason' => 'not_found',
+            'is_booking_loop' => 0
+        ];
+    }
+
+    // If already cleared, return meaningful response
+    if (!empty($retrieved[0]['time_cleared'])) {
+        return [
+            'success' => false,
+            'false_reason' => 'Your waitlist booking has already been cleared.',
+            'is_booking_loop' => 0
+        ];
+    }
+
+    // Perform DB update: set time_cleared to now
+    try {
+        $now = date('Y-m-d H:i:s');
+        update_booking_list($id, 'time_cleared', $now);
+        update_booking_list($id, 'booking_status', 'Cancelled');
+
+        return [
+            'success' => true,
+            'false_reason' => '',
+            'is_booking_loop' => 0,
+        ];
+    } catch (Exception $e) {
+        return [
+            'success' => false,
+            'false_reason' => 'Database update error. Please contact staff for assistance.',
+            'error_message' => $e->getMessage(),
+            'is_booking_loop' => 0
+        ];
+    }
+}
+
+
 function flow_execution ($inputDataSet) {
     $flow = $inputDataSet['booking_flow'];
     $store_id = $inputDataSet['store_id'];
@@ -414,23 +556,22 @@ function flow_execution ($inputDataSet) {
               ];
               return $return_json;
           case 2.2:
-              // Change Pax
-               $return_json = [
-                  'success' => true,
-                  'booking_ahead' => 0,
-                  'estimate_waiting_time' => '2min',
-                  'is_booking_loop' => 0
-              ];
-              return $return_json;
+              // Change Pax — delegate to change_pax function
+              $booking_list_id = isset($inputDataSet['booking_list_id']) ? intval($inputDataSet['booking_list_id']) : 0;
+              $pax_new = isset($inputDataSet['pax_new']) ? intval($inputDataSet['pax_new']) : null;
+              // if pax_new is not provided, respond with error
+              if ($pax_new === null) {
+                  return [
+                      'success' => false,
+                      'false_reason' => 'Invalid number of pax entered.',
+                      'is_booking_loop' => 1
+                  ];
+              }
+              return change_pax($booking_list_id, $pax_new);
           case 2.3:
-              // Cancel Booking
-               $return_json = [
-                  'success' => true,
-                  'booking_ahead' => 0,
-                  'estimate_waiting_time' => '2min',
-                  'is_booking_loop' => 0
-              ];
-              return $return_json;
+              // Cancel Booking — delegate to cancel_booking()
+              $booking_list_id = isset($inputDataSet['booking_list_id']) ? intval($inputDataSet['booking_list_id']) : 0;
+              return cancel_booking($booking_list_id);
           default:
               throw new Exception('Unknown flow: ' . $flow);
     }
