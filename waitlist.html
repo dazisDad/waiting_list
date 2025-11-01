@@ -28,6 +28,22 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
         }
+        
+        /* Highlight animation for completed items */
+        .checkin-highlight {
+            background-color: rgba(34, 197, 94, 0.2) !important; /* Subtle green background */
+            transition: all 0.3s ease-in-out;
+        }
+        
+        .cancel-highlight {
+            background-color: rgba(239, 68, 68, 0.2) !important; /* Subtle red background */
+            transition: all 0.3s ease-in-out;
+        }
+        
+        .fade-out-highlight {
+            background-color: transparent !important;
+            transition: all 0.7s ease-out;
+        }
     </style>
 </head>
 <body class="p-4 sm:p-8">
@@ -102,19 +118,19 @@
         // Create mock waitlist data based on current time
         // Extended list for testing minRowDisplay functionality
         const mockWaitlist = [
-            // Completed items (will be sorted to the top)
-            { id: 1005, name: "Haneul Jung", pax: 2, entryTime: Date.now() - 45 * 60 * 1000, status: "Cancelled" },
-            { id: 1008, name: "Jimin Lee", pax: 3, entryTime: Date.now() - 50 * 60 * 1000, status: "Check-In" },
-            { id: 1010, name: "Yuna Choi", pax: 4, entryTime: Date.now() - 55 * 60 * 1000, status: "Waiting" },
+            // Completed items (will be sorted to the top) - with time_cleared set
+            { id: 1005, name: "Haneul Jung", pax: 2, time_created: Date.now() - 45 * 60 * 1000, time_cleared: Date.now() - 40 * 60 * 1000, status: "Cancelled" },
+            { id: 1008, name: "Jimin Lee", pax: 3, time_created: Date.now() - 50 * 60 * 1000, time_cleared: Date.now() - 45 * 60 * 1000, status: "Check-In" },
+            { id: 1010, name: "Yuna Choi", pax: 4, time_created: Date.now() - 55 * 60 * 1000, time_cleared: null, status: "Waiting" },
             
-            // Active items (Waiting/Called)
-            { id: 1001, name: "Minji Kim", pax: 4, entryTime: Date.now() - 35 * 60 * 1000, status: "Waiting" }, 
-            { id: 1002, name: "Juno Lee", pax: 2, entryTime: Date.now() - 30 * 60 * 1000, status: "Waiting" }, 
-            { id: 1003, name: "Seyeon Park", pax: 3, entryTime: Date.now() - 25 * 60 * 1000, status: "Called" },  
-            { id: 1004, name: "Eunwoo Choi", pax: 5, entryTime: Date.now() - 20 * 60 * 1000, status: "Waiting" },
-            { id: 1006, name: "Jihoon Kim", pax: 3, entryTime: Date.now() - 15 * 60 * 1000, status: "Waiting" },
-            { id: 1007, name: "Somin Park", pax: 6, entryTime: Date.now() - 10 * 60 * 1000, status: "Waiting" },
-            { id: 1009, name: "Taehyun Lee", pax: 2, entryTime: Date.now() - 5 * 60 * 1000, status: "Waiting" },
+            // Active items (Waiting/Called) - no time_cleared
+            { id: 1001, name: "Minji Kim", pax: 4, time_created: Date.now() - 35 * 60 * 1000, time_cleared: null, status: "Waiting" }, 
+            { id: 1002, name: "Juno Lee", pax: 2, time_created: Date.now() - 30 * 60 * 1000, time_cleared: null, status: "Waiting" }, 
+            { id: 1003, name: "Seyeon Park", pax: 3, time_created: Date.now() - 25 * 60 * 1000, time_cleared: null, status: "Called" },  
+            { id: 1004, name: "Eunwoo Choi", pax: 5, time_created: Date.now() - 20 * 60 * 1000, time_cleared: null, status: "Waiting" },
+            { id: 1006, name: "Jihoon Kim", pax: 3, time_created: Date.now() - 15 * 60 * 1000, time_cleared: null, status: "Waiting" },
+            { id: 1007, name: "Somin Park", pax: 6, time_created: Date.now() - 10 * 60 * 1000, time_cleared: null, status: "Waiting" },
+            { id: 1009, name: "Taehyun Lee", pax: 2, time_created: Date.now() - 5 * 60 * 1000, time_cleared: null, status: "Waiting" },
         ];
 
         const waitlistBody = document.getElementById('waitlist-body');
@@ -136,22 +152,58 @@
 
 
         /**
-         * Converts elapsed time to 'm:ss' or 'h:mm:ss' format (no padding for minutes/hours).
+         * For completed items (Check-In/Cancelled), shows completion time and duration in parentheses.
+         * For active items (Waiting/Called), shows current elapsed time from time_created.
          */
-        function formatElapsedTime(entryTime) {
-            const elapsedMs = Date.now() - entryTime;
-            const totalSeconds = Math.floor(elapsedMs / 1000);
-            
-            let minutes = Math.floor(totalSeconds / 60);
-            const seconds = String(totalSeconds % 60).padStart(2, '0');
-            
-            if (minutes >= 60) {
-                const hours = Math.floor(minutes / 60);
-                const remainingMinutes = String(minutes % 60).padStart(2, '0');
-                return `${hours}:${remainingMinutes}:${seconds}`; 
-            }
+        function formatElapsedTime(item) {
+            if (item.time_cleared) {
+                // Completed items - show completion time and duration
+                const completionTime = new Date(item.time_cleared);
+                const timeString = completionTime.toLocaleTimeString('en-GB', { 
+                    hour12: false,
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                
+                // Calculate duration
+                const durationMs = item.time_cleared - item.time_created;
+                const totalSeconds = Math.floor(durationMs / 1000);
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
+                
+                let durationString;
+                if (minutes >= 60) {
+                    const hours = Math.floor(minutes / 60);
+                    const remainingMinutes = minutes % 60;
+                    if (remainingMinutes > 0) {
+                        durationString = `${hours} hr ${remainingMinutes} min`;
+                    } else {
+                        durationString = `${hours} hr`;
+                    }
+                } else if (minutes > 0) {
+                    durationString = `${minutes} min`;
+                } else {
+                    durationString = `${seconds} sec`;
+                }
+                
+                return `${timeString} (${durationString})`;
+            } else {
+                // Active items - calculate current elapsed time
+                const elapsedMs = Date.now() - item.time_created;
+                const totalSeconds = Math.floor(elapsedMs / 1000);
+                
+                let minutes = Math.floor(totalSeconds / 60);
+                const seconds = String(totalSeconds % 60).padStart(2, '0');
+                
+                if (minutes >= 60) {
+                    const hours = Math.floor(minutes / 60);
+                    const remainingMinutes = String(minutes % 60).padStart(2, '0');
+                    return `${hours}:${remainingMinutes}:${seconds}`; 
+                }
 
-            return `${minutes}:${seconds}`; 
+                return `${minutes}:${seconds}`; 
+            }
         }
 
         /**
@@ -222,7 +274,6 @@
          */
         function handleCheckIn(id, name) {
             console.log(`ACTION: Checking in customer ${name} (#${id}).`);
-            showMessageBox(`[${name}, #${id}] 체크인 완료되었습니다.`);
             const item = mockWaitlist.find(item => item.id === id);
             let shouldScroll = false;
             
@@ -230,11 +281,12 @@
                  // Check if item was active before status change (Waiting or Called)
                 const wasActive = item.status === 'Waiting' || item.status === 'Called';
                 item.status = 'Check-In';
+                item.time_cleared = Date.now(); // Set time_cleared when checking in
                 
                 if (wasActive && rowHeight > 0) {
-                     // 1. Update initialScrollTop by one row's height
-                    initialScrollTop += rowHeight;
-                    console.log(`SCROLL_UPDATE: Check-In. Adding rowHeight (${rowHeight.toFixed(2)}px) to initialScrollTop.`);
+                     // 1. Update initialScrollTop by moving up one row's height to show the cleared item
+                    initialScrollTop -= rowHeight;
+                    console.log(`SCROLL_UPDATE: Check-In. Subtracting rowHeight (${rowHeight.toFixed(2)}px) from initialScrollTop.`);
                     console.log(`SCROLL_UPDATE: New initialScrollTop: ${initialScrollTop.toFixed(2)}px`);
                     shouldScroll = true;
                 }
@@ -245,8 +297,54 @@
             // IMPORTANT FIX: Scroll must happen AFTER the DOM is updated by renderWaitlist.
             if (shouldScroll) {
                 requestAnimationFrame(() => {
-                    waitlistContainer.scrollTo({ top: initialScrollTop, behavior: 'smooth' }); 
-                    console.log(`SCROLL_ACTION_RAF: Scroll to initialScrollTop (${initialScrollTop.toFixed(2)}px) applied after re-render.`);
+                    // Find the position of the just completed item in the DOM
+                    const rows = waitlistBody.getElementsByTagName('tr');
+                    let targetScrollTop = 0;
+                    let itemFound = false;
+                    
+                    // Look for the row that contains the just completed item
+                    for (let i = 0; i < rows.length; i++) {
+                        const row = rows[i];
+                        const idCell = row.querySelector('td:first-child');
+                        if (idCell && idCell.textContent.trim() === id.toString()) {
+                            // Found the just completed item - scroll to show it at the top
+                            itemFound = true;
+                            break;
+                        }
+                        targetScrollTop += row.offsetHeight;
+                    }
+                    
+                    if (itemFound) {
+                        waitlistContainer.scrollTo({ top: targetScrollTop, behavior: 'smooth' }); 
+                        console.log(`SCROLL_ACTION_RAF: Check-In scroll to show item #${id} at ${targetScrollTop.toFixed(2)}px`);
+                        initialScrollTop = targetScrollTop;
+                        
+                        // Add highlight effect to the completed item
+                        setTimeout(() => {
+                            const targetRow = Array.from(rows).find(row => {
+                                const idCell = row.querySelector('td:first-child');
+                                return idCell && idCell.textContent.trim() === id.toString();
+                            });
+                            
+                            if (targetRow) {
+                                targetRow.classList.add('checkin-highlight');
+                                console.log(`HIGHLIGHT: Added green highlight to Check-In item #${id}`);
+                                
+                                // Remove highlight after 1 second
+                                setTimeout(() => {
+                                    targetRow.classList.remove('checkin-highlight');
+                                    targetRow.classList.add('fade-out-highlight');
+                                    
+                                    // Clean up fade-out class
+                                    setTimeout(() => {
+                                        targetRow.classList.remove('fade-out-highlight');
+                                    }, 700);
+                                }, 1000);
+                            }
+                        }, 300); // Small delay to ensure smooth scroll is started
+                    } else {
+                        console.log(`SCROLL_ACTION_RAF: Could not find item #${id} in DOM`);
+                    }
                 });
             }
         }
@@ -256,7 +354,6 @@
          */
         function handleCancel(id, name) {
             console.log(`ACTION: Cancelling customer ${name} (#${id}).`);
-            showMessageBox(`[${name}, #${id}] 예약이 취소되었습니다.`);
             const item = mockWaitlist.find(item => item.id === id);
             let shouldScroll = false;
             
@@ -264,11 +361,12 @@
                  // Check if item was active before status change (Waiting or Called)
                 const wasActive = item.status === 'Waiting' || item.status === 'Called';
                 item.status = 'Cancelled';
+                item.time_cleared = Date.now(); // Set time_cleared when cancelling
                 
                 if (wasActive && rowHeight > 0) {
-                     // 1. Update initialScrollTop by one row's height
-                    initialScrollTop += rowHeight;
-                    console.log(`SCROLL_UPDATE: Cancel. Adding rowHeight (${rowHeight.toFixed(2)}px) to initialScrollTop.`);
+                     // 1. Update initialScrollTop by moving up one row's height to show the cleared item
+                    initialScrollTop -= rowHeight;
+                    console.log(`SCROLL_UPDATE: Cancel. Subtracting rowHeight (${rowHeight.toFixed(2)}px) from initialScrollTop.`);
                     console.log(`SCROLL_UPDATE: New initialScrollTop: ${initialScrollTop.toFixed(2)}px`);
                     shouldScroll = true;
                 }
@@ -279,8 +377,54 @@
             // IMPORTANT FIX: Scroll must happen AFTER the DOM is updated by renderWaitlist.
             if (shouldScroll) {
                 requestAnimationFrame(() => {
-                    waitlistContainer.scrollTo({ top: initialScrollTop, behavior: 'smooth' }); 
-                    console.log(`SCROLL_ACTION_RAF: Scroll to initialScrollTop (${initialScrollTop.toFixed(2)}px) applied after re-render.`);
+                    // Find the position of the just completed item in the DOM
+                    const rows = waitlistBody.getElementsByTagName('tr');
+                    let targetScrollTop = 0;
+                    let itemFound = false;
+                    
+                    // Look for the row that contains the just completed item
+                    for (let i = 0; i < rows.length; i++) {
+                        const row = rows[i];
+                        const idCell = row.querySelector('td:first-child');
+                        if (idCell && idCell.textContent.trim() === id.toString()) {
+                            // Found the just completed item - scroll to show it at the top
+                            itemFound = true;
+                            break;
+                        }
+                        targetScrollTop += row.offsetHeight;
+                    }
+                    
+                    if (itemFound) {
+                        waitlistContainer.scrollTo({ top: targetScrollTop, behavior: 'smooth' }); 
+                        console.log(`SCROLL_ACTION_RAF: Cancel scroll to show item #${id} at ${targetScrollTop.toFixed(2)}px`);
+                        initialScrollTop = targetScrollTop;
+                        
+                        // Add highlight effect to the completed item
+                        setTimeout(() => {
+                            const targetRow = Array.from(rows).find(row => {
+                                const idCell = row.querySelector('td:first-child');
+                                return idCell && idCell.textContent.trim() === id.toString();
+                            });
+                            
+                            if (targetRow) {
+                                targetRow.classList.add('cancel-highlight');
+                                console.log(`HIGHLIGHT: Added red highlight to Cancel item #${id}`);
+                                
+                                // Remove highlight after 1 second
+                                setTimeout(() => {
+                                    targetRow.classList.remove('cancel-highlight');
+                                    targetRow.classList.add('fade-out-highlight');
+                                    
+                                    // Clean up fade-out class
+                                    setTimeout(() => {
+                                        targetRow.classList.remove('fade-out-highlight');
+                                    }, 700);
+                                }, 1000);
+                            }
+                        }, 300); // Small delay to ensure smooth scroll is started
+                    } else {
+                        console.log(`SCROLL_ACTION_RAF: Could not find item #${id} in DOM`);
+                    }
                 });
             }
         }
@@ -476,14 +620,23 @@
         function renderWaitlist() {
             console.log("RENDER: Starting table render.");
 
-            // 1. Sort the entire list: Completed items first, then Active items by entry time (oldest first).
+            // 1. Sort the entire list: Completed items first (by time_cleared), then Active items by time_created (oldest first).
             mockWaitlist.sort((a, b) => {
                 const priorityA = getSortPriority(a.status);
                 const priorityB = getSortPriority(b.status);
+                
                 if (priorityA !== priorityB) {
                     return priorityA - priorityB;
                 }
-                return a.entryTime - b.entryTime;
+                
+                // Both items have the same priority level
+                if (priorityA === 0) {
+                    // Both are completed items - sort by time_cleared (oldest first, recent last)
+                    return (a.time_cleared || 0) - (b.time_cleared || 0);
+                } else {
+                    // Both are active items - sort by time_created (oldest first)
+                    return a.time_created - b.time_created;
+                }
             });
             
             const completedItemsCount = mockWaitlist.filter(item => getSortPriority(item.status) === 0).length;
@@ -517,7 +670,7 @@
                         </td>
                         <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-700 font-bold text-center">${item.pax}</td>
                         <td id="time-${item.id}" class="px-2 py-2 whitespace-nowrap text-sm font-mono tracking-wider text-center ${timeClass}">
-                            ${formatElapsedTime(item.entryTime)}
+                            ${formatElapsedTime(item)}
                         </td>
                         <td class="px-2 py-2 whitespace-nowrap text-center text-sm font-medium">
                             <div class="flex justify-center flex-wrap gap-1">
@@ -544,12 +697,13 @@
         /**
          * Updates the elapsed time for all items every second.
          * Only changes the text content of the time cell.
+         * Note: Completed items (with time_cleared) will show fixed time, so no update needed for them.
          */
         function updateElapsedTimes() {
             mockWaitlist.forEach(item => {
                 const timeElement = document.getElementById(`time-${item.id}`);
                 if (timeElement) {
-                    timeElement.textContent = formatElapsedTime(item.entryTime);
+                    timeElement.textContent = formatElapsedTime(item);
                 }
             });
         }
