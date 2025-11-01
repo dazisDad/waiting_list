@@ -100,17 +100,21 @@
 
     <script>
         // Create mock waitlist data based on current time
-        // Short list for testing dynamic scroll activation
+        // Extended list for testing minRowDisplay functionality
         const mockWaitlist = [
             // Completed items (will be sorted to the top)
-            { id: 1005, name: "Haneul Jung", pax: 2, entryTime: Date.now() - 15 * 60 * 1000, status: "Cancelled" },
-            { id: 1008, name: "Jimin Lee", pax: 3, entryTime: Date.now() - 30 * 60 * 1000, status: "Check-In" }, 
+            { id: 1005, name: "Haneul Jung", pax: 2, entryTime: Date.now() - 45 * 60 * 1000, status: "Cancelled" },
+            { id: 1008, name: "Jimin Lee", pax: 3, entryTime: Date.now() - 50 * 60 * 1000, status: "Check-In" },
+            { id: 1010, name: "Yuna Choi", pax: 4, entryTime: Date.now() - 55 * 60 * 1000, status: "Waiting" },
             
             // Active items (Waiting/Called)
-            { id: 1001, name: "Minji Kim", pax: 4, entryTime: Date.now() - 25 * 60 * 1000, status: "Waiting" }, 
-            { id: 1002, name: "Juno Lee", pax: 2, entryTime: Date.now() - 15 * 60 * 1000, status: "Waiting" }, 
-            { id: 1003, name: "Seyeon Park", pax: 3, entryTime: Date.now() - 5 * 60 * 1000, status: "Called" },  
-            { id: 1004, name: "Eunwoo Choi", pax: 5, entryTime: Date.now() - 2 * 60 * 1000, status: "Waiting" },
+            { id: 1001, name: "Minji Kim", pax: 4, entryTime: Date.now() - 35 * 60 * 1000, status: "Waiting" }, 
+            { id: 1002, name: "Juno Lee", pax: 2, entryTime: Date.now() - 30 * 60 * 1000, status: "Waiting" }, 
+            { id: 1003, name: "Seyeon Park", pax: 3, entryTime: Date.now() - 25 * 60 * 1000, status: "Called" },  
+            { id: 1004, name: "Eunwoo Choi", pax: 5, entryTime: Date.now() - 20 * 60 * 1000, status: "Waiting" },
+            { id: 1006, name: "Jihoon Kim", pax: 3, entryTime: Date.now() - 15 * 60 * 1000, status: "Waiting" },
+            { id: 1007, name: "Somin Park", pax: 6, entryTime: Date.now() - 10 * 60 * 1000, status: "Waiting" },
+            { id: 1009, name: "Taehyun Lee", pax: 2, entryTime: Date.now() - 5 * 60 * 1000, status: "Waiting" },
         ];
 
         const waitlistBody = document.getElementById('waitlist-body');
@@ -121,6 +125,9 @@
         
         // Define the Tailwind class for maximum height
         const MAX_HEIGHT_CLASS = 'max-h-[60vh]';
+        
+        // Number of rows to display on screen (including completed items)
+        const displayedRows = 7;
 
         // --- Global State Variables ---
         let isInitialScrollDone = false; 
@@ -309,57 +316,73 @@
             let totalHeightToScroll = 0;
             const completedItemsCount = mockWaitlist.filter(item => getSortPriority(item.status) === 0).length;
             const hasCompletedItems = completedItemsCount > 0;
+            const totalRows = mockWaitlist.length;
+            const shouldEnableScrolling = totalRows > displayedRows && hasCompletedItems;
             
-            if (hasCompletedItems) {
-                // Calculate height of completed rows
+            if (shouldEnableScrolling) {
+                // Calculate height of completed rows (only if we should scroll)
                 for (let i = 0; i < completedItemsCount && i < rows.length; i++) {
                     totalHeightToScroll += rows[i].offsetHeight;
                 }
             }
             
             console.log(`--- Scroll/Height Calculation ---`);
-            console.log(`Completed items: ${completedItemsCount}`);
+            console.log(`Total rows: ${totalRows}, displayedRows: ${displayedRows}, Completed items: ${completedItemsCount}`);
+            console.log(`shouldEnableScrolling: ${shouldEnableScrolling}`);
             console.log(`Calculated scroll target (total height of completed items): ${totalHeightToScroll.toFixed(2)}px`);
 
             // --- Dynamic Height/Scroll Activation ---
-            const isUsingMaxHeight = waitlistContainer.classList.contains(MAX_HEIGHT_CLASS);
-            // isNaturallyScrollable은 스크롤바가 자연스럽게 생겼는지 확인합니다.
-            const isNaturallyScrollable = waitlistContainer.scrollHeight > waitlistContainer.clientHeight && isUsingMaxHeight; 
-
-            if (hasCompletedItems && !isNaturallyScrollable) {
-                // Short list with history: Force height to enable scrollbar
-                console.log("HEIGHT: Short list with history. Forcing container height to enable scroll.");
-                let activeRowsHeight = 0;
-                for (let i = completedItemsCount; i < rows.length; i++) {
-                    activeRowsHeight += rows[i].offsetHeight;
+            if (shouldEnableScrolling) {
+                // Force height to show exactly displayedRows number of rows
+                console.log(`HEIGHT: Forcing container height to show exactly ${displayedRows} rows.`);
+                let displayedRowsHeight = 0;
+                // Calculate height of exactly displayedRows number of rows
+                for (let i = 0; i < Math.min(displayedRows, rows.length); i++) {
+                    displayedRowsHeight += rows[i].offsetHeight;
                 }
                 const headerHeight = waitlistContainer.querySelector('thead').offsetHeight;
-                const forcedHeight = activeRowsHeight + headerHeight + 5; 
+                const forcedHeight = displayedRowsHeight + headerHeight + 5; 
                 
+                console.log(`HEIGHT: Setting forced height to ${forcedHeight.toFixed(2)}px (${displayedRows} rows + header)`);
                 waitlistContainer.classList.remove(MAX_HEIGHT_CLASS);
                 waitlistContainer.style.height = `${forcedHeight}px`;
             } else {
-                // Long list or no history: Revert to max-height setup
-                console.log("HEIGHT: Long list or no history. Reverting to max-height.");
-                waitlistContainer.classList.add(MAX_HEIGHT_CLASS);
-                waitlistContainer.style.height = ''; 
+                // Revert to max-height setup when scrolling is not needed
+                console.log("HEIGHT: Reverting to max-height (no scrolling needed).");
+                
+                // DEBUG: Check if we should calculate exact height even when no scrolling needed
+                if (totalRows === displayedRows) {
+                    let allRowsHeight = 0;
+                    for (let i = 0; i < rows.length; i++) {
+                        allRowsHeight += rows[i].offsetHeight;
+                    }
+                    const headerHeight = waitlistContainer.querySelector('thead').offsetHeight;
+                    const exactHeight = allRowsHeight + headerHeight + 10; // Extra padding for safety
+                    
+                    console.log(`HEIGHT: Total rows equals displayedRows (${displayedRows}). Setting exact height to ${exactHeight.toFixed(2)}px`);
+                    waitlistContainer.classList.remove(MAX_HEIGHT_CLASS);
+                    waitlistContainer.style.height = `${exactHeight}px`;
+                } else {
+                    waitlistContainer.classList.add(MAX_HEIGHT_CLASS);
+                    waitlistContainer.style.height = ''; 
+                }
             }
             
             // Recalculate scroll state after potential height adjustments
             const isNowScrollable = waitlistContainer.scrollHeight > waitlistContainer.clientHeight;
             
-            // Check if the current position is the Active Queue position (tolerance of 5px)
-            const isScrolledToActive = totalHeightToScroll > 0 && 
-                                       waitlistContainer.scrollTop >= (totalHeightToScroll - 5) && 
-                                       waitlistContainer.scrollTop <= (totalHeightToScroll + 5); 
+            // Check if the current position is the Active Queue position (tolerance of 10px for browser precision)
+            const isScrolledToActive = shouldEnableScrolling && totalHeightToScroll > 0 && 
+                                       waitlistContainer.scrollTop >= (totalHeightToScroll - 10) && 
+                                       waitlistContainer.scrollTop <= (totalHeightToScroll + 10); 
             
             console.log(`--- Current Scroll State ---`);
             console.log(`isInitialScrollDone: ${isInitialScrollDone}`);
-            console.log(`hasCompletedItems: ${hasCompletedItems}`);
+            console.log(`shouldEnableScrolling: ${shouldEnableScrolling}`);
             console.log(`isNowScrollable: ${isNowScrollable}`);
             console.log(`Current ScrollTop: ${waitlistContainer.scrollTop.toFixed(2)}px`);
             console.log(`initialScrollTop: ${initialScrollTop.toFixed(2)}px`); 
-            console.log(`isScrolledToActive: ${isScrolledToActive} (Is scroll position within +/- 5px of target)`);
+            console.log(`isScrolledToActive: ${isScrolledToActive} (Is scroll position within +/- 10px of target)`);
 
             
             // 2. Button State Update (Dynamic)
@@ -377,11 +400,11 @@
             }
 
             // isInitialScrollDone = true 일 때의 동적 로직:
-            // Active Queue를 건너뛸 기록이 있고, 스크롤이 가능하며, 현재 Active Queue 위치에 있지 않은 경우 활성화
-            const shouldEnableScrollDown = hasCompletedItems && isNowScrollable && !isScrolledToActive;
+            // 총 행 수가 minRowDisplay를 초과하고, Active Queue를 건너뛸 기록이 있고, 스크롤이 가능하며, 현재 Active Queue 위치에 있지 않은 경우 활성화
+            const shouldEnableScrollDown = shouldEnableScrolling && isNowScrollable && !isScrolledToActive;
             
             console.log(`--- BUTTON STATE DECISION (Dynamic) ---`);
-            console.log(`Should Enable? (hasHistory && isScrollable && !isAtActive): ${shouldEnableScrollDown}`);
+            console.log(`Should Enable? (shouldEnableScrolling && isScrollable && !isAtActive): ${shouldEnableScrollDown}`);
 
 
             if (shouldEnableScrollDown) {
@@ -401,9 +424,14 @@
                 if (isScrolledToActive) {
                     console.log(`BUTTON: DISABLED. Reason: Already at the Active Queue position.`);
                     scrollButton.textContent = "Active Queue 위치 고정"; 
-                } else if (!hasCompletedItems) {
-                    console.log(`BUTTON: DISABLED. Reason: No completed history to scroll past.`);
-                    scrollButton.textContent = "Active Queue로 이동 (Scroll to Active)";
+                } else if (!shouldEnableScrolling) {
+                    if (totalRows <= displayedRows) {
+                        console.log(`BUTTON: DISABLED. Reason: Total rows (${totalRows}) <= displayedRows (${displayedRows}). All items visible.`);
+                        scrollButton.textContent = "전체 항목 표시 중";
+                    } else {
+                        console.log(`BUTTON: DISABLED. Reason: No completed history to scroll past.`);
+                        scrollButton.textContent = "Active Queue로 이동 (Scroll to Active)";
+                    }
                 } else if (!isNowScrollable) {
                     console.log(`BUTTON: DISABLED. Reason: Container is not scrollable (list is short).`);
                     scrollButton.textContent = "Active Queue로 이동 (Scroll to Active)";
@@ -553,15 +581,36 @@
             
             console.log(`INIT: Calculated scrollTarget = ${scrollTarget.toFixed(2)}px. Completed items = ${completedItemsCount}`);
 
-            // 2. 건너뛸 기록이 있는 경우에만 초기 스크롤을 강제합니다.
-            if (completedItemsCount > 0) {
+            // 2. 총 행 수가 displayedRows를 초과하고 완료된 항목이 있는 경우에만 초기 스크롤을 강제합니다.
+            const totalRows = mockWaitlist.length;
+            const shouldScrollToActive = totalRows > displayedRows && completedItemsCount > 0;
+            console.log(`INIT: Total rows: ${totalRows}, displayedRows: ${displayedRows}, shouldScrollToActive: ${shouldScrollToActive}`);
+            
+            if (shouldScrollToActive) {
                 // 스크롤 위치를 즉시 설정합니다. (비헤이비어 'auto')
                 waitlistContainer.scrollTop = scrollTarget;
                 console.log(`INIT: Forced scroll to position: ${scrollTarget.toFixed(2)}px`);
                 
-                // 초기 스크롤 위치 저장 및 로깅
-                initialScrollTop = waitlistContainer.scrollTop;
-                console.log(`INIT: InitialScrollTop value recorded: ${initialScrollTop.toFixed(2)}px`);
+                // 실제 스크롤된 위치를 다음 프레임에서 읽어서 정확한 값을 저장
+                requestAnimationFrame(() => {
+                    // 더 정확한 스크롤을 위해 한 번 더 시도
+                    const actualScrollTop = waitlistContainer.scrollTop;
+                    if (Math.abs(actualScrollTop - scrollTarget) > 2) {
+                        console.log(`INIT: Adjusting scroll position. First attempt: ${actualScrollTop.toFixed(2)}px`);
+                        waitlistContainer.scrollTop = scrollTarget;
+                        
+                        // 조정 후 다시 한번 확인
+                        requestAnimationFrame(() => {
+                            initialScrollTop = waitlistContainer.scrollTop;
+                            console.log(`INIT: InitialScrollTop value recorded (final): ${initialScrollTop.toFixed(2)}px`);
+                            console.log(`INIT: Final difference: ${(scrollTarget - initialScrollTop).toFixed(2)}px`);
+                        });
+                    } else {
+                        initialScrollTop = actualScrollTop;
+                        console.log(`INIT: InitialScrollTop value recorded (actual): ${initialScrollTop.toFixed(2)}px`);
+                        console.log(`INIT: Difference between target and actual: ${(scrollTarget - initialScrollTop).toFixed(2)}px`);
+                    }
+                });
             } else {
                 initialScrollTop = 0; // Ensure it's 0 if no initial scroll occurred
                 console.log("INIT: No completed items, skipping initial forced scroll.");
