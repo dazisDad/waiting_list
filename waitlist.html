@@ -63,7 +63,7 @@
             <!-- Initial state is disabled, the logic will update the text and class -->
             <button id="scroll-to-active-btn" onclick="handleScrollToActive()" disabled
                 class="action-button px-4 py-2 text-sm font-semibold rounded-lg transition duration-150 bg-gray-300 text-gray-500 cursor-not-allowed">
-                Active Queue 위치 고정
+                @ Active Queue
             </button>
         </div>
 
@@ -143,7 +143,7 @@
         const MAX_HEIGHT_CLASS = 'max-h-[60vh]';
         
         // Number of rows to display on screen (including completed items)
-        const displayedRows = 7;
+        const displayedRows = 3;
 
         // --- Global State Variables ---
         let isInitialScrollDone = false; 
@@ -536,7 +536,7 @@
                  console.log(`--- BUTTON STATE DECISION ---`);
                  console.log("BUTTON: DISABLED. Reason: Initial setup (isInitialScrollDone=false).");
                  scrollButton.disabled = true;
-                 scrollButton.textContent = "Active Queue 위치 고정"; 
+                 scrollButton.textContent = "@ Active Queue"; 
                  scrollButton.classList.remove('bg-indigo-600', 'text-white', 'hover:bg-indigo-700');
                  scrollButton.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
                  console.groupEnd();
@@ -556,7 +556,7 @@
                 console.log(`BUTTON: ENABLED. Reason: Active history exists, scrollable, and user is not at the Active Queue.`);
                 
                 scrollButton.disabled = false;
-                scrollButton.textContent = "Active Queue로 이동 (Scroll to Active)";
+                scrollButton.textContent = "Scroll to Active";
                 scrollButton.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
                 scrollButton.classList.add('bg-indigo-600', 'text-white', 'hover:bg-indigo-700');
             } else {
@@ -567,21 +567,21 @@
                 // Display appropriate text for the disabled state
                 if (isScrolledToActive) {
                     console.log(`BUTTON: DISABLED. Reason: Already at the Active Queue position.`);
-                    scrollButton.textContent = "Active Queue 위치 고정"; 
+                    scrollButton.textContent = "@ Active Queue"; 
                 } else if (!shouldEnableScrolling) {
                     if (totalRows <= displayedRows) {
                         console.log(`BUTTON: DISABLED. Reason: Total rows (${totalRows}) <= displayedRows (${displayedRows}). All items visible.`);
-                        scrollButton.textContent = "전체 항목 표시 중";
+                        scrollButton.textContent = "Showing All";
                     } else {
                         console.log(`BUTTON: DISABLED. Reason: No completed history to scroll past.`);
-                        scrollButton.textContent = "Active Queue로 이동 (Scroll to Active)";
+                        scrollButton.textContent = "Scroll to Active";
                     }
                 } else if (!isNowScrollable) {
                     console.log(`BUTTON: DISABLED. Reason: Container is not scrollable (list is short).`);
-                    scrollButton.textContent = "Active Queue로 이동 (Scroll to Active)";
+                    scrollButton.textContent = "Scroll to Active";
                 } else {
                     console.log(`BUTTON: DISABLED. Reason: Default disabled state.`);
-                    scrollButton.textContent = "Active Queue로 이동 (Scroll to Active)";
+                    scrollButton.textContent = "Scroll to Active";
                 }
 
                 scrollButton.classList.remove('bg-indigo-600', 'text-white', 'hover:bg-indigo-700');
