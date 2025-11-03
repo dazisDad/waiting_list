@@ -23,7 +23,11 @@
         "vendor",
         "composer*",
         "\\events.json",
-        "\\.bak"
+        "\\.bak",
+        "\\.env",
+        "dazismaths*",
+        "temp",
+        "\\.json"
     ],
     "generatedFiles": {
         "extensionsToInclude": [
