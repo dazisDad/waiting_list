@@ -28,8 +28,8 @@
     }
 
     .status-checkedin {
-      color: #34d399;
-      text-shadow: 0 0 8px rgba(52, 211, 153, 0.5);
+      color: #8b5cf6;
+      text-shadow: 0 0 8px rgba(139, 92, 246, 0.5);
     }
 
     .status-cancelled {
@@ -103,14 +103,16 @@
 
     /* Highlight animation for completed items - Dark theme */
     .checkin-highlight {
-      background-color: rgba(52, 211, 153, 0.15) !important;
-      box-shadow: 0 0 20px rgba(52, 211, 153, 0.3);
+      background-color: rgba(139, 92, 246, 0.15) !important;
+      box-shadow: none !important;
+      border: none !important;
       transition: all 0.3s ease-in-out;
     }
 
     .cancel-highlight {
       background-color: rgba(248, 113, 113, 0.15) !important;
-      box-shadow: 0 0 20px rgba(248, 113, 113, 0.3);
+      box-shadow: none !important;
+      border: none !important;
       transition: all 0.3s ease-in-out;
     }
 
@@ -118,6 +120,22 @@
       background-color: transparent !important;
       box-shadow: none;
       transition: all 0.7s ease-out;
+    }
+
+    /* Button click highlight - brief flash effect */
+    tbody tr.button-click-highlight,
+    tbody tr.button-click-highlight:hover,
+    tbody tr.row-hover.button-click-highlight,
+    tbody tr.row-hover.button-click-highlight:hover,
+    tbody tr.bg-slate-900.button-click-highlight,
+    tbody tr.bg-slate-900.button-click-highlight:hover {
+      background-color: #334155 !important;
+      transition: none !important;
+    }
+    
+    /* Override any conflicting background colors */
+    .button-click-highlight.bg-slate-900 {
+      background-color: #334155 !important;
     }
 
     /* Row hover effect */
@@ -132,6 +150,233 @@
     }
     .row-completed:hover {
       background-color: #334155 !important;
+    }
+
+    /* Disable hover during scroll to prevent unwanted highlights */
+    .disable-hover .row-hover:hover,
+    .disable-hover .row-completed:hover {
+      background-color: inherit !important;
+      box-shadow: none !important;
+    }
+
+    /* Desktop: Ensure row-selected has no effect */
+    @media (min-width: 769px) {
+      .row-selected {
+        background-color: inherit !important;
+        border-left: none !important;
+        box-shadow: none !important;
+      }
+
+      /* Remove focus styles from rows on desktop */
+      .row-clickable,
+      .row-hover,
+      .row-completed,
+      tr {
+        outline: none !important;
+      }
+
+      .row-clickable:focus,
+      .row-clickable:focus-visible,
+      .row-clickable:focus-within,
+      .row-hover:focus,
+      .row-hover:focus-visible,
+      .row-hover:focus-within,
+      .row-completed:focus,
+      .row-completed:focus-visible,
+      .row-completed:focus-within,
+      tr:focus,
+      tr:focus-visible,
+      tr:focus-within {
+        outline: none !important;
+        background-color: inherit !important;
+        box-shadow: none !important;
+      }
+
+      /* Disable pointer events on row onclick for desktop */
+      .row-clickable {
+        pointer-events: auto;
+        cursor: default !important;
+      }
+    }
+
+    /* Mobile: Hide Action column header and cells */
+    @media (max-width: 768px) {
+      .action-column-header,
+      .action-column-cell {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+      }
+
+      /* Mobile row cursor */
+      .row-clickable {
+        cursor: pointer;
+        transition: none !important;
+      }
+
+      /* Make only the row itself clickable, not its children */
+      .row-clickable > td {
+        pointer-events: auto;
+      }
+
+      .row-clickable > td > * {
+        pointer-events: none !important;
+      }
+
+      /* Disable all button interactions on mobile (buttons are hidden anyway) */
+      .action-column-cell button,
+      .action-column-cell .action-button {
+        pointer-events: none !important;
+        transition: none !important;
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+      }
+
+      /* Force disable all button states on mobile */
+      .action-column-cell .btn-ask,
+      .action-column-cell .btn-ask:hover,
+      .action-column-cell .btn-ask:active,
+      .action-column-cell .btn-ask:focus,
+      .action-column-cell .btn-ask:focus-visible {
+        background-color: transparent !important;
+        transition: none !important;
+        pointer-events: none !important;
+      }
+
+      .action-column-cell .btn-call,
+      .action-column-cell .btn-call:hover,
+      .action-column-cell .btn-call:active,
+      .action-column-cell .btn-call:focus,
+      .action-column-cell .btn-call:focus-visible {
+        background-color: transparent !important;
+        transition: none !important;
+        pointer-events: none !important;
+      }
+
+      .action-column-cell .btn-cancel,
+      .action-column-cell .btn-cancel:hover,
+      .action-column-cell .btn-cancel:active,
+      .action-column-cell .btn-cancel:focus,
+      .action-column-cell .btn-cancel:focus-visible {
+        background-color: transparent !important;
+        transition: none !important;
+        pointer-events: none !important;
+      }
+
+      .action-column-cell .btn-checkin,
+      .action-column-cell .btn-checkin:hover,
+      .action-column-cell .btn-checkin:active,
+      .action-column-cell .btn-checkin:focus,
+      .action-column-cell .btn-checkin:focus-visible {
+        background-color: #8b5cf6 !important;
+        transition: none !important;
+        pointer-events: none !important;
+      }
+
+      /* Disable hover effect on mobile to avoid confusion */
+      .row-hover,
+      .row-completed {
+        transition: none !important;
+      }
+
+      .row-hover:hover,
+      .row-completed:hover {
+        background-color: inherit !important;
+        box-shadow: none !important;
+        transition: none !important;
+      }
+
+      /* Selected row highlight on mobile - No transition for instant feedback */
+      .row-selected {
+        background-color: #334155 !important;
+        border-left: 3px solid #8b5cf6 !important;
+        transition: none !important;
+      }
+
+      .row-selected:hover {
+        background-color: #334155 !important;
+        box-shadow: none !important;
+      }
+
+      /* Expanded row for mobile buttons */
+      .mobile-action-row {
+        background-color: #1e293b;
+        border-top: 1px solid #475569;
+      }
+
+      .mobile-action-row td {
+        padding: 12px 8px;
+      }
+
+      /* Mobile button styles - No transition for instant feedback */
+      .mobile-btn,
+      .mobile-btn-call,
+      .mobile-btn-ask,
+      .mobile-btn-checkin,
+      .mobile-btn-cancel {
+        transition: none !important;
+      }
+
+      /* Mobile Call button */
+      .mobile-btn-call {
+        background-color: transparent;
+        border: 1px solid #34d399;
+        color: #34d399;
+      }
+      .mobile-btn-call:active {
+        background-color: #34d399;
+        color: #ffffff;
+        transition: none !important;
+      }
+
+      /* Mobile Ask button */
+      .mobile-btn-ask {
+        background-color: transparent;
+        border: 1px solid #60a5fa;
+        color: #60a5fa;
+      }
+      .mobile-btn-ask:active {
+        background-color: #60a5fa;
+        color: #ffffff;
+        transition: none !important;
+      }
+
+      /* Mobile Check-In button */
+      .mobile-btn-checkin {
+        background-color: #8b5cf6;
+        border: 1px solid #8b5cf6;
+        color: #ffffff;
+      }
+      .mobile-btn-checkin:active {
+        background-color: #a78bfa;
+        border-color: #a78bfa;
+        transition: none !important;
+      }
+
+      /* Mobile Cancel button */
+      .mobile-btn-cancel {
+        background-color: transparent;
+        border: 1px solid #f87171;
+        color: #f87171;
+      }
+      .mobile-btn-cancel:active {
+        background-color: #f87171;
+        color: #ffffff;
+        transition: none !important;
+      }
+
+      /* Adjust table widths for mobile */
+      .mobile-adjusted-width {
+        width: auto !important;
+      }
+    }
+
+    /* Desktop: Hide mobile action rows */
+    @media (min-width: 769px) {
+      .mobile-action-row {
+        display: none !important;
+      }
     }
   </style>
 </head>
@@ -184,8 +429,8 @@
               <!-- Reduced padding (px-2 py-2) and centered -->
               <th class="px-2 py-2 text-center text-xs font-semibold text-slate-300 uppercase tracking-wider w-2/12">
                 Elapsed Time</th>
-              <!-- Reduced width for Action column -->
-              <th class="px-2 py-2 text-center text-xs font-semibold text-slate-300 uppercase tracking-wider w-5/12">
+              <!-- Reduced width for Action column - Hidden on mobile -->
+              <th class="action-column-header px-2 py-2 text-center text-xs font-semibold text-slate-300 uppercase tracking-wider w-5/12">
                 Action</th>
               <!-- Reduced padding (px-2 py-2) -->
               <th class="px-2 py-2 text-center text-xs font-semibold text-slate-300 uppercase tracking-wider w-1/12">
@@ -253,7 +498,124 @@
     let isInitialScrollDone = false;
     let initialScrollTop = 0; // 초기 스크롤 탑 값 저장 변수 (Active Queue의 시작 위치를 추적)
     let rowHeight = 0; // 단일 행의 높이 (Check-In/Cancel 시 initialScrollTop 업데이트에 사용)
+    let expandedRowId = null; // 현재 확장된 행의 ID (모바일용)
 
+
+    /**
+     * Mobile: Toggle mobile action row for a specific item
+     */
+    function toggleMobileActions(itemId, event) {
+      // Check if we're on mobile (screen width <= 768px)
+      if (window.innerWidth > 768) {
+        // Desktop: Remove any row-selected classes that might remain
+        document.querySelectorAll('.row-selected').forEach(row => {
+          row.classList.remove('row-selected');
+        });
+        return; // Do nothing on desktop
+      }
+
+      // Prevent event bubbling and default behavior
+      if (event) {
+        // If the click originated from a button, ignore it (shouldn't happen on mobile but safety check)
+        if (event.target.tagName === 'BUTTON' || event.target.closest('button')) {
+          return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+      }
+
+      const mobileActionRowId = `mobile-actions-${itemId}`;
+      const existingMobileRow = document.getElementById(mobileActionRowId);
+      const currentRow = document.querySelector(`tr[data-item-id="${itemId}"]`);
+
+      // If clicking the same row, close it
+      if (expandedRowId === itemId) {
+        if (existingMobileRow) {
+          existingMobileRow.remove();
+        }
+        if (currentRow) {
+          // Force immediate class removal
+          currentRow.classList.remove('row-selected');
+          // Force reflow to ensure immediate visual update
+          void currentRow.offsetHeight;
+        }
+        expandedRowId = null;
+        console.log(`MOBILE: Collapsed row for item #${itemId}`);
+        return;
+      }
+
+      // If another row is expanded, close it first
+      if (expandedRowId !== null) {
+        const prevMobileRow = document.getElementById(`mobile-actions-${expandedRowId}`);
+        if (prevMobileRow) {
+          prevMobileRow.remove();
+        }
+        const prevRow = document.querySelector(`tr[data-item-id="${expandedRowId}"]`);
+        if (prevRow) {
+          prevRow.classList.remove('row-selected');
+          // Force reflow
+          void prevRow.offsetHeight;
+        }
+      }
+
+      // Add highlight to the newly selected row immediately
+      if (currentRow) {
+        // Force reflow before adding class to ensure clean state
+        void currentRow.offsetHeight;
+        currentRow.classList.add('row-selected');
+        // Force another reflow to ensure immediate application
+        void currentRow.offsetHeight;
+      }
+
+      // Expand the clicked row
+      expandedRowId = itemId;
+      const item = mockWaitlist.find(i => i.id === itemId);
+      if (!item) return;
+
+      const statusPriority = getSortPriority(item.status);
+      const baseClasses = "action-button px-3 py-1.5 text-xs font-medium rounded-md";
+
+      let actionButtons = '';
+      
+      if (statusPriority === 0) {
+        // Completed items: Show only Undo button
+        const undoClasses = `${baseClasses} bg-slate-700 border border-slate-600 text-slate-300 hover:bg-slate-600 hover:border-slate-500 flex-1`;
+        actionButtons = `<button onclick="handleUndo(${item.id}, '${item.name}')" class="${undoClasses} mobile-btn">Undo</button>`;
+      } else {
+        // Active items: Show all 4 action buttons
+        const callClasses = `${baseClasses} mobile-btn-call flex-1`;
+        const askClasses = `${baseClasses} mobile-btn-ask flex-1`;
+        const checkInClasses = `${baseClasses} mobile-btn-checkin flex-1`;
+        const cancelClasses = `${baseClasses} mobile-btn-cancel flex-1`;
+        
+        actionButtons = `
+          <button onclick="handleCall(${item.id}, '${item.name}', event)" class="${callClasses}">Call</button>
+          <button onclick="handleAsk(${item.id}, '${item.name}', event)" class="${askClasses}">Ask</button>
+          <button onclick="handleCheckIn(${item.id}, '${item.name}')" class="${checkInClasses}">Check-In</button>
+          <button onclick="handleCancel(${item.id}, '${item.name}')" class="${cancelClasses}">Cancel</button>
+        `;
+      }
+
+      // Find the main row and insert mobile action row after it
+      const mainRow = document.querySelector(`tr[data-item-id="${itemId}"]`);
+      if (mainRow) {
+        const mobileRow = document.createElement('tr');
+        mobileRow.id = mobileActionRowId;
+        mobileRow.className = 'mobile-action-row';
+        mobileRow.innerHTML = `
+          <td colspan="6" class="px-2 py-3">
+            <div class="flex gap-1.5">
+              ${actionButtons}
+            </div>
+          </td>
+        `;
+        
+        // Insert after the main row
+        mainRow.insertAdjacentElement('afterend', mobileRow);
+        console.log(`MOBILE: Expanded row for item #${itemId}`);
+      }
+    }
 
     /**
      * For completed items (Check-In/Cancelled), returns object with completion time and duration.
@@ -359,23 +721,110 @@
     }
 
     /**
-     * Handles customer actions. Renders the table after status change.
+     * Adds a temporary highlight effect to a row.
+     * The highlight appears briefly and then fades out.
      */
-    function handleCall(id, name) {
+    function highlightRow(id) {
+      requestAnimationFrame(() => {
+        const rows = waitlistBody.getElementsByTagName('tr');
+        const targetRow = Array.from(rows).find(row => {
+          const idCell = row.querySelector('td:first-child');
+          return idCell && idCell.textContent.trim() === id.toString();
+        });
+
+        if (targetRow) {
+          // Store original background color
+          const originalBgColor = targetRow.style.backgroundColor;
+          
+          // Add a temporary highlight class AND inline style for maximum priority
+          targetRow.classList.add('button-click-highlight');
+          targetRow.style.backgroundColor = '#334155';
+          
+          // Remove highlight after a moment
+          setTimeout(() => {
+            targetRow.classList.remove('button-click-highlight');
+            targetRow.style.backgroundColor = originalBgColor;
+          }, 500);
+        }
+      });
+    }
+
+    /**
+     * Adds a temporary highlight effect to a button.
+     */
+    function highlightButton(buttonElement) {
+      if (!buttonElement) return;
+      
+      const originalBgColor = buttonElement.style.backgroundColor;
+      const originalColor = buttonElement.style.color;
+      const originalBorderColor = buttonElement.style.borderColor;
+      
+      // Determine button color based on class
+      let highlightBgColor = '#8b5cf6'; // default purple
+      let highlightTextColor = '#ffffff';
+      
+      if (buttonElement.classList.contains('mobile-btn-call') || buttonElement.classList.contains('btn-call')) {
+        highlightBgColor = '#34d399'; // green
+      } else if (buttonElement.classList.contains('mobile-btn-ask') || buttonElement.classList.contains('btn-ask')) {
+        highlightBgColor = '#60a5fa'; // blue
+      } else if (buttonElement.classList.contains('mobile-btn-checkin') || buttonElement.classList.contains('btn-checkin')) {
+        highlightBgColor = '#8b5cf6'; // purple
+      } else if (buttonElement.classList.contains('mobile-btn-cancel') || buttonElement.classList.contains('btn-cancel')) {
+        highlightBgColor = '#f87171'; // red
+      }
+      
+      // Apply highlight
+      buttonElement.style.backgroundColor = highlightBgColor;
+      buttonElement.style.color = highlightTextColor;
+      buttonElement.style.borderColor = highlightBgColor;
+      
+      // Remove highlight after a moment
+      setTimeout(() => {
+        buttonElement.style.backgroundColor = originalBgColor;
+        buttonElement.style.color = originalColor;
+        buttonElement.style.borderColor = originalBorderColor;
+      }, 300);
+    }
+
+    /**
+     * Handles customer actions. Updates status without changing buttons.
+     */
+    function handleCall(id, name, event) {
       console.log(`ACTION: Calling customer ${name} (#${id}).`);
-      // Log only - no modal message
       console.log(`INFO: [${name}, #${id}] 고객님께 전화를 겁니다.`);
+      
+      // Check if mobile (button highlight)
+      const isMobile = window.innerWidth <= 768;
+      
+      if (isMobile && event && event.target) {
+        // Highlight the button on mobile
+        highlightButton(event.target);
+      } else if (!isMobile) {
+        // Desktop: Add row highlight
+        highlightRow(id);
+      }
+      
+      // Just update the status, don't change UI
       const item = mockWaitlist.find(item => item.id === id);
       if (item) {
         item.status = 'Called';
       }
-      renderWaitlist(); // Re-render to update sorting/buttons
     }
 
-    function handleAsk(id, name) {
+    function handleAsk(id, name, event) {
       console.log(`ACTION: Asking customer ${name} (#${id}).`);
-      // Log only - no modal message
       console.log(`INFO: [${name}, #${id}]에게 메시지/문의 창을 엽니다.`);
+      
+      // Check if mobile (button highlight)
+      const isMobile = window.innerWidth <= 768;
+      
+      if (isMobile && event && event.target) {
+        // Highlight the button on mobile
+        highlightButton(event.target);
+      } else {
+        // Desktop: Add row highlight
+        highlightRow(id);
+      }
     }
 
     /**
@@ -698,7 +1147,7 @@
         //console.log("BUTTON: DISABLED. Reason: Initial setup (isInitialScrollDone=false).");
         scrollButton.disabled = true;
         scrollButton.textContent = "@ Active Queue";
-        scrollButton.classList.remove('bg-violet-600', 'text-white', 'hover:bg-violet-700', 'border-violet-500');
+        scrollButton.classList.remove('bg-yellow-600', 'text-slate-900', 'hover:bg-yellow-700', 'border-yellow-500');
         scrollButton.classList.add('bg-slate-700', 'text-slate-500', 'cursor-not-allowed', 'border-slate-600');
         console.groupEnd();
         return totalHeightToScroll; // Early exit during initial setup
@@ -719,7 +1168,7 @@
         scrollButton.disabled = false;
         scrollButton.textContent = "Scroll to Active";
         scrollButton.classList.remove('bg-slate-700', 'text-slate-500', 'cursor-not-allowed', 'border-slate-600');
-        scrollButton.classList.add('bg-violet-600', 'text-white', 'hover:bg-violet-700', 'border-violet-500');
+        scrollButton.classList.add('bg-yellow-600', 'text-slate-900', 'hover:bg-yellow-700', 'border-yellow-500');
       } else {
         // DISABLED: At the active queue, no history, or not scrollable.
 
@@ -745,7 +1194,7 @@
           scrollButton.textContent = "Scroll to Active";
         }
 
-        scrollButton.classList.remove('bg-violet-600', 'text-white', 'hover:bg-violet-700', 'border-violet-500');
+        scrollButton.classList.remove('bg-yellow-600', 'text-slate-900', 'hover:bg-yellow-700', 'border-yellow-500');
         scrollButton.classList.add('bg-slate-700', 'text-slate-500', 'cursor-not-allowed', 'border-slate-600');
       }
 
@@ -780,6 +1229,17 @@
      */
     function renderWaitlist() {
       console.log("RENDER: Starting table render.");
+
+      // Clean up mobile state on desktop
+      if (window.innerWidth > 768) {
+        document.querySelectorAll('.row-selected').forEach(row => {
+          row.classList.remove('row-selected');
+        });
+        document.querySelectorAll('.mobile-action-row').forEach(row => {
+          row.remove();
+        });
+        expandedRowId = null;
+      }
 
       // 1. Sort the entire list: Completed items first (by time_cleared), then Active items by time_created (oldest first).
       mockWaitlist.sort((a, b) => {
@@ -836,8 +1296,8 @@
           const cancelClasses = `${baseClasses} btn-cancel flex-1`;
           
           actionButtons = `
-            <button onclick="handleCall(${item.id}, '${item.name}')" class="${callClasses}">Call</button>
-            <button onclick="handleAsk(${item.id}, '${item.name}')" class="${askClasses}">Ask</button>
+            <button onclick="handleCall(${item.id}, '${item.name}', event)" class="${callClasses}">Call</button>
+            <button onclick="handleAsk(${item.id}, '${item.name}', event)" class="${askClasses}">Ask</button>
             <button onclick="handleCheckIn(${item.id}, '${item.name}')" class="${checkInClasses}">Check-In</button>
             <button onclick="handleCancel(${item.id}, '${item.name}')" class="${cancelClasses}">Cancel</button>
           `;
@@ -854,8 +1314,13 @@
           timeHTML = `<div class="font-mono tracking-wider">${timeData.time}</div>`;
         }
 
+        // Mobile: Add onclick handler, Desktop: no onclick
+        // Always add onclick - the function itself checks if mobile
+        const onclickAttr = `onclick="toggleMobileActions(${item.id}, event)"`;
+        const rowClickableClass = 'row-clickable';
+
         tableHTML += `
-                    <tr class="${rowClass}">
+                    <tr class="${rowClass} ${rowClickableClass}" data-item-id="${item.id}" ${onclickAttr}>
                         <td class="px-2 py-2 whitespace-nowrap text-sm font-medium ${idClass} text-center">${item.id}</td>
                         <td class="px-2 py-2 whitespace-nowrap text-sm">
                             <div class="font-semibold ${nameClass}">${item.name}</div>
@@ -864,12 +1329,12 @@
                         <td id="time-${item.id}" class="px-2 py-2 whitespace-nowrap text-sm text-center ${timeClass}">
                             ${timeHTML}
                         </td>
-                        <td class="px-2 py-2 whitespace-nowrap text-center text-sm font-medium">
+                        <td class="action-column-cell px-2 py-2 whitespace-nowrap text-center text-sm font-medium">
                             <div class="${actionContainerClass}">
                                 ${actionButtons}
                             </div>
                         </td>
-                        <td class="px-2 py-2 whitespace-nowrap text-center text-sm font-medium">
+                        <td class="px-2 py-2 whitespace-nowrap text-sm font-medium text-center">
                             <span class="${statusData.className}">${statusData.icon}</span>
                         </td>
                     </tr>
@@ -878,6 +1343,21 @@
 
       waitlistBody.innerHTML = tableHTML;
       console.log("RENDER: Table HTML injected into DOM.");
+
+      // Debug: Check for any row-selected classes on desktop
+      if (window.innerWidth > 768) {
+        // Force remove any inline styles or problematic classes
+        const allRows = waitlistBody.querySelectorAll('tr');
+        
+        // Clean up mobile-related classes
+        allRows.forEach((row) => {
+          row.removeAttribute('style'); // Remove any inline styles
+          row.classList.remove('row-selected'); // Remove row-selected if exists
+        });
+      }
+
+      // Close any expanded mobile row when re-rendering
+      expandedRowId = null;
 
       // NOTE: 데이터가 변경되어 렌더링이 발생하면, 버튼 상태와 스크롤 타겟을 즉시 업데이트합니다.
       updateScrollAndButtonState();
@@ -911,6 +1391,14 @@
 
     // --- Initial Setup ---
 
+    // 0. Clean up any stray mobile state classes on load
+    document.querySelectorAll('.row-selected').forEach(row => {
+      row.classList.remove('row-selected');
+    });
+    document.querySelectorAll('.mobile-action-row').forEach(row => {
+      row.remove();
+    });
+
     // 1. Initial rendering of the table content
     renderWaitlist(); // This now calls updateScrollAndButtonState() once
 
@@ -942,9 +1430,33 @@
       console.log(`INIT: Total rows: ${totalRows}, displayedRows: ${displayedRows}, shouldScrollToActive: ${shouldScrollToActive}`);
 
       if (shouldScrollToActive) {
+        // Disable hover temporarily during scroll
+        waitlistContainer.classList.add('disable-hover');
+        
         // 스크롤 위치를 즉시 설정합니다. (비헤이비어 'auto')
         waitlistContainer.scrollTop = scrollTarget;
         console.log(`INIT: Forced scroll to position: ${scrollTarget.toFixed(2)}px`);
+
+        // Re-enable hover only when the user actually interacts (mousemove or window focus)
+        const reenableHover = () => {
+          waitlistContainer.classList.remove('disable-hover');
+          console.log('INIT: Hover re-enabled after user interaction');
+          document.removeEventListener('mousemove', reenableHover);
+          window.removeEventListener('focus', reenableHover);
+          clearTimeout(reenableFallback);
+        };
+
+        // If the user moves the mouse (or window gains focus), re-enable hover immediately
+        document.addEventListener('mousemove', reenableHover, { once: true });
+        window.addEventListener('focus', reenableHover, { once: true });
+
+        // Fallback: if no interaction occurs within 8s, re-enable to avoid permanently disabling hover
+        const reenableFallback = setTimeout(() => {
+          waitlistContainer.classList.remove('disable-hover');
+          console.log('INIT: Hover re-enabled by fallback after 8s');
+          document.removeEventListener('mousemove', reenableHover);
+          window.removeEventListener('focus', reenableHover);
+        }, 8000);
 
         // 실제 스크롤된 위치를 다음 프레임에서 읽어서 정확한 값을 저장
         requestAnimationFrame(() => {
@@ -986,7 +1498,22 @@
 
     // 5. Add window resize listener: Scrollability and height calculations change on resize.
     // 창 크기가 변경될 때 버튼 상태를 업데이트합니다.
-    window.addEventListener('resize', updateScrollAndButtonState);
+    window.addEventListener('resize', () => {
+      updateScrollAndButtonState();
+      
+      // Clean up mobile state when switching to desktop
+      if (window.innerWidth > 768) {
+        // Remove all mobile action rows
+        document.querySelectorAll('.mobile-action-row').forEach(row => row.remove());
+        // Remove all row-selected classes
+        document.querySelectorAll('.row-selected').forEach(row => {
+          row.classList.remove('row-selected');
+        });
+        // Reset expanded row tracking
+        expandedRowId = null;
+        console.log('RESIZE: Switched to desktop, cleaned up mobile state');
+      }
+    });
   </script>
 </body>
 
