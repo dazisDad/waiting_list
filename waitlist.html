@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Waitlist Manager</title>
+  <title>DL Waitlist Manager</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght400;600;700&display=swap" rel="stylesheet">
@@ -48,15 +48,23 @@
       box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.4);
     }
 
+    /* Desktop: Remove all button hover/active background effects - only row highlights */
+    @media (min-width: 769px) {
+      .action-button {
+        transition: none !important;
+      }
+      
+      .action-button:hover:not(:disabled) {
+        transform: none !important;
+        box-shadow: none !important;
+      }
+    }
+
     /* Outline button styles - Call */
     .btn-call {
       background-color: transparent;
       border-color: #34d399;
       color: #34d399;
-    }
-    .btn-call:hover:not(:disabled) {
-      background-color: #34d399;
-      color: #ffffff;
     }
 
     /* Outline button styles - Ask */
@@ -65,20 +73,12 @@
       border-color: #60a5fa;
       color: #60a5fa;
     }
-    .btn-ask:hover:not(:disabled) {
-      background-color: #60a5fa;
-      color: #ffffff;
-    }
 
     /* Outline button styles - Check-In */
     .btn-checkin {
       background-color: transparent;
       border-color: #8b5cf6;
       color: #8b5cf6;
-    }
-    .btn-checkin:hover:not(:disabled) {
-      background-color: #8b5cf6;
-      color: #ffffff;
     }
 
     /* Outline button styles - Cancel (Danger) */
@@ -87,20 +87,12 @@
       border-color: #f87171;
       color: #f87171;
     }
-    .btn-cancel:hover:not(:disabled) {
-      background-color: #f87171;
-      color: #ffffff;
-    }
 
     /* Outline button styles - Undo */
     .btn-undo {
       background-color: transparent;
       border-color: #fbbf24;
       color: #fbbf24;
-    }
-    .btn-undo:hover:not(:disabled) {
-      background-color: #fbbf24;
-      color: #ffffff;
     }
 
     /* Disabled button state */
@@ -147,6 +139,17 @@
     /* Override any conflicting background colors */
     .button-click-highlight.bg-slate-900 {
       background-color: #334155 !important;
+    }
+
+    /* Persistent row highlight (toggle on/off by clicking row) */
+    tbody tr.row-persistent-highlight,
+    tbody tr.row-persistent-highlight:hover,
+    tbody tr.row-hover.row-persistent-highlight,
+    tbody tr.row-hover.row-persistent-highlight:hover,
+    tbody tr.bg-slate-900.row-persistent-highlight,
+    tbody tr.bg-slate-900.row-persistent-highlight:hover {
+      background-color: #334155 !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
     /* Row hover effect */
@@ -603,22 +606,38 @@
         ? `${buttonDef.functionName}(${itemId}, '${itemName}', event)`
         : `${buttonDef.functionName}(${itemId}, '${itemName}')`;
       
-      return `<button onclick="${fnCall}" class="${classes}">${buttonDef.label}</button>`;
+      // Add blur on click to remove focus highlight (desktop only)
+      const onclickHandler = isMobile 
+        ? `${fnCall}` 
+        : `${fnCall}; setTimeout(() => this.blur(), 100);`;
+      
+      return `<button onclick="${onclickHandler}" class="${classes}">${buttonDef.label}</button>`;
     }
 
     /**
      * Mobile: Toggle mobile action row for a specific item
+     * Desktop: Toggle row highlight
      */
     function toggleMobileActions(itemId, event) {
       // Check if we're on mobile (screen width <= 768px)
       if (window.innerWidth > 768) {
-        // Desktop: Remove any row-selected classes that might remain
-        document.querySelectorAll('.row-selected').forEach(row => {
-          row.classList.remove('row-selected');
-        });
-        return; // Do nothing on desktop
+        // Desktop: Toggle row highlight (persistent)
+        if (event) {
+          // If the click originated from a button, ignore it
+          if (event.target.tagName === 'BUTTON' || event.target.closest('button')) {
+            return;
+          }
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        
+        // Toggle persistent highlight on the row
+        highlightRow(itemId, false);
+        console.log(`DESKTOP: Toggled highlight for row #${itemId}`);
+        return;
       }
 
+      // Mobile functionality (rest of the code remains the same)
       // Prevent event bubbling and default behavior
       if (event) {
         // If the click originated from a button, ignore it (shouldn't happen on mobile but safety check)
@@ -810,7 +829,7 @@
      * Adds a temporary highlight effect to a row.
      * The highlight appears briefly and then fades out.
      */
-    function highlightRow(id) {
+    function highlightRow(id, shouldFlash = false) {
       requestAnimationFrame(() => {
         const rows = waitlistBody.getElementsByTagName('tr');
         const targetRow = Array.from(rows).find(row => {
@@ -819,57 +838,73 @@
         });
 
         if (targetRow) {
-          // Store original background color
-          const originalBgColor = targetRow.style.backgroundColor;
-          
-          // Add a temporary highlight class AND inline style for maximum priority
-          targetRow.classList.add('button-click-highlight');
-          targetRow.style.backgroundColor = '#334155';
-          
-          // Remove highlight after a moment
-          setTimeout(() => {
-            targetRow.classList.remove('button-click-highlight');
-            targetRow.style.backgroundColor = originalBgColor;
-          }, 500);
+          if (shouldFlash) {
+            // Flash effect: temporary highlight that disappears
+            const originalBgColor = targetRow.style.backgroundColor;
+            
+            targetRow.classList.add('button-click-highlight');
+            targetRow.style.backgroundColor = '#334155';
+            
+            setTimeout(() => {
+              targetRow.classList.remove('button-click-highlight');
+              targetRow.style.backgroundColor = originalBgColor;
+            }, 500);
+          } else {
+            // Toggle persistent highlight
+            const isCurrentlyHighlighted = targetRow.classList.contains('row-persistent-highlight');
+            
+            // First, remove highlight from all other rows
+            const allRows = waitlistBody.getElementsByTagName('tr');
+            Array.from(allRows).forEach(row => {
+              if (row !== targetRow) {
+                row.classList.remove('row-persistent-highlight');
+                // Remove inline style completely
+                row.style.removeProperty('background-color');
+              }
+            });
+            
+            if (isCurrentlyHighlighted) {
+              // Remove highlight from this row
+              targetRow.classList.remove('row-persistent-highlight');
+              // Remove inline style completely
+              targetRow.style.removeProperty('background-color');
+            } else {
+              // Add highlight to this row
+              targetRow.classList.add('row-persistent-highlight');
+              targetRow.style.backgroundColor = '#334155';
+            }
+          }
         }
       });
     }
 
     /**
-     * Adds a temporary highlight effect to a button.
+     * Adds a temporary flash effect to a button.
      */
-    function highlightButton(buttonElement) {
-      if (!buttonElement) return;
+    function flashButton(event) {
+      if (!event || !event.target) return;
       
-      const originalBgColor = buttonElement.style.backgroundColor;
-      const originalColor = buttonElement.style.color;
-      const originalBorderColor = buttonElement.style.borderColor;
+      const button = event.target;
+      const originalBgColor = button.style.backgroundColor;
+      const originalColor = button.style.color;
       
-      // Determine button color based on class
-      let highlightBgColor = '#8b5cf6'; // default purple
-      let highlightTextColor = '#ffffff';
+      // Get button color from button definition
+      let flashColor = '#8b5cf6'; // default
+      if (button.classList.contains('btn-call')) flashColor = '#34d399';
+      else if (button.classList.contains('btn-ask')) flashColor = '#60a5fa';
+      else if (button.classList.contains('btn-checkin')) flashColor = '#8b5cf6';
+      else if (button.classList.contains('btn-cancel')) flashColor = '#f87171';
+      else if (button.classList.contains('btn-undo')) flashColor = '#fbbf24';
       
-      if (buttonElement.classList.contains('mobile-btn-call') || buttonElement.classList.contains('btn-call')) {
-        highlightBgColor = '#34d399'; // green
-      } else if (buttonElement.classList.contains('mobile-btn-ask') || buttonElement.classList.contains('btn-ask')) {
-        highlightBgColor = '#60a5fa'; // blue
-      } else if (buttonElement.classList.contains('mobile-btn-checkin') || buttonElement.classList.contains('btn-checkin')) {
-        highlightBgColor = '#8b5cf6'; // purple
-      } else if (buttonElement.classList.contains('mobile-btn-cancel') || buttonElement.classList.contains('btn-cancel')) {
-        highlightBgColor = '#f87171'; // red
-      }
+      // Apply flash
+      button.style.backgroundColor = flashColor;
+      button.style.color = '#ffffff';
       
-      // Apply highlight
-      buttonElement.style.backgroundColor = highlightBgColor;
-      buttonElement.style.color = highlightTextColor;
-      buttonElement.style.borderColor = highlightBgColor;
-      
-      // Remove highlight after a moment
+      // Remove flash after brief moment
       setTimeout(() => {
-        buttonElement.style.backgroundColor = originalBgColor;
-        buttonElement.style.color = originalColor;
-        buttonElement.style.borderColor = originalBorderColor;
-      }, 300);
+        button.style.backgroundColor = originalBgColor;
+        button.style.color = originalColor;
+      }, 200);
     }
 
     /**
@@ -879,15 +914,13 @@
       console.log(`ACTION: Calling customer ${name} (#${id}).`);
       console.log(`INFO: [${name}, #${id}] 고객님께 전화를 겁니다.`);
       
-      // Check if mobile (button highlight)
+      // Check if mobile - on desktop, highlight the row and flash button
       const isMobile = window.innerWidth <= 768;
       
-      if (isMobile && event && event.target) {
-        // Highlight the button on mobile
-        highlightButton(event.target);
-      } else if (!isMobile) {
-        // Desktop: Add row highlight
-        highlightRow(id);
+      if (!isMobile) {
+        // Desktop: Flash row (temporary) and flash button
+        highlightRow(id, true);
+        flashButton(event);
       }
       
       // Just update the status, don't change UI
@@ -901,15 +934,13 @@
       console.log(`ACTION: Asking customer ${name} (#${id}).`);
       console.log(`INFO: [${name}, #${id}]에게 메시지/문의 창을 엽니다.`);
       
-      // Check if mobile (button highlight)
+      // Check if mobile - on desktop, highlight the row and flash button
       const isMobile = window.innerWidth <= 768;
       
-      if (isMobile && event && event.target) {
-        // Highlight the button on mobile
-        highlightButton(event.target);
-      } else {
-        // Desktop: Add row highlight
-        highlightRow(id);
+      if (!isMobile) {
+        // Desktop: Flash row (temporary) and flash button
+        highlightRow(id, true);
+        flashButton(event);
       }
     }
 
