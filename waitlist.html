@@ -70,15 +70,15 @@
       color: #ffffff;
     }
 
-    /* Filled button styles - Check-In (Primary) */
+    /* Outline button styles - Check-In */
     .btn-checkin {
-      background-color: #8b5cf6;
+      background-color: transparent;
       border-color: #8b5cf6;
-      color: #ffffff;
+      color: #8b5cf6;
     }
     .btn-checkin:hover:not(:disabled) {
-      background-color: #a78bfa;
-      border-color: #a78bfa;
+      background-color: #8b5cf6;
+      color: #ffffff;
     }
 
     /* Outline button styles - Cancel (Danger) */
@@ -89,6 +89,17 @@
     }
     .btn-cancel:hover:not(:disabled) {
       background-color: #f87171;
+      color: #ffffff;
+    }
+
+    /* Outline button styles - Undo */
+    .btn-undo {
+      background-color: transparent;
+      border-color: #fbbf24;
+      color: #fbbf24;
+    }
+    .btn-undo:hover:not(:disabled) {
+      background-color: #fbbf24;
       color: #ffffff;
     }
 
@@ -344,13 +355,13 @@
 
       /* Mobile Check-In button */
       .mobile-btn-checkin {
-        background-color: #8b5cf6;
+        background-color: transparent;
         border: 1px solid #8b5cf6;
-        color: #ffffff;
+        color: #8b5cf6;
       }
       .mobile-btn-checkin:active {
-        background-color: #a78bfa;
-        border-color: #a78bfa;
+        background-color: #8b5cf6;
+        color: #ffffff;
         transition: none !important;
       }
 
@@ -362,6 +373,18 @@
       }
       .mobile-btn-cancel:active {
         background-color: #f87171;
+        color: #ffffff;
+        transition: none !important;
+      }
+
+      /* Mobile Undo button */
+      .mobile-btn-undo {
+        background-color: transparent;
+        border: 1px solid #fbbf24;
+        color: #fbbf24;
+      }
+      .mobile-btn-undo:active {
+        background-color: #fbbf24;
         color: #ffffff;
         transition: none !important;
       }
@@ -500,6 +523,88 @@
     let rowHeight = 0; // 단일 행의 높이 (Check-In/Cancel 시 initialScrollTop 업데이트에 사용)
     let expandedRowId = null; // 현재 확장된 행의 ID (모바일용)
 
+    // --- Action Button Definitions ---
+    const actionButtonDefinitions = [
+      {
+        id: 'call',
+        label: 'Call',
+        color: '#34d399', // green
+        textColor: '#34d399',
+        isBackgroundFill: false,
+        functionName: 'handleCall',
+        showForStatus: ['Waiting', 'Called'], // Show for these statuses
+        mobileBtnClass: 'mobile-btn-call',
+        desktopBtnClass: 'btn-call'
+      },
+      {
+        id: 'ask',
+        label: 'Ask',
+        color: '#60a5fa', // blue
+        textColor: '#60a5fa',
+        isBackgroundFill: false,
+        functionName: 'handleAsk',
+        showForStatus: ['Waiting', 'Called'],
+        mobileBtnClass: 'mobile-btn-ask',
+        desktopBtnClass: 'btn-ask'
+      },
+      {
+        id: 'checkin',
+        label: 'Check-In',
+        color: '#8b5cf6', // purple
+        textColor: '#8b5cf6', // purple text for outline style
+        isBackgroundFill: false,
+        functionName: 'handleCheckIn',
+        showForStatus: ['Waiting', 'Called'],
+        mobileBtnClass: 'mobile-btn-checkin',
+        desktopBtnClass: 'btn-checkin'
+      },
+      {
+        id: 'cancel',
+        label: 'Cancel',
+        color: '#f87171', // red
+        textColor: '#f87171',
+        isBackgroundFill: false,
+        functionName: 'handleCancel',
+        showForStatus: ['Waiting', 'Called'],
+        mobileBtnClass: 'mobile-btn-cancel',
+        desktopBtnClass: 'btn-cancel'
+      },
+      {
+        id: 'undo',
+        label: 'Undo',
+        color: '#fbbf24', // yellow/amber
+        textColor: '#fbbf24',
+        isBackgroundFill: false,
+        functionName: 'handleUndo',
+        showForStatus: ['Check-In', 'Cancelled'],
+        mobileBtnClass: 'mobile-btn-undo',
+        desktopBtnClass: 'btn-undo'
+      }
+    ];
+
+    /**
+     * Helper function to get buttons for a specific item status
+     */
+    function getButtonsForStatus(status) {
+      return actionButtonDefinitions.filter(btn => btn.showForStatus.includes(status));
+    }
+
+    /**
+     * Helper function to generate button HTML
+     */
+    function generateButtonHTML(buttonDef, itemId, itemName, isMobile) {
+      const baseClasses = 'action-button px-3 py-1.5 rounded-md border font-medium text-sm';
+      const btnClass = isMobile ? buttonDef.mobileBtnClass : buttonDef.desktopBtnClass;
+      const classes = `${baseClasses} ${btnClass} flex-1`;
+      
+      // Determine if event parameter is needed
+      const needsEvent = ['handleCall', 'handleAsk'].includes(buttonDef.functionName);
+      const fnCall = needsEvent 
+        ? `${buttonDef.functionName}(${itemId}, '${itemName}', event)`
+        : `${buttonDef.functionName}(${itemId}, '${itemName}')`;
+      
+      return `<button onclick="${fnCall}" class="${classes}">${buttonDef.label}</button>`;
+    }
 
     /**
      * Mobile: Toggle mobile action row for a specific item
@@ -573,29 +678,10 @@
       const item = mockWaitlist.find(i => i.id === itemId);
       if (!item) return;
 
-      const statusPriority = getSortPriority(item.status);
-      const baseClasses = "action-button px-3 py-1.5 text-xs font-medium rounded-md";
-
-      let actionButtons = '';
-      
-      if (statusPriority === 0) {
-        // Completed items: Show only Undo button
-        const undoClasses = `${baseClasses} bg-slate-700 border border-slate-600 text-slate-300 hover:bg-slate-600 hover:border-slate-500 flex-1`;
-        actionButtons = `<button onclick="handleUndo(${item.id}, '${item.name}')" class="${undoClasses} mobile-btn">Undo</button>`;
-      } else {
-        // Active items: Show all 4 action buttons
-        const callClasses = `${baseClasses} mobile-btn-call flex-1`;
-        const askClasses = `${baseClasses} mobile-btn-ask flex-1`;
-        const checkInClasses = `${baseClasses} mobile-btn-checkin flex-1`;
-        const cancelClasses = `${baseClasses} mobile-btn-cancel flex-1`;
-        
-        actionButtons = `
-          <button onclick="handleCall(${item.id}, '${item.name}', event)" class="${callClasses}">Call</button>
-          <button onclick="handleAsk(${item.id}, '${item.name}', event)" class="${askClasses}">Ask</button>
-          <button onclick="handleCheckIn(${item.id}, '${item.name}')" class="${checkInClasses}">Check-In</button>
-          <button onclick="handleCancel(${item.id}, '${item.name}')" class="${cancelClasses}">Cancel</button>
-        `;
-      }
+      // Get buttons for this item's status
+      const buttons = getButtonsForStatus(item.status);
+      const buttonHTMLs = buttons.map(btnDef => generateButtonHTML(btnDef, item.id, item.name, true));
+      const actionButtons = buttonHTMLs.join('\n');
 
       // Find the main row and insert mobile action row after it
       const mainRow = document.querySelector(`tr[data-item-id="${itemId}"]`);
@@ -1278,30 +1364,11 @@
         const paxClass = statusPriority === 0 ? 'text-slate-300' : 'text-amber-400';
         const timeClass = statusPriority === 0 ? 'text-slate-200' : 'text-amber-400';
 
-        // Action Button Styling - Dark Modern Theme
-        const baseClasses = "action-button px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200";
-
-        let actionButtons = '';
-        let actionContainerClass = 'flex gap-1.5';
-        
-        if (statusPriority === 0) {
-          // Completed items: Show only Undo button (fill container width)
-          const undoClasses = `${baseClasses} bg-slate-700 border border-slate-600 text-slate-300 hover:bg-slate-600 hover:border-slate-500 flex-1`;
-          actionButtons = `<button onclick="handleUndo(${item.id}, '${item.name}')" class="${undoClasses}">Undo</button>`;
-        } else {
-          // Active items: Show all 4 action buttons with flex-1 to fill container equally
-          const callClasses = `${baseClasses} btn-call flex-1`;
-          const askClasses = `${baseClasses} btn-ask flex-1`;
-          const checkInClasses = `${baseClasses} btn-checkin flex-1`;
-          const cancelClasses = `${baseClasses} btn-cancel flex-1`;
-          
-          actionButtons = `
-            <button onclick="handleCall(${item.id}, '${item.name}', event)" class="${callClasses}">Call</button>
-            <button onclick="handleAsk(${item.id}, '${item.name}', event)" class="${askClasses}">Ask</button>
-            <button onclick="handleCheckIn(${item.id}, '${item.name}')" class="${checkInClasses}">Check-In</button>
-            <button onclick="handleCancel(${item.id}, '${item.name}')" class="${cancelClasses}">Cancel</button>
-          `;
-        }
+        // Action Buttons - Generate using button definitions
+        const buttons = getButtonsForStatus(item.status);
+        const buttonHTMLs = buttons.map(btnDef => generateButtonHTML(btnDef, item.id, item.name, false));
+        const actionButtons = buttonHTMLs.join('\n');
+        const actionContainerClass = 'flex gap-1.5';
 
         // Build time cell HTML - two lines for completed items, one line for active items
         let timeHTML;
