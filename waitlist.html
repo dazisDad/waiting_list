@@ -60,8 +60,8 @@
       }
     }
 
-    /* Outline button styles - Call */
-    .btn-call {
+    /* Outline button styles - Ready */
+    .btn-ready {
       background-color: transparent;
       border-color: #34d399;
       color: #34d399;
@@ -74,8 +74,8 @@
       color: #60a5fa;
     }
 
-    /* Outline button styles - Check-In */
-    .btn-checkin {
+    /* Outline button styles - Arrive */
+    .btn-arrive {
       background-color: transparent;
       border-color: #8b5cf6;
       color: #8b5cf6;
@@ -105,7 +105,7 @@
     }
 
     /* Highlight animation for completed items - Dark theme */
-    .checkin-highlight {
+    .arrive-highlight {
       background-color: rgba(139, 92, 246, 0.15) !important;
       box-shadow: none !important;
       border: none !important;
@@ -258,11 +258,11 @@
         pointer-events: none !important;
       }
 
-      .action-column-cell .btn-call,
-      .action-column-cell .btn-call:hover,
-      .action-column-cell .btn-call:active,
-      .action-column-cell .btn-call:focus,
-      .action-column-cell .btn-call:focus-visible {
+      .action-column-cell .btn-ready,
+      .action-column-cell .btn-ready:hover,
+      .action-column-cell .btn-ready:active,
+      .action-column-cell .btn-ready:focus,
+      .action-column-cell .btn-ready:focus-visible {
         background-color: transparent !important;
         transition: none !important;
         pointer-events: none !important;
@@ -278,11 +278,11 @@
         pointer-events: none !important;
       }
 
-      .action-column-cell .btn-checkin,
-      .action-column-cell .btn-checkin:hover,
-      .action-column-cell .btn-checkin:active,
-      .action-column-cell .btn-checkin:focus,
-      .action-column-cell .btn-checkin:focus-visible {
+      .action-column-cell .btn-arrive,
+      .action-column-cell .btn-arrive:hover,
+      .action-column-cell .btn-arrive:active,
+      .action-column-cell .btn-arrive:focus,
+      .action-column-cell .btn-arrive:focus-visible {
         background-color: #8b5cf6 !important;
         transition: none !important;
         pointer-events: none !important;
@@ -332,13 +332,13 @@
         transition: none !important;
       }
 
-      /* Mobile Call button */
-      .mobile-btn-call {
+      /* Mobile Ready button */
+      .mobile-btn-ready {
         background-color: transparent;
         border: 1px solid #34d399;
         color: #34d399;
       }
-      .mobile-btn-call:active {
+      .mobile-btn-ready:active {
         background-color: #34d399;
         color: #ffffff;
         transition: none !important;
@@ -356,13 +356,13 @@
         transition: none !important;
       }
 
-      /* Mobile Check-In button */
-      .mobile-btn-checkin {
+      /* Mobile Arrive button */
+      .mobile-btn-arrive {
         background-color: transparent;
         border: 1px solid #8b5cf6;
         color: #8b5cf6;
       }
-      .mobile-btn-checkin:active {
+      .mobile-btn-arrive:active {
         background-color: #8b5cf6;
         color: #ffffff;
         transition: none !important;
@@ -458,9 +458,6 @@
               <!-- Reduced width for Action column - Hidden on mobile -->
               <th class="action-column-header px-2 py-2 text-center text-xs font-semibold text-slate-300 uppercase tracking-wider w-5/12">
                 Action</th>
-              <!-- Reduced padding (px-2 py-2) -->
-              <th class="px-2 py-2 text-center text-xs font-semibold text-slate-300 uppercase tracking-wider w-1/12">
-                Status</th>
             </tr>
           </thead>
           <tbody id="waitlist-body" class="bg-slate-900 divide-y divide-slate-800">
@@ -495,13 +492,13 @@
     const mockWaitlist = [
       // Completed items (will be sorted to the top) - with time_cleared set
       { id: 1005, name: "Haneul Jung", pax: 2, time_created: Date.now() - 45 * 60 * 1000, time_cleared: Date.now() - 40 * 60 * 1000, status: "Cancelled" },
-      { id: 1008, name: "Jimin Lee", pax: 3, time_created: Date.now() - 50 * 60 * 1000, time_cleared: Date.now() - 45 * 60 * 1000, status: "Check-In" },
+      { id: 1008, name: "Jimin Lee", pax: 3, time_created: Date.now() - 50 * 60 * 1000, time_cleared: Date.now() - 45 * 60 * 1000, status: "Arrived" },
       { id: 1010, name: "Yuna Choi", pax: 4, time_created: Date.now() - 55 * 60 * 1000, time_cleared: null, status: "Waiting" },
 
-      // Active items (Waiting/Called) - no time_cleared
+      // Active items (Waiting/Ready) - no time_cleared
       { id: 1001, name: "Minji Kim", pax: 4, time_created: Date.now() - 35 * 60 * 1000, time_cleared: null, status: "Waiting" },
       { id: 1002, name: "Juno Lee", pax: 2, time_created: Date.now() - 30 * 60 * 1000, time_cleared: null, status: "Waiting" },
-      { id: 1003, name: "Seyeon Park", pax: 3, time_created: Date.now() - 25 * 60 * 1000, time_cleared: null, status: "Called" },
+      { id: 1003, name: "Seyeon Park", pax: 3, time_created: Date.now() - 25 * 60 * 1000, time_cleared: null, status: "Ready" },
       { id: 1004, name: "Eunwoo Choi", pax: 5, time_created: Date.now() - 20 * 60 * 1000, time_cleared: null, status: "Waiting" },
       { id: 1006, name: "Jihoon Kim", pax: 3, time_created: Date.now() - 15 * 60 * 1000, time_cleared: null, status: "Waiting" },
       { id: 1007, name: "Somin Park", pax: 6, time_created: Date.now() - 10 * 60 * 1000, time_cleared: null, status: "Waiting" },
@@ -529,15 +526,15 @@
     // --- Action Button Definitions ---
     const actionButtonDefinitions = [
       {
-        id: 'call',
-        label: 'Call',
+        id: 'ready',
+        label: 'Ready',
         color: '#34d399', // green
         textColor: '#34d399',
         isBackgroundFill: false,
-        functionName: 'handleCall',
-        showForStatus: ['Waiting', 'Called'], // Show for these statuses
-        mobileBtnClass: 'mobile-btn-call',
-        desktopBtnClass: 'btn-call'
+        functionName: 'handleReady',
+        showForStatus: ['Waiting', 'Ready'], // Show for these statuses
+        mobileBtnClass: 'mobile-btn-ready',
+        desktopBtnClass: 'btn-ready'
       },
       {
         id: 'ask',
@@ -546,20 +543,20 @@
         textColor: '#60a5fa',
         isBackgroundFill: false,
         functionName: 'handleAsk',
-        showForStatus: ['Waiting', 'Called'],
+        showForStatus: ['Waiting', 'Ready'],
         mobileBtnClass: 'mobile-btn-ask',
         desktopBtnClass: 'btn-ask'
       },
       {
-        id: 'checkin',
-        label: 'Check-In',
+        id: 'arrive',
+        label: 'Arrive',
         color: '#8b5cf6', // purple
         textColor: '#8b5cf6', // purple text for outline style
         isBackgroundFill: false,
-        functionName: 'handleCheckIn',
-        showForStatus: ['Waiting', 'Called'],
-        mobileBtnClass: 'mobile-btn-checkin',
-        desktopBtnClass: 'btn-checkin'
+        functionName: 'handleArrive',
+        showForStatus: ['Waiting', 'Ready'],
+        mobileBtnClass: 'mobile-btn-arrive',
+        desktopBtnClass: 'btn-arrive'
       },
       {
         id: 'cancel',
@@ -568,7 +565,7 @@
         textColor: '#f87171',
         isBackgroundFill: false,
         functionName: 'handleCancel',
-        showForStatus: ['Waiting', 'Called'],
+        showForStatus: ['Waiting', 'Ready'],
         mobileBtnClass: 'mobile-btn-cancel',
         desktopBtnClass: 'btn-cancel'
       },
@@ -579,7 +576,7 @@
         textColor: '#fbbf24',
         isBackgroundFill: false,
         functionName: 'handleUndo',
-        showForStatus: ['Check-In', 'Cancelled'],
+        showForStatus: ['Arrived', 'Cancelled'],
         mobileBtnClass: 'mobile-btn-undo',
         desktopBtnClass: 'btn-undo'
       }
@@ -601,7 +598,7 @@
       const classes = `${baseClasses} ${btnClass} flex-1`;
       
       // Determine if event parameter is needed
-      const needsEvent = ['handleCall', 'handleAsk'].includes(buttonDef.functionName);
+      const needsEvent = ['handleReady', 'handleAsk'].includes(buttonDef.functionName);
       const fnCall = needsEvent 
         ? `${buttonDef.functionName}(${itemId}, '${itemName}', event)`
         : `${buttonDef.functionName}(${itemId}, '${itemName}')`;
@@ -709,7 +706,7 @@
         mobileRow.id = mobileActionRowId;
         mobileRow.className = 'mobile-action-row';
         mobileRow.innerHTML = `
-          <td colspan="6" class="px-2 py-3">
+          <td colspan="5" class="px-2 py-3">
             <div class="flex gap-1.5">
               ${actionButtons}
             </div>
@@ -789,11 +786,11 @@
 
       switch (status) {
         case 'Waiting':
-        case 'Called':
+        case 'Ready':
           icon = '◎';
           className += ' status-waiting';
           break;
-        case 'Check-In':
+        case 'Arrived':
           icon = '✔';
           className += ' status-checkedin';
           break;
@@ -890,9 +887,9 @@
       
       // Get button color from button definition
       let flashColor = '#8b5cf6'; // default
-      if (button.classList.contains('btn-call')) flashColor = '#34d399';
+      if (button.classList.contains('btn-ready')) flashColor = '#34d399';
       else if (button.classList.contains('btn-ask')) flashColor = '#60a5fa';
-      else if (button.classList.contains('btn-checkin')) flashColor = '#8b5cf6';
+      else if (button.classList.contains('btn-arrive')) flashColor = '#8b5cf6';
       else if (button.classList.contains('btn-cancel')) flashColor = '#f87171';
       else if (button.classList.contains('btn-undo')) flashColor = '#fbbf24';
       
@@ -910,9 +907,9 @@
     /**
      * Handles customer actions. Updates status without changing buttons.
      */
-    function handleCall(id, name, event) {
-      console.log(`ACTION: Calling customer ${name} (#${id}).`);
-      console.log(`INFO: [${name}, #${id}] 고객님께 전화를 겁니다.`);
+    function handleReady(id, name, event) {
+      console.log(`ACTION: Marking customer ${name} (#${id}) as ready.`);
+      console.log(`INFO: [${name}, #${id}] 고객님께 테이블이 준비되었음을 알립니다.`);
       
       // Check if mobile - on desktop, highlight the row and flash button
       const isMobile = window.innerWidth <= 768;
@@ -926,7 +923,7 @@
       // Just update the status, don't change UI
       const item = mockWaitlist.find(item => item.id === id);
       if (item) {
-        item.status = 'Called';
+        item.status = 'Ready';
       }
     }
 
@@ -945,23 +942,23 @@
     }
 
     /**
-     * Handles customer actions (Check-In). Updates initialScrollTop and performs scroll.
+     * Handles customer actions (Arrive). Updates initialScrollTop and performs scroll.
      */
-    function handleCheckIn(id, name) {
-      console.log(`ACTION: Checking in customer ${name} (#${id}).`);
+    function handleArrive(id, name) {
+      console.log(`ACTION: Customer ${name} (#${id}) has arrived.`);
       const item = mockWaitlist.find(item => item.id === id);
       let shouldScroll = false;
 
       if (item) {
-        // Check if item was active before status change (Waiting or Called)
-        const wasActive = item.status === 'Waiting' || item.status === 'Called';
-        item.status = 'Check-In';
-        item.time_cleared = Date.now(); // Set time_cleared when checking in
+        // Check if item was active before status change (Waiting or Ready)
+        const wasActive = item.status === 'Waiting' || item.status === 'Ready';
+        item.status = 'Arrived';
+        item.time_cleared = Date.now(); // Set time_cleared when arrived
 
         if (wasActive && rowHeight > 0) {
           // 1. Update initialScrollTop by moving up one row's height to show the cleared item
           initialScrollTop -= rowHeight;
-          console.log(`SCROLL_UPDATE: Check-In. Subtracting rowHeight (${rowHeight.toFixed(2)}px) from initialScrollTop.`);
+          console.log(`SCROLL_UPDATE: Arrive. Subtracting rowHeight (${rowHeight.toFixed(2)}px) from initialScrollTop.`);
           console.log(`SCROLL_UPDATE: New initialScrollTop: ${initialScrollTop.toFixed(2)}px`);
           shouldScroll = true;
         }
@@ -991,7 +988,7 @@
 
           if (itemFound) {
             waitlistContainer.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
-            console.log(`SCROLL_ACTION_RAF: Check-In scroll to show item #${id} at ${targetScrollTop.toFixed(2)}px`);
+            console.log(`SCROLL_ACTION_RAF: Arrive scroll to show item #${id} at ${targetScrollTop.toFixed(2)}px`);
             initialScrollTop = targetScrollTop;
 
             // Add highlight effect to the completed item
@@ -1002,12 +999,12 @@
               });
 
               if (targetRow) {
-                targetRow.classList.add('checkin-highlight');
-                console.log(`HIGHLIGHT: Added green highlight to Check-In item #${id}`);
+                targetRow.classList.add('arrive-highlight');
+                console.log(`HIGHLIGHT: Added purple highlight to Arrive item #${id}`);
 
                 // Remove highlight after 1 second
                 setTimeout(() => {
-                  targetRow.classList.remove('checkin-highlight');
+                  targetRow.classList.remove('arrive-highlight');
                   targetRow.classList.add('fade-out-highlight');
 
                   // Clean up fade-out class
@@ -1033,8 +1030,8 @@
       let shouldScroll = false;
 
       if (item) {
-        // Check if item was active before status change (Waiting or Called)
-        const wasActive = item.status === 'Waiting' || item.status === 'Called';
+        // Check if item was active before status change (Waiting or Ready)
+        const wasActive = item.status === 'Waiting' || item.status === 'Ready';
         item.status = 'Cancelled';
         item.time_cleared = Date.now(); // Set time_cleared when cancelling
 
@@ -1105,14 +1102,14 @@
     }
 
     /**
-     * Handles Undo action for completed items (Check-In/Cancelled).
+     * Handles Undo action for completed items (Arrived/Cancelled).
      * Restores the item to "Waiting" status with highlight effect.
      */
     function handleUndo(id, name) {
       console.log(`ACTION: Undo for customer ${name} (#${id}).`);
       const item = mockWaitlist.find(item => item.id === id);
       
-      if (item && (item.status === 'Check-In' || item.status === 'Cancelled')) {
+      if (item && (item.status === 'Arrived' || item.status === 'Cancelled')) {
         const wasCompleted = true;
         item.status = 'Waiting';
         item.time_cleared = null; // Clear the completion time
@@ -1136,12 +1133,12 @@
         });
 
         if (targetRow) {
-          targetRow.classList.add('checkin-highlight'); // Reuse green highlight for Undo
-          console.log(`HIGHLIGHT: Added green highlight to Undo item #${id}`);
+          targetRow.classList.add('arrive-highlight'); // Reuse purple highlight for Undo
+          console.log(`HIGHLIGHT: Added purple highlight to Undo item #${id}`);
 
           // Remove highlight after 1 second
           setTimeout(() => {
-            targetRow.classList.remove('checkin-highlight');
+            targetRow.classList.remove('arrive-highlight');
             targetRow.classList.add('fade-out-highlight');
 
             // Clean up fade-out class
@@ -1155,11 +1152,11 @@
 
     /**
      * Helper function to determine sorting priority.
-     * Check-In and Cancelled should come first (lower number = higher priority).
+     * Arrived and Cancelled should come first (lower number = higher priority).
      * @returns {number} The sort priority (0 for completed/cancelled, 1 for active).
      */
     function getSortPriority(status) {
-      if (status === 'Check-In' || status === 'Cancelled') {
+      if (status === 'Arrived' || status === 'Cancelled') {
         return 0; // Highest priority (comes first)
       }
       return 1; // Lower priority (comes after 0)
@@ -1431,9 +1428,6 @@
                             <div class="${actionContainerClass}">
                                 ${actionButtons}
                             </div>
-                        </td>
-                        <td class="px-2 py-2 whitespace-nowrap text-sm font-medium text-center">
-                            <span class="${statusData.className}">${statusData.icon}</span>
                         </td>
                     </tr>
                  `;
