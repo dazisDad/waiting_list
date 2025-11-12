@@ -104,58 +104,53 @@
       opacity: 0.6;
     }
 
-    /* Highlight animation for completed items - Dark theme */
+    /* Highlight animation for completed items - Yellow border */
     .arrive-highlight {
-      background-color: rgba(139, 92, 246, 0.15) !important;
-      box-shadow: none !important;
-      border: none !important;
+      outline: 2px solid #fbbf24 !important;
+      outline-offset: -2px !important;
       transition: all 0.3s ease-in-out;
     }
 
     .cancel-highlight {
-      background-color: rgba(248, 113, 113, 0.15) !important;
-      box-shadow: none !important;
-      border: none !important;
+      outline: 2px solid #fbbf24 !important;
+      outline-offset: -2px !important;
       transition: all 0.3s ease-in-out;
     }
 
     .fade-out-highlight {
-      background-color: transparent !important;
-      box-shadow: none;
+      outline: none !important;
       transition: all 0.7s ease-out;
     }
 
     /* Button click highlight - brief flash effect */
+    tbody tr.button-click-highlight,
+    /* Flash effect for button clicks - yellow border */
     tbody tr.button-click-highlight,
     tbody tr.button-click-highlight:hover,
     tbody tr.row-hover.button-click-highlight,
     tbody tr.row-hover.button-click-highlight:hover,
     tbody tr.bg-slate-900.button-click-highlight,
     tbody tr.bg-slate-900.button-click-highlight:hover {
-      background-color: #334155 !important;
+      outline: 2px solid #fbbf24 !important;
+      outline-offset: -2px !important;
       transition: none !important;
     }
-    
-    /* Override any conflicting background colors */
-    .button-click-highlight.bg-slate-900 {
-      background-color: #334155 !important;
-    }
 
-    /* Persistent row highlight (toggle on/off by clicking row) */
+    /* Persistent row highlight (toggle on/off by clicking row) - yellow border */
     tbody tr.row-persistent-highlight,
     tbody tr.row-persistent-highlight:hover,
     tbody tr.row-hover.row-persistent-highlight,
     tbody tr.row-hover.row-persistent-highlight:hover,
     tbody tr.bg-slate-900.row-persistent-highlight,
     tbody tr.bg-slate-900.row-persistent-highlight:hover {
-      background-color: #334155 !important;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      outline: 2px solid #fbbf24 !important;
+      outline-offset: -2px !important;
     }
 
-    /* Row hover effect */
+    /* Row hover effect - yellow border */
     .row-hover:hover {
-      background-color: #334155 !important;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      outline: 2px solid #fbbf24 !important;
+      outline-offset: -2px !important;
     }
 
     /* Completed row style */
@@ -163,14 +158,14 @@
       background-color: #1e293b;
     }
     .row-completed:hover {
-      background-color: #334155 !important;
+      outline: 2px solid #fbbf24 !important;
+      outline-offset: -2px !important;
     }
 
     /* Disable hover during scroll to prevent unwanted highlights */
     .disable-hover .row-hover:hover,
     .disable-hover .row-completed:hover {
-      background-color: inherit !important;
-      box-shadow: none !important;
+      outline: none !important;
     }
 
     /* Desktop: Ensure row-selected has no effect */
@@ -179,31 +174,24 @@
         background-color: inherit !important;
         border-left: none !important;
         box-shadow: none !important;
-      }
-
-      /* Remove focus styles from rows on desktop */
-      .row-clickable,
-      .row-hover,
-      .row-completed,
-      tr {
         outline: none !important;
       }
 
+      /* Remove focus styles from rows on desktop (except intentional highlights) */
       .row-clickable:focus,
       .row-clickable:focus-visible,
       .row-clickable:focus-within,
-      .row-hover:focus,
-      .row-hover:focus-visible,
-      .row-hover:focus-within,
-      .row-completed:focus,
-      .row-completed:focus-visible,
-      .row-completed:focus-within,
       tr:focus,
       tr:focus-visible,
       tr:focus-within {
         outline: none !important;
-        background-color: inherit !important;
-        box-shadow: none !important;
+      }
+      
+      /* But allow hover and persistent highlight outlines */
+      .row-hover:focus.row-persistent-highlight,
+      .row-completed:focus.row-persistent-highlight {
+        outline: 2px solid #fbbf24 !important;
+        outline-offset: -2px !important;
       }
 
       /* Disable pointer events on row onclick for desktop */
@@ -327,25 +315,32 @@
       .row-completed:hover {
         background-color: inherit !important;
         box-shadow: none !important;
+        outline: none !important;
         transition: none !important;
       }
 
-      /* Selected row highlight on mobile - No transition for instant feedback */
+      /* Selected row highlight on mobile - Yellow border on outer edges only */
       .row-selected {
-        background-color: #334155 !important;
-        border-left: 3px solid #8b5cf6 !important;
+        border-top: 2px solid #fbbf24 !important;
+        border-left: 2px solid #fbbf24 !important;
+        border-right: 2px solid #fbbf24 !important;
+        border-bottom: none !important; /* No bottom border - will be on action row */
         transition: none !important;
       }
 
       .row-selected:hover {
-        background-color: #334155 !important;
-        box-shadow: none !important;
+        border-top: 2px solid #fbbf24 !important;
+        border-left: 2px solid #fbbf24 !important;
+        border-right: 2px solid #fbbf24 !important;
       }
 
-      /* Expanded row for mobile buttons */
+      /* Mobile action row - complete the border box */
       .mobile-action-row {
         background-color: #1e293b;
-        border-top: 1px solid #475569;
+        border-left: 2px solid #fbbf24 !important;
+        border-right: 2px solid #fbbf24 !important;
+        border-bottom: 2px solid #fbbf24 !important;
+        border-top: 1px solid #475569 !important; /* Keep original border between rows */
       }
 
       .mobile-action-row td {
@@ -911,18 +906,14 @@
 
         if (targetRow) {
           if (shouldFlash) {
-            // Flash effect: temporary highlight that disappears
-            const originalBgColor = targetRow.style.backgroundColor;
-            
+            // Flash effect: temporary yellow border highlight
             targetRow.classList.add('button-click-highlight');
-            targetRow.style.backgroundColor = '#334155';
             
             setTimeout(() => {
               targetRow.classList.remove('button-click-highlight');
-              targetRow.style.backgroundColor = originalBgColor;
             }, 500);
           } else {
-            // Toggle persistent highlight
+            // Toggle persistent yellow border highlight
             const isCurrentlyHighlighted = targetRow.classList.contains('row-persistent-highlight');
             
             // First, remove highlight from all other rows
@@ -930,20 +921,15 @@
             Array.from(allRows).forEach(row => {
               if (row !== targetRow) {
                 row.classList.remove('row-persistent-highlight');
-                // Remove inline style completely
-                row.style.removeProperty('background-color');
               }
             });
             
             if (isCurrentlyHighlighted) {
               // Remove highlight from this row
               targetRow.classList.remove('row-persistent-highlight');
-              // Remove inline style completely
-              targetRow.style.removeProperty('background-color');
             } else {
               // Add highlight to this row
               targetRow.classList.add('row-persistent-highlight');
-              targetRow.style.backgroundColor = '#334155';
             }
           }
         }
