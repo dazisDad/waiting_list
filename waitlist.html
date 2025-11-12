@@ -553,9 +553,9 @@
     ];
 
     const mockAskQuestions = [
-      "Q: Table is Ready. Coming?",
-      "Q: Is outdoor seating OK?",
-      "Q: Is split table OK?",
+      { Id: 1, question: "Table is Ready. Coming?", q_level: 1 },
+      { Id: 2, question: "Is outdoor seating OK?", q_level: 1 },
+      { Id: 3, question: "Is split table OK?", q_level: 1 },
     ];
 
     const waitlistBody = document.getElementById('waitlist-body');
@@ -754,11 +754,11 @@
       // Check if this item is in Ask mode
       if (askModeItems.has(item.booking_number)) {
         // Show question buttons + Exit button (mobile)
-        buttonHTMLs = mockAskQuestions.map(question => {
+        buttonHTMLs = mockAskQuestions.map(q => {
           const baseClasses = 'action-button px-2 py-1 rounded-md border font-medium text-xs';
           const classes = `${baseClasses} mobile-btn-ask flex-1`;
-          const fnCall = `handleQuestion(${item.booking_number}, '${item.customer_name}', '${question.replace(/'/g, "\\'")}', event)`;
-          return `<button onclick="${fnCall}" class="${classes}">${question}</button>`;
+          const fnCall = `handleQuestion(${item.booking_number}, '${item.customer_name}', '${q.question.replace(/'/g, "\\'")}', event)`;
+          return `<button onclick="${fnCall}" class="${classes}">${q.question}</button>`;
         });
         
         // Add Exit button
@@ -1044,11 +1044,11 @@
             // Check if this item is in Ask mode
             if (askModeItems.has(item.booking_number)) {
               // Show question buttons + Exit button (mobile)
-              buttonHTMLs = mockAskQuestions.map(question => {
+              buttonHTMLs = mockAskQuestions.map(q => {
                 const baseClasses = 'action-button px-2 py-1 rounded-md border font-medium text-xs';
                 const classes = `${baseClasses} mobile-btn-ask flex-1`;
-                const fnCall = `handleQuestion(${item.booking_number}, '${item.customer_name}', '${question.replace(/'/g, "\\'")}', event)`;
-                return `<button onclick="${fnCall}" class="${classes}">${question}</button>`;
+                const fnCall = `handleQuestion(${item.booking_number}, '${item.customer_name}', '${q.question.replace(/'/g, "\\'")}', event)`;
+                return `<button onclick="${fnCall}" class="${classes}">${q.question}</button>`;
               });
               
               // Add Exit button
@@ -1639,12 +1639,12 @@
         
         if (isInAskMode) {
           // Show question buttons + Exit button (with ask-mode-btn class for 2-per-row layout)
-          buttonHTMLs = mockAskQuestions.map(question => {
+          buttonHTMLs = mockAskQuestions.map(q => {
             const baseClasses = 'action-button px-2 py-1 rounded-md border font-medium text-xs';
             const classes = `${baseClasses} btn-ask flex-1 ask-mode-btn`;
-            const fnCall = `handleQuestion(${item.booking_number}, '${item.customer_name}', '${question.replace(/'/g, "\\'")}', event)`;
+            const fnCall = `handleQuestion(${item.booking_number}, '${item.customer_name}', '${q.question.replace(/'/g, "\\'")}', event)`;
             const onclickHandler = `${fnCall}; setTimeout(() => this.blur(), 100);`;
-            return `<button onclick="${onclickHandler}" class="${classes}">${question}</button>`;
+            return `<button onclick="${onclickHandler}" class="${classes}">${q.question}</button>`;
           });
           
           // Add Exit button (also with ask-mode-btn class)
