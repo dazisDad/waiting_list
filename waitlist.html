@@ -213,6 +213,35 @@
       }
     }
 
+    /* Desktop: Force action column to maintain fixed width and prevent overflow */
+    @media (min-width: 769px) {
+      .action-column-cell {
+        max-width: 45%;
+        overflow: visible;
+      }
+      
+      .action-column-cell > div {
+        flex-wrap: wrap;
+        max-width: 100%;
+        gap: 0.375rem;
+      }
+      
+      .action-column-cell .action-button {
+        min-width: 0;
+        flex-shrink: 1;
+        white-space: normal;
+        overflow: visible;
+        word-wrap: break-word;
+        line-height: 1.2;
+      }
+      
+      /* Ask mode: 2 buttons per row */
+      .action-column-cell .action-button.ask-mode-btn {
+        flex-basis: calc(50% - 0.1875rem);
+        max-width: calc(50% - 0.1875rem);
+      }
+    }
+
     /* Mobile: Hide Action column header and cells */
     @media (max-width: 768px) {
       .action-column-header,
@@ -440,7 +469,7 @@
     <div class="shadow-2xl rounded-lg overflow-x-auto border border-slate-700">
       <!-- Inner container for vertical scrolling with fixed header -->
       <div id="waitlist-container" class="max-h-[60vh] overflow-y-auto relative bg-slate-900">
-        <table class="min-w-full divide-y divide-slate-700">
+        <table class="min-w-full divide-y divide-slate-700" style="table-layout: fixed;">
           <thead class="bg-slate-800 sticky top-0 z-10 border-b border-slate-700">
             <tr>
               <!-- Reduced padding (px-2 py-2) and centered -->
@@ -523,6 +552,12 @@
       { Id: 12, booking_list_id: "763", dateTime: Date.now() - 5 * 60 * 1000, qna: "Waiting" },
     ];
 
+    const mockAskQuestions = [
+      "Q: Table is Ready. Coming?",
+      "Q: Is outdoor seating OK?",
+      "Q: Is split table OK?",
+    ];
+
     const waitlistBody = document.getElementById('waitlist-body');
     const messageBox = document.getElementById('message-box');
     const messageText = document.getElementById('message-text');
@@ -540,6 +575,7 @@
     let initialScrollTop = 0; // 초기 스크롤 탑 값 저장 변수 (Active Queue의 시작 위치를 추적)
     let rowHeight = 0; // 단일 행의 높이 (Check-In/Cancel 시 initialScrollTop 업데이트에 사용)
     let expandedRowId = null; // 현재 확장된 행의 ID (모바일용)
+    let askModeItems = new Set(); // Track which items are in "Ask mode" showing question buttons
 
     // --- Action Button Definitions ---
     const actionButtonDefinitions = [
@@ -713,8 +749,29 @@
       if (!item) return;
 
       // Get buttons for this item's status
-      const buttons = getButtonsForStatus(item.status);
-      const buttonHTMLs = buttons.map(btnDef => generateButtonHTML(btnDef, item.booking_number, item.customer_name, true));
+      let buttonHTMLs;
+      
+      // Check if this item is in Ask mode
+      if (askModeItems.has(item.booking_number)) {
+        // Show question buttons + Exit button (mobile)
+        buttonHTMLs = mockAskQuestions.map(question => {
+          const baseClasses = 'action-button px-2 py-1 rounded-md border font-medium text-xs';
+          const classes = `${baseClasses} mobile-btn-ask flex-1`;
+          const fnCall = `handleQuestion(${item.booking_number}, '${item.customer_name}', '${question.replace(/'/g, "\\'")}', event)`;
+          return `<button onclick="${fnCall}" class="${classes}">${question}</button>`;
+        });
+        
+        // Add Exit button
+        const exitBaseClasses = 'action-button px-2 py-1 rounded-md border font-medium text-xs';
+        const exitClasses = `${exitBaseClasses} mobile-btn-cancel flex-1`;
+        const exitOnclick = `handleExitAsk(${item.booking_number})`;
+        buttonHTMLs.push(`<button onclick="${exitOnclick}" class="${exitClasses}">Exit</button>`);
+      } else {
+        // Show normal buttons
+        const buttons = getButtonsForStatus(item.status);
+        buttonHTMLs = buttons.map(btnDef => generateButtonHTML(btnDef, item.booking_number, item.customer_name, true));
+      }
+      
       const actionButtons = buttonHTMLs.join('\n');
 
       // Find the main row and insert mobile action row after it
@@ -949,14 +1006,104 @@
       console.log(`ACTION: Asking customer ${customer_name} (#${booking_number}).`);
       console.log(`INFO: [${customer_name}, #${booking_number}]에게 메시지/문의 창을 엽니다.`);
       
-      // Check if mobile - on desktop, highlight the row and flash button
+      // Check if mobile - on desktop, highlight the row (no flash button to avoid interference)
       const isMobile = window.innerWidth <= 768;
       
       if (!isMobile) {
-        // Desktop: Flash row (temporary) and flash button
+        // Desktop: Flash row (temporary) only
         highlightRow(booking_number, true);
+      }
+
+      // Toggle Ask mode for this item
+      if (askModeItems.has(booking_number)) {
+        askModeItems.delete(booking_number);
+        console.log(`ASK_MODE: Disabled for #${booking_number}. Current set:`, Array.from(askModeItems));
+      } else {
+        askModeItems.add(booking_number);
+        console.log(`ASK_MODE: Enabled for #${booking_number}. Current set:`, Array.from(askModeItems));
+      }
+
+      // Re-render to show question buttons
+      renderWaitlist();
+
+      // On mobile, re-open the action row after rendering
+      if (isMobile) {
+        // Use requestAnimationFrame to ensure DOM is updated
+        requestAnimationFrame(() => {
+          // Re-trigger mobile action row expansion
+          const mainRow = document.querySelector(`tr[data-item-id="${booking_number}"]`);
+          if (mainRow) {
+            // Simulate the expansion logic
+            expandedRowId = booking_number;
+            const item = mockWaitlist.find(i => i.booking_number === booking_number);
+            if (!item) return;
+
+            const mobileActionRowId = `mobile-actions-${booking_number}`;
+            let buttonHTMLs;
+            
+            // Check if this item is in Ask mode
+            if (askModeItems.has(item.booking_number)) {
+              // Show question buttons + Exit button (mobile)
+              buttonHTMLs = mockAskQuestions.map(question => {
+                const baseClasses = 'action-button px-2 py-1 rounded-md border font-medium text-xs';
+                const classes = `${baseClasses} mobile-btn-ask flex-1`;
+                const fnCall = `handleQuestion(${item.booking_number}, '${item.customer_name}', '${question.replace(/'/g, "\\'")}', event)`;
+                return `<button onclick="${fnCall}" class="${classes}">${question}</button>`;
+              });
+              
+              // Add Exit button
+              const exitBaseClasses = 'action-button px-2 py-1 rounded-md border font-medium text-xs';
+              const exitClasses = `${exitBaseClasses} mobile-btn-cancel flex-1`;
+              const exitOnclick = `handleExitAsk(${item.booking_number})`;
+              buttonHTMLs.push(`<button onclick="${exitOnclick}" class="${exitClasses}">Exit</button>`);
+            } else {
+              // Show normal buttons
+              const buttons = getButtonsForStatus(item.status);
+              buttonHTMLs = buttons.map(btnDef => generateButtonHTML(btnDef, item.booking_number, item.customer_name, true));
+            }
+            
+            const actionButtons = buttonHTMLs.join('\n');
+
+            const mobileRow = document.createElement('tr');
+            mobileRow.id = mobileActionRowId;
+            mobileRow.className = 'mobile-action-row';
+            mobileRow.innerHTML = `
+              <td colspan="5" class="px-2 py-3">
+                <div class="flex gap-1.5">
+                  ${actionButtons}
+                </div>
+              </td>
+            `;
+            
+            // Insert after the main row
+            mainRow.insertAdjacentElement('afterend', mobileRow);
+            mainRow.classList.add('row-selected');
+            console.log(`MOBILE: Re-opened action row for #${booking_number} after Ask mode toggle`);
+          }
+        });
+      }
+    }
+
+    /**
+     * Handles question button click - logs the question
+     */
+    function handleQuestion(booking_number, customer_name, question, event) {
+      console.log(`QUESTION: Sending to ${customer_name} (#${booking_number}): ${question}`);
+      
+      // Flash button on desktop
+      const isMobile = window.innerWidth <= 768;
+      if (!isMobile) {
         flashButton(event);
       }
+    }
+
+    /**
+     * Exits Ask mode and returns to normal button view
+     */
+    function handleExitAsk(booking_number) {
+      console.log(`ACTION: Exiting Ask mode for booking #${booking_number}`);
+      askModeItems.delete(booking_number);
+      renderWaitlist();
     }
 
     /**
@@ -1484,7 +1631,35 @@
 
         // Action Buttons - Generate using button definitions
         const buttons = getButtonsForStatus(item.status);
-        const buttonHTMLs = buttons.map(btnDef => generateButtonHTML(btnDef, item.booking_number, item.customer_name, false));
+        let buttonHTMLs;
+        
+        // Check if this item is in Ask mode
+        const isInAskMode = askModeItems.has(item.booking_number);
+        console.log(`RENDER: Item #${item.booking_number} - isInAskMode: ${isInAskMode}`);
+        
+        if (isInAskMode) {
+          // Show question buttons + Exit button (with ask-mode-btn class for 2-per-row layout)
+          buttonHTMLs = mockAskQuestions.map(question => {
+            const baseClasses = 'action-button px-2 py-1 rounded-md border font-medium text-xs';
+            const classes = `${baseClasses} btn-ask flex-1 ask-mode-btn`;
+            const fnCall = `handleQuestion(${item.booking_number}, '${item.customer_name}', '${question.replace(/'/g, "\\'")}', event)`;
+            const onclickHandler = `${fnCall}; setTimeout(() => this.blur(), 100);`;
+            return `<button onclick="${onclickHandler}" class="${classes}">${question}</button>`;
+          });
+          
+          // Add Exit button (also with ask-mode-btn class)
+          const exitBaseClasses = 'action-button px-2 py-1 rounded-md border font-medium text-xs';
+          const exitClasses = `${exitBaseClasses} btn-cancel flex-1 ask-mode-btn`;
+          const exitOnclick = `handleExitAsk(${item.booking_number}); setTimeout(() => this.blur(), 100);`;
+          buttonHTMLs.push(`<button onclick="${exitOnclick}" class="${exitClasses}">Exit</button>`);
+          
+          console.log(`RENDER: Generated ${buttonHTMLs.length} question buttons for #${item.booking_number}`);
+        } else {
+          // Show normal buttons
+          buttonHTMLs = buttons.map(btnDef => generateButtonHTML(btnDef, item.booking_number, item.customer_name, false));
+          console.log(`RENDER: Generated ${buttonHTMLs.length} normal buttons for #${item.booking_number}`);
+        }
+        
         const actionButtons = buttonHTMLs.join('\n');
         const actionContainerClass = 'flex gap-1.5';
 
