@@ -1419,12 +1419,14 @@
         let chatHistoryHTML = '';
         if (chatHistory.length > 0) {
           const chatClass = statusPriority === 0 ? 'text-slate-400' : 'text-slate-400';
+          const hasStatusMessage = item.status === 'Arrived' || item.status === 'Cancelled';
+          
           chatHistoryHTML = chatHistory.map((chat, index) => {
             let elapsedTime;
             const isLastMessage = index === chatHistory.length - 1;
             
-            if (isLastMessage) {
-              // Last message: calculate ongoing elapsed time from message dateTime to now
+            if (isLastMessage && !hasStatusMessage) {
+              // Last message and no status message to follow: calculate ongoing elapsed time from message dateTime to now
               const elapsedMs = Date.now() - chat.dateTime;
               const totalSeconds = Math.floor(elapsedMs / 1000);
               const minutes = Math.floor(totalSeconds / 60);
@@ -1438,9 +1440,18 @@
                 elapsedTime = `${minutes}:${seconds}`;
               }
             } else {
-              // Not last message: calculate fixed elapsed time from this message to next message
-              const nextChat = chatHistory[index + 1];
-              const elapsedMs = nextChat.dateTime - chat.dateTime;
+              // Not last message OR last message with status to follow: calculate fixed elapsed time to next event
+              let nextEventTime;
+              if (isLastMessage && hasStatusMessage) {
+                // Calculate time to status event (time_cleared)
+                nextEventTime = item.time_cleared;
+              } else {
+                // Calculate time to next chat message
+                const nextChat = chatHistory[index + 1];
+                nextEventTime = nextChat.dateTime;
+              }
+              
+              const elapsedMs = nextEventTime - chat.dateTime;
               const totalSeconds = Math.floor(elapsedMs / 1000);
               const minutes = Math.floor(totalSeconds / 60);
               const seconds = String(totalSeconds % 60).padStart(2, '0');
@@ -1454,11 +1465,21 @@
               }
             }
             
-            // Add a data attribute to identify ongoing messages for live updates
-            const dataAttr = isLastMessage ? `data-chat-id="${chat.Id}" data-chat-time="${chat.dateTime}"` : '';
+            // Add a data attribute to identify ongoing messages for live updates (only if truly last and no status)
+            const dataAttr = (isLastMessage && !hasStatusMessage) ? `data-chat-id="${chat.Id}" data-chat-time="${chat.dateTime}"` : '';
             
-            return `<div class="text-xs ${chatClass} leading-relaxed" ${dataAttr}>↳ [${elapsedTime}] ${chat.qna}</div>`; //arrow
+            // Apply green color (#34d399) for "Q: Table is Ready. Coming?" message (same as Ready button)
+            const messageChatClass = chat.qna.includes('Table is Ready') ? 'text-emerald-400' : chatClass;
+            
+            return `<div class="text-xs ${messageChatClass} leading-relaxed" ${dataAttr}>↳ [${elapsedTime}] ${chat.qna}</div>`; //arrow
           }).join('');
+
+          // Add status message if item is Arrived or Cancelled (without elapsed time)
+          if (hasStatusMessage) {
+            // Apply color based on status: purple for Arrived (#8b5cf6), red for Cancelled (#f87171)
+            const statusColor = item.status === 'Arrived' ? 'text-purple-500' : 'text-red-400';
+            chatHistoryHTML += `<div class="text-xs ${statusColor} leading-relaxed">↳ ${item.status}</div>`;
+          }
         }
 
         // Action Buttons - Generate using button definitions
