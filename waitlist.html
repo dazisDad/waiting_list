@@ -491,18 +491,36 @@
     // Extended list for testing minRowDisplay functionality
     const mockWaitlist = [
       // Completed items (will be sorted to the top) - with time_cleared set
-      { id: 1005, name: "Haneul Jung", pax: 2, time_created: Date.now() - 45 * 60 * 1000, time_cleared: Date.now() - 40 * 60 * 1000, status: "Cancelled" },
-      { id: 1008, name: "Jimin Lee", pax: 3, time_created: Date.now() - 50 * 60 * 1000, time_cleared: Date.now() - 45 * 60 * 1000, status: "Arrived" },
-      { id: 1010, name: "Yuna Choi", pax: 4, time_created: Date.now() - 55 * 60 * 1000, time_cleared: null, status: "Waiting" },
+      { booking_number: 1005, customer_name: "Haneul Jung", pax: 2, time_created: Date.now() - 45 * 60 * 1000, time_cleared: Date.now() - 40 * 60 * 1000, status: "Cancelled", booking_list_id: "123", customer_phone: "010-1111-1111", subscriber_id: "sub_aaa" },
+      { booking_number: 1008, customer_name: "Jimin Lee", pax: 3, time_created: Date.now() - 50 * 60 * 1000, time_cleared: Date.now() - 45 * 60 * 1000, status: "Arrived", booking_list_id: "234", customer_phone: "010-2222-2222", subscriber_id: "sub_bbb" },
+      { booking_number: 1010, customer_name: "Yuna Choi", pax: 4, time_created: Date.now() - 55 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "456", customer_phone: "010-3333-3333", subscriber_id: "sub_ccc" },
 
       // Active items (Waiting/Ready) - no time_cleared
-      { id: 1001, name: "Minji Kim", pax: 4, time_created: Date.now() - 35 * 60 * 1000, time_cleared: null, status: "Waiting" },
-      { id: 1002, name: "Juno Lee", pax: 2, time_created: Date.now() - 30 * 60 * 1000, time_cleared: null, status: "Waiting" },
-      { id: 1003, name: "Seyeon Park", pax: 3, time_created: Date.now() - 25 * 60 * 1000, time_cleared: null, status: "Ready" },
-      { id: 1004, name: "Eunwoo Choi", pax: 5, time_created: Date.now() - 20 * 60 * 1000, time_cleared: null, status: "Waiting" },
-      { id: 1006, name: "Jihoon Kim", pax: 3, time_created: Date.now() - 15 * 60 * 1000, time_cleared: null, status: "Waiting" },
-      { id: 1007, name: "Somin Park", pax: 6, time_created: Date.now() - 10 * 60 * 1000, time_cleared: null, status: "Waiting" },
-      { id: 1009, name: "Taehyun Lee", pax: 2, time_created: Date.now() - 5 * 60 * 1000, time_cleared: null, status: "Waiting" },
+      { booking_number: 1001, customer_name: "Minji Kim", pax: 4, time_created: Date.now() - 35 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "235", customer_phone: "010-4444-4444", subscriber_id: "sub_ddd" },
+      { booking_number: 1002, customer_name: "Juno Lee", pax: 2, time_created: Date.now() - 30 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "335", customer_phone: "010-5555-5555", subscriber_id: "sub_eee" },
+      { booking_number: 1003, customer_name: "Seyeon Park", pax: 3, time_created: Date.now() - 25 * 60 * 1000, time_cleared: null, status: "Ready", booking_list_id: "347", customer_phone: "010-6666-6666", subscriber_id: "sub_fff" },
+      { booking_number: 1004, customer_name: "Eunwoo Choi", pax: 5, time_created: Date.now() - 20 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "156", customer_phone: "010-7777-7777", subscriber_id: "sub_ggg" },
+      { booking_number: 1006, customer_name: "Jihoon Kim", pax: 3, time_created: Date.now() - 15 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "287", customer_phone: "010-8888-8888", subscriber_id: "sub_hhh" },
+      { booking_number: 1007, customer_name: "Somin Park", pax: 6, time_created: Date.now() - 10 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "563", customer_phone: "010-9999-9999", subscriber_id: "sub_iii" },
+      { booking_number: 1009, customer_name: "Taehyun Lee", pax: 2, time_created: Date.now() - 5 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "763", customer_phone: "010-0000-0000", subscriber_id: "sub_jjj" },
+    ];
+
+    const mockChatList = [
+      { Id: 1, booking_list_id: "123", dateTime: Date.now() - 45 * 60 * 1000, qna: "Waiting" },
+      { Id: 2, booking_list_id: "234", dateTime: Date.now() - 50 * 60 * 1000, qna: "Waiting" },
+      { Id: 3, booking_list_id: "456", dateTime: Date.now() - 55 * 60 * 1000, qna: "Waiting" },
+      
+      { Id: 4, booking_list_id: "235", dateTime: Date.now() - 35 * 60 * 1000, qna: "Waiting" },
+      { Id: 5, booking_list_id: "335", dateTime: Date.now() - 30 * 60 * 1000, qna: "Waiting" },
+      { Id: 6, booking_list_id: "347", dateTime: Date.now() - 25 * 60 * 1000, qna: "Waiting" },
+
+      { Id: 7, booking_list_id: "335", dateTime: Date.now() - 23 * 60 * 1000, qna: "Q: Table is Ready. Coming?" },
+      { Id: 8, booking_list_id: "335", dateTime: Date.now() - 22 * 60 * 1000, qna: "A: Coming in 5 mins" },
+
+      { Id: 9, booking_list_id: "156", dateTime: Date.now() - 20 * 60 * 1000, qna: "Waiting" },
+      { Id: 10, booking_list_id: "287", dateTime: Date.now() - 15 * 60 * 1000, qna: "Waiting" },
+      { Id: 11, booking_list_id: "563", dateTime: Date.now() - 10 * 60 * 1000, qna: "Waiting" },
+      { Id: 12, booking_list_id: "763", dateTime: Date.now() - 5 * 60 * 1000, qna: "Waiting" },
     ];
 
     const waitlistBody = document.getElementById('waitlist-body');
@@ -592,7 +610,7 @@
     /**
      * Helper function to generate button HTML
      */
-    function generateButtonHTML(buttonDef, itemId, itemName, isMobile) {
+    function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) {
       const baseClasses = 'action-button px-3 py-1.5 rounded-md border font-medium text-sm';
       const btnClass = isMobile ? buttonDef.mobileBtnClass : buttonDef.desktopBtnClass;
       const classes = `${baseClasses} ${btnClass} flex-1`;
@@ -600,8 +618,8 @@
       // Determine if event parameter is needed
       const needsEvent = ['handleReady', 'handleAsk'].includes(buttonDef.functionName);
       const fnCall = needsEvent 
-        ? `${buttonDef.functionName}(${itemId}, '${itemName}', event)`
-        : `${buttonDef.functionName}(${itemId}, '${itemName}')`;
+        ? `${buttonDef.functionName}(${booking_number}, '${customer_name}', event)`
+        : `${buttonDef.functionName}(${booking_number}, '${customer_name}')`;
       
       // Add blur on click to remove focus highlight (desktop only)
       const onclickHandler = isMobile 
@@ -615,7 +633,7 @@
      * Mobile: Toggle mobile action row for a specific item
      * Desktop: Toggle row highlight
      */
-    function toggleMobileActions(itemId, event) {
+    function toggleMobileActions(booking_number, event) {
       // Check if we're on mobile (screen width <= 768px)
       if (window.innerWidth > 768) {
         // Desktop: Toggle row highlight (persistent)
@@ -629,8 +647,8 @@
         }
         
         // Toggle persistent highlight on the row
-        highlightRow(itemId, false);
-        console.log(`DESKTOP: Toggled highlight for row #${itemId}`);
+        highlightRow(booking_number, false);
+        console.log(`DESKTOP: Toggled highlight for row #${booking_number}`);
         return;
       }
 
@@ -646,12 +664,12 @@
         event.stopImmediatePropagation();
       }
 
-      const mobileActionRowId = `mobile-actions-${itemId}`;
+      const mobileActionRowId = `mobile-actions-${booking_number}`;
       const existingMobileRow = document.getElementById(mobileActionRowId);
-      const currentRow = document.querySelector(`tr[data-item-id="${itemId}"]`);
+      const currentRow = document.querySelector(`tr[data-item-id="${booking_number}"]`);
 
       // If clicking the same row, close it
-      if (expandedRowId === itemId) {
+      if (expandedRowId === booking_number) {
         if (existingMobileRow) {
           existingMobileRow.remove();
         }
@@ -662,7 +680,7 @@
           void currentRow.offsetHeight;
         }
         expandedRowId = null;
-        console.log(`MOBILE: Collapsed row for item #${itemId}`);
+        console.log(`MOBILE: Collapsed row for item #${booking_number}`);
         return;
       }
 
@@ -690,17 +708,17 @@
       }
 
       // Expand the clicked row
-      expandedRowId = itemId;
-      const item = mockWaitlist.find(i => i.id === itemId);
+      expandedRowId = booking_number;
+      const item = mockWaitlist.find(i => i.booking_number === booking_number);
       if (!item) return;
 
       // Get buttons for this item's status
       const buttons = getButtonsForStatus(item.status);
-      const buttonHTMLs = buttons.map(btnDef => generateButtonHTML(btnDef, item.id, item.name, true));
+      const buttonHTMLs = buttons.map(btnDef => generateButtonHTML(btnDef, item.booking_number, item.customer_name, true));
       const actionButtons = buttonHTMLs.join('\n');
 
       // Find the main row and insert mobile action row after it
-      const mainRow = document.querySelector(`tr[data-item-id="${itemId}"]`);
+      const mainRow = document.querySelector(`tr[data-item-id="${booking_number}"]`);
       if (mainRow) {
         const mobileRow = document.createElement('tr');
         mobileRow.id = mobileActionRowId;
@@ -715,7 +733,7 @@
         
         // Insert after the main row
         mainRow.insertAdjacentElement('afterend', mobileRow);
-        console.log(`MOBILE: Expanded row for item #${itemId}`);
+        console.log(`MOBILE: Expanded row for item #${booking_number}`);
       }
     }
 
@@ -826,12 +844,12 @@
      * Adds a temporary highlight effect to a row.
      * The highlight appears briefly and then fades out.
      */
-    function highlightRow(id, shouldFlash = false) {
+    function highlightRow(booking_number, shouldFlash = false) {
       requestAnimationFrame(() => {
         const rows = waitlistBody.getElementsByTagName('tr');
         const targetRow = Array.from(rows).find(row => {
           const idCell = row.querySelector('td:first-child');
-          return idCell && idCell.textContent.trim() === id.toString();
+          return idCell && idCell.textContent.trim() === booking_number.toString();
         });
 
         if (targetRow) {
@@ -907,36 +925,36 @@
     /**
      * Handles customer actions. Updates status without changing buttons.
      */
-    function handleReady(id, name, event) {
-      console.log(`ACTION: Marking customer ${name} (#${id}) as ready.`);
-      console.log(`INFO: [${name}, #${id}] 고객님께 테이블이 준비되었음을 알립니다.`);
+    function handleReady(booking_number, customer_name, event) {
+      console.log(`ACTION: Marking customer ${customer_name} (#${booking_number}) as ready.`);
+      console.log(`INFO: [${customer_name}, #${booking_number}] 고객님께 테이블이 준비되었음을 알립니다.`);
       
       // Check if mobile - on desktop, highlight the row and flash button
       const isMobile = window.innerWidth <= 768;
       
       if (!isMobile) {
         // Desktop: Flash row (temporary) and flash button
-        highlightRow(id, true);
+        highlightRow(booking_number, true);
         flashButton(event);
       }
       
       // Just update the status, don't change UI
-      const item = mockWaitlist.find(item => item.id === id);
+      const item = mockWaitlist.find(item => item.booking_number === booking_number);
       if (item) {
         item.status = 'Ready';
       }
     }
 
-    function handleAsk(id, name, event) {
-      console.log(`ACTION: Asking customer ${name} (#${id}).`);
-      console.log(`INFO: [${name}, #${id}]에게 메시지/문의 창을 엽니다.`);
+    function handleAsk(booking_number, customer_name, event) {
+      console.log(`ACTION: Asking customer ${customer_name} (#${booking_number}).`);
+      console.log(`INFO: [${customer_name}, #${booking_number}]에게 메시지/문의 창을 엽니다.`);
       
       // Check if mobile - on desktop, highlight the row and flash button
       const isMobile = window.innerWidth <= 768;
       
       if (!isMobile) {
         // Desktop: Flash row (temporary) and flash button
-        highlightRow(id, true);
+        highlightRow(booking_number, true);
         flashButton(event);
       }
     }
@@ -944,9 +962,9 @@
     /**
      * Handles customer actions (Arrive). Updates initialScrollTop and performs scroll.
      */
-    function handleArrive(id, name) {
-      console.log(`ACTION: Customer ${name} (#${id}) has arrived.`);
-      const item = mockWaitlist.find(item => item.id === id);
+    function handleArrive(booking_number, customer_name) {
+      console.log(`ACTION: Customer ${customer_name} (#${booking_number}) has arrived.`);
+      const item = mockWaitlist.find(item => item.booking_number === booking_number);
       let shouldScroll = false;
 
       if (item) {
@@ -978,7 +996,7 @@
           for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
             const idCell = row.querySelector('td:first-child');
-            if (idCell && idCell.textContent.trim() === id.toString()) {
+            if (idCell && idCell.textContent.trim() === booking_number.toString()) {
               // Found the just completed item - scroll to show it at the top
               itemFound = true;
               break;
@@ -988,19 +1006,19 @@
 
           if (itemFound) {
             waitlistContainer.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
-            console.log(`SCROLL_ACTION_RAF: Arrive scroll to show item #${id} at ${targetScrollTop.toFixed(2)}px`);
+            console.log(`SCROLL_ACTION_RAF: Arrive scroll to show item #${booking_number} at ${targetScrollTop.toFixed(2)}px`);
             initialScrollTop = targetScrollTop;
 
             // Add highlight effect to the completed item
             setTimeout(() => {
               const targetRow = Array.from(rows).find(row => {
                 const idCell = row.querySelector('td:first-child');
-                return idCell && idCell.textContent.trim() === id.toString();
+                return idCell && idCell.textContent.trim() === booking_number.toString();
               });
 
               if (targetRow) {
                 targetRow.classList.add('arrive-highlight');
-                console.log(`HIGHLIGHT: Added purple highlight to Arrive item #${id}`);
+                console.log(`HIGHLIGHT: Added purple highlight to Arrive item #${booking_number}`);
 
                 // Remove highlight after 1 second
                 setTimeout(() => {
@@ -1015,7 +1033,7 @@
               }
             }, 300); // Small delay to ensure smooth scroll is started
           } else {
-            console.log(`SCROLL_ACTION_RAF: Could not find item #${id} in DOM`);
+            console.log(`SCROLL_ACTION_RAF: Could not find item #${booking_number} in DOM`);
           }
         });
       }
@@ -1024,9 +1042,9 @@
     /**
      * Handles customer actions (Cancel). Updates initialScrollTop and performs scroll.
      */
-    function handleCancel(id, name) {
-      console.log(`ACTION: Cancelling customer ${name} (#${id}).`);
-      const item = mockWaitlist.find(item => item.id === id);
+    function handleCancel(booking_number, customer_name) {
+      console.log(`ACTION: Cancelling customer ${customer_name} (#${booking_number}).`);
+      const item = mockWaitlist.find(item => item.booking_number === booking_number);
       let shouldScroll = false;
 
       if (item) {
@@ -1058,7 +1076,7 @@
           for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
             const idCell = row.querySelector('td:first-child');
-            if (idCell && idCell.textContent.trim() === id.toString()) {
+            if (idCell && idCell.textContent.trim() === booking_number.toString()) {
               // Found the just completed item - scroll to show it at the top
               itemFound = true;
               break;
@@ -1068,19 +1086,19 @@
 
           if (itemFound) {
             waitlistContainer.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
-            console.log(`SCROLL_ACTION_RAF: Cancel scroll to show item #${id} at ${targetScrollTop.toFixed(2)}px`);
+            console.log(`SCROLL_ACTION_RAF: Cancel scroll to show item #${booking_number} at ${targetScrollTop.toFixed(2)}px`);
             initialScrollTop = targetScrollTop;
 
             // Add highlight effect to the completed item
             setTimeout(() => {
               const targetRow = Array.from(rows).find(row => {
                 const idCell = row.querySelector('td:first-child');
-                return idCell && idCell.textContent.trim() === id.toString();
+                return idCell && idCell.textContent.trim() === booking_number.toString();
               });
 
               if (targetRow) {
                 targetRow.classList.add('cancel-highlight');
-                console.log(`HIGHLIGHT: Added red highlight to Cancel item #${id}`);
+                console.log(`HIGHLIGHT: Added red highlight to Cancel item #${booking_number}`);
 
                 // Remove highlight after 1 second
                 setTimeout(() => {
@@ -1095,7 +1113,7 @@
               }
             }, 300); // Small delay to ensure smooth scroll is started
           } else {
-            console.log(`SCROLL_ACTION_RAF: Could not find item #${id} in DOM`);
+            console.log(`SCROLL_ACTION_RAF: Could not find item #${booking_number} in DOM`);
           }
         });
       }
@@ -1105,9 +1123,9 @@
      * Handles Undo action for completed items (Arrived/Cancelled).
      * Restores the item to "Waiting" status with highlight effect.
      */
-    function handleUndo(id, name) {
-      console.log(`ACTION: Undo for customer ${name} (#${id}).`);
-      const item = mockWaitlist.find(item => item.id === id);
+    function handleUndo(booking_number, customer_name) {
+      console.log(`ACTION: Undo for customer ${customer_name} (#${booking_number}).`);
+      const item = mockWaitlist.find(item => item.booking_number === booking_number);
       
       if (item && (item.status === 'Arrived' || item.status === 'Cancelled')) {
         const wasCompleted = true;
@@ -1129,12 +1147,12 @@
         const rows = waitlistBody.getElementsByTagName('tr');
         const targetRow = Array.from(rows).find(row => {
           const idCell = row.querySelector('td:first-child');
-          return idCell && idCell.textContent.trim() === id.toString();
+          return idCell && idCell.textContent.trim() === booking_number.toString();
         });
 
         if (targetRow) {
           targetRow.classList.add('arrive-highlight'); // Reuse purple highlight for Undo
-          console.log(`HIGHLIGHT: Added purple highlight to Undo item #${id}`);
+          console.log(`HIGHLIGHT: Added purple highlight to Undo item #${booking_number}`);
 
           // Remove highlight after 1 second
           setTimeout(() => {
@@ -1394,7 +1412,7 @@
 
         // Action Buttons - Generate using button definitions
         const buttons = getButtonsForStatus(item.status);
-        const buttonHTMLs = buttons.map(btnDef => generateButtonHTML(btnDef, item.id, item.name, false));
+        const buttonHTMLs = buttons.map(btnDef => generateButtonHTML(btnDef, item.booking_number, item.customer_name, false));
         const actionButtons = buttonHTMLs.join('\n');
         const actionContainerClass = 'flex gap-1.5';
 
@@ -1411,17 +1429,17 @@
 
         // Mobile: Add onclick handler, Desktop: no onclick
         // Always add onclick - the function itself checks if mobile
-        const onclickAttr = `onclick="toggleMobileActions(${item.id}, event)"`;
+        const onclickAttr = `onclick="toggleMobileActions(${item.booking_number}, event)"`;
         const rowClickableClass = 'row-clickable';
 
         tableHTML += `
-                    <tr class="${rowClass} ${rowClickableClass}" data-item-id="${item.id}" ${onclickAttr}>
-                        <td class="px-2 py-2 whitespace-nowrap text-sm font-medium ${idClass} text-center">${item.id}</td>
+                    <tr class="${rowClass} ${rowClickableClass}" data-item-id="${item.booking_number}" ${onclickAttr}>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm font-medium ${idClass} text-center">${item.booking_number}</td>
                         <td class="px-2 py-2 whitespace-nowrap text-sm">
-                            <div class="font-semibold ${nameClass}">${item.name}</div>
+                            <div class="font-semibold ${nameClass}">${item.customer_name}</div>
                         </td>
                         <td class="px-2 py-2 whitespace-nowrap text-sm ${paxClass} font-bold text-center">${item.pax}</td>
-                        <td id="time-${item.id}" class="px-2 py-2 whitespace-nowrap text-sm text-center ${timeClass}">
+                        <td id="time-${item.booking_number}" class="px-2 py-2 whitespace-nowrap text-sm text-center ${timeClass}">
                             ${timeHTML}
                         </td>
                         <td class="action-column-cell px-2 py-2 whitespace-nowrap text-center text-sm font-medium">
@@ -1461,7 +1479,7 @@
      */
     function updateElapsedTimes() {
       mockWaitlist.forEach(item => {
-        const timeElement = document.getElementById(`time-${item.id}`);
+        const timeElement = document.getElementById(`time-${item.booking_number}`);
         if (timeElement) {
           const timeData = formatElapsedTime(item);
           
@@ -1516,7 +1534,7 @@
 
       console.log(`INIT: Calculated scrollTarget = ${scrollTarget.toFixed(2)}px. Completed items = ${completedItemsCount}`);
 
-      // 2. 총 행 수가 displayedRows를 초과하고 완료된 항목이 있는 경우에만 초기 스크롤을 강제합니다.
+      // 2. 총 행 수가 displayedRows를 초과하고, Active Queue를 건너뛸 기록이 있고, 스크롤이 가능하며, 현재 Active Queue 위치에 있지 않은 경우 활성화
       const totalRows = mockWaitlist.length;
       const shouldScrollToActive = totalRows > displayedRows && completedItemsCount > 0;
       console.log(`INIT: Total rows: ${totalRows}, displayedRows: ${displayedRows}, shouldScrollToActive: ${shouldScrollToActive}`);
