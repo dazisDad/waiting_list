@@ -95,6 +95,13 @@
       color: #fbbf24;
     }
 
+    /* Outline button styles - Next (yellow/amber) */
+    .btn-next {
+      background-color: transparent;
+      border-color: #fbbf24;
+      color: #fbbf24;
+    }
+
     /* Disabled button state */
     .action-button:disabled {
       background-color: #475569;
@@ -416,6 +423,18 @@
         transition: none !important;
       }
 
+      /* Mobile Next button */
+      .mobile-btn-next {
+        background-color: transparent;
+        border: 1px solid #fbbf24;
+        color: #fbbf24;
+      }
+      .mobile-btn-next:active {
+        background-color: #fbbf24;
+        color: #ffffff;
+        transition: none !important;
+      }
+
       /* Adjust table widths for mobile */
       .mobile-adjusted-width {
         width: auto !important;
@@ -584,7 +603,9 @@
       
       // Generate question buttons
       const questionButtons = pageQuestions.map(q => {
-        const classes = `${baseClasses} ${btnClass} flex-1`;
+        // On mobile with 4+ questions, use flex-[3] for questions so Next/Exit container can be flex-[1] (1/4 width)
+        const flexClass = (isMobile && totalQuestions >= 4) ? 'flex-[3]' : 'flex-1';
+        const classes = `${baseClasses} ${btnClass} ${flexClass}`;
         const fnCall = `handleQuestion(${booking_number}, '${customer_name}', '${q.question.replace(/'/g, "\\'")}')`;
         const onclickHandler = isMobile 
           ? `${fnCall}` 
@@ -598,7 +619,7 @@
           ? 'action-button px-2 py-1 rounded-md border font-medium text-xs'
           : 'action-button px-2 py-1 rounded-md border font-medium text-xs';
         const exitBtnClass = isMobile ? 'mobile-btn-cancel' : 'btn-cancel';
-        const nextBtnClass = isMobile ? 'mobile-btn-ask' : 'btn-ask';
+        const nextBtnClass = isMobile ? 'mobile-btn-next' : 'btn-next';
         
         // Next button (navigates to next page, wraps around)
         const nextOnclick = isMobile
@@ -612,8 +633,10 @@
           : `handleExitAsk(${booking_number}); setTimeout(() => this.blur(), 100);`;
         const exitButton = `<button onclick="${exitOnclick}" class="${exitBaseClasses} ${exitBtnClass} flex-1">Exit</button>`;
         
-        // Wrap Next and Exit in a container div so they take up the same space as one question button
-        const nextExitContainer = `<div class="flex gap-1.5 flex-1">${nextButton}${exitButton}</div>`;
+        // Wrap Next and Exit in a container div
+        // On mobile: use flex-[1] for fixed 1/4 width, on desktop: use flex-1 for equal sizing
+        const containerFlex = isMobile ? 'flex-[1]' : 'flex-1';
+        const nextExitContainer = `<div class="flex gap-1.5 ${containerFlex}">${nextButton}${exitButton}</div>`;
         questionButtons.push(nextExitContainer);
       } else {
         // Only Exit button if 3 or fewer questions
@@ -702,7 +725,9 @@
       
       // Generate question buttons
       const questionButtons = pageQuestions.map(q => {
-        const classes = `${baseClasses} ${btnClass} flex-1`;
+        // On mobile with 4+ questions, use flex-[3] for questions so Next/Exit container can be flex-[1] (1/4 width)
+        const flexClass = (isMobile && totalQuestions >= 4) ? 'flex-[3]' : 'flex-1';
+        const classes = `${baseClasses} ${btnClass} ${flexClass}`;
         const fnCall = `handleQuestion(${booking_number}, '${customer_name}', '${q.question.replace(/'/g, "\\'")}')`;
         const onclickHandler = isMobile 
           ? `${fnCall}` 
@@ -716,7 +741,7 @@
           ? 'action-button px-2 py-1 rounded-md border font-medium text-xs'
           : 'action-button px-2 py-1 rounded-md border font-medium text-xs';
         const exitBtnClass = isMobile ? 'mobile-btn-cancel' : 'btn-cancel';
-        const nextBtnClass = isMobile ? 'mobile-btn-ask' : 'btn-ask';
+        const nextBtnClass = isMobile ? 'mobile-btn-next' : 'btn-next';
         
         // Next button (navigates to next page, wraps around)
         const nextOnclick = isMobile
@@ -730,8 +755,10 @@
           : `handleExitAsk(${booking_number}); setTimeout(() => this.blur(), 100);`;
         const exitButton = `<button onclick="${exitOnclick}" class="${exitBaseClasses} ${exitBtnClass} flex-1">Exit</button>`;
         
-        // Wrap Next and Exit in a container div so they take up the same space as one question button
-        const nextExitContainer = `<div class="flex gap-1.5 flex-1">${nextButton}${exitButton}</div>`;
+        // Wrap Next and Exit in a container div
+        // On mobile: use flex-[1] for fixed 1/4 width, on desktop: use flex-1 for equal sizing
+        const containerFlex = isMobile ? 'flex-[1]' : 'flex-1';
+        const nextExitContainer = `<div class="flex gap-1.5 ${containerFlex}">${nextButton}${exitButton}</div>`;
         questionButtons.push(nextExitContainer);
       } else {
         // Only Exit button if 3 or fewer questions
