@@ -515,18 +515,18 @@
     // Extended list for testing minRowDisplay functionality
     const mockWaitlist = [
       // Completed items (will be sorted to the top) - with time_cleared set
-      { booking_number: 1005, customer_name: "Haneul Jung", pax: 2, time_created: Date.now() - 45 * 60 * 1000, time_cleared: Date.now() - 40 * 60 * 1000, status: "Cancelled", booking_list_id: "123", customer_phone: "010-1111-1111", subscriber_id: "sub_aaa" },
-      { booking_number: 1008, customer_name: "Jimin Lee", pax: 3, time_created: Date.now() - 50 * 60 * 1000, time_cleared: Date.now() - 45 * 60 * 1000, status: "Arrived", booking_list_id: "234", customer_phone: "010-2222-2222", subscriber_id: "sub_bbb" },
-      { booking_number: 1010, customer_name: "Yuna Choi", pax: 4, time_created: Date.now() - 55 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "456", customer_phone: "010-3333-3333", subscriber_id: "sub_ccc" },
+      { booking_number: 1005, customer_name: "Haneul Jung", pax: 2, time_created: Date.now() - 45 * 60 * 1000, time_cleared: Date.now() - 40 * 60 * 1000, status: "Cancelled", booking_list_id: "123", customer_phone: "010-1111-1111", subscriber_id: "sub_aaa", q_level: 500 },
+      { booking_number: 1008, customer_name: "Jimin Lee", pax: 3, time_created: Date.now() - 50 * 60 * 1000, time_cleared: Date.now() - 45 * 60 * 1000, status: "Arrived", booking_list_id: "234", customer_phone: "010-2222-2222", subscriber_id: "sub_bbb", q_level: 500 },
 
       // Active items (Waiting/Ready) - no time_cleared
-      { booking_number: 1001, customer_name: "Minji Kim", pax: 4, time_created: Date.now() - 35 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "235", customer_phone: "010-4444-4444", subscriber_id: "sub_ddd" },
-      { booking_number: 1002, customer_name: "Juno Lee", pax: 2, time_created: Date.now() - 30 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "335", customer_phone: "010-5555-5555", subscriber_id: "sub_eee" },
-      { booking_number: 1003, customer_name: "Seyeon Park", pax: 3, time_created: Date.now() - 25 * 60 * 1000, time_cleared: null, status: "Ready", booking_list_id: "347", customer_phone: "010-6666-6666", subscriber_id: "sub_fff" },
-      { booking_number: 1004, customer_name: "Eunwoo Choi", pax: 5, time_created: Date.now() - 20 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "156", customer_phone: "010-7777-7777", subscriber_id: "sub_ggg" },
-      { booking_number: 1006, customer_name: "Jihoon Kim", pax: 3, time_created: Date.now() - 15 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "287", customer_phone: "010-8888-8888", subscriber_id: "sub_hhh" },
-      { booking_number: 1007, customer_name: "Somin Park", pax: 6, time_created: Date.now() - 10 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "563", customer_phone: "010-9999-9999", subscriber_id: "sub_iii" },
-      { booking_number: 1009, customer_name: "Taehyun Lee", pax: 2, time_created: Date.now() - 5 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "763", customer_phone: "010-0000-0000", subscriber_id: "sub_jjj" },
+      { booking_number: 1010, customer_name: "Yuna Choi", pax: 4, time_created: Date.now() - 55 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "456", customer_phone: "010-3333-3333", subscriber_id: "sub_ccc", q_level: 100 },
+      { booking_number: 1001, customer_name: "Minji Kim", pax: 4, time_created: Date.now() - 35 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "235", customer_phone: "010-4444-4444", subscriber_id: "sub_ddd", q_level: 100 },
+      { booking_number: 1002, customer_name: "Juno Lee", pax: 2, time_created: Date.now() - 30 * 60 * 1000, time_cleared: null, status: "Ready", booking_list_id: "335", customer_phone: "010-5555-5555", subscriber_id: "sub_eee", q_level: 300 },
+      { booking_number: 1003, customer_name: "Seyeon Park", pax: 3, time_created: Date.now() - 25 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "347", customer_phone: "010-6666-6666", subscriber_id: "sub_fff", q_level: 100 },
+      { booking_number: 1004, customer_name: "Eunwoo Choi", pax: 5, time_created: Date.now() - 20 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "156", customer_phone: "010-7777-7777", subscriber_id: "sub_ggg", q_level: 100 },
+      { booking_number: 1006, customer_name: "Jihoon Kim", pax: 3, time_created: Date.now() - 15 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "287", customer_phone: "010-8888-8888", subscriber_id: "sub_hhh", q_level: 100 },
+      { booking_number: 1007, customer_name: "Somin Park", pax: 6, time_created: Date.now() - 10 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "563", customer_phone: "010-9999-9999", subscriber_id: "sub_iii", q_level: 100 },
+      { booking_number: 1009, customer_name: "Taehyun Lee", pax: 2, time_created: Date.now() - 5 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "763", customer_phone: "010-0000-0000", subscriber_id: "sub_jjj", q_level: 100 },
     ];
 
     const mockChatList = [
@@ -542,16 +542,212 @@
       { Id: 8, booking_list_id: "335", dateTime: Date.now() - 22 * 60 * 1000, qna: "A: Coming in 5 mins" },
 
       { Id: 9, booking_list_id: "156", dateTime: Date.now() - 20 * 60 * 1000, qna: "Waiting" },
-      { Id: 10, booking_list_id: "287", dateTime: Date.now() - 15 * 60 * 1000, qna: "Waiting" },
-      { Id: 11, booking_list_id: "563", dateTime: Date.now() - 10 * 60 * 1000, qna: "Waiting" },
-      { Id: 12, booking_list_id: "763", dateTime: Date.now() - 5 * 60 * 1000, qna: "Waiting" },
+      { Id: 10, booking_list_id: "156", dateTime: Date.now() - 19 * 60 * 1000, qna: "Q: Is outdoor seating OK?" },
+
+      { Id: 11, booking_list_id: "287", dateTime: Date.now() - 15 * 60 * 1000, qna: "Waiting" },
+      { Id: 12, booking_list_id: "563", dateTime: Date.now() - 10 * 60 * 1000, qna: "Waiting" },
+      { Id: 13, booking_list_id: "763", dateTime: Date.now() - 5 * 60 * 1000, qna: "Waiting" },
     ];
 
     const mockAskQuestions = [
-      { Id: 1, question: "Table is Ready. Coming?", q_level: 1 },
-      { Id: 2, question: "Is outdoor seating OK?", q_level: 1 },
-      { Id: 3, question: "Is split table OK?", q_level: 1 },
+      { Id: 1, question: "Table is Ready. Coming?", q_level: 300, minPax: 1 },
+      { Id: 2, question: "Is outdoor seating OK?", q_level: 200, minPax: 1 },
+      { Id: 3, question: "Is split table OK?", q_level: 200, minPax: 5 },
+      { Id: 4, question: "Is sharing table OK?", q_level: 200, minPax: 1 },
+      { Id: 5, question: "Table passed to next customer", q_level: 300, q_level_min: 300, minPax: 1 },
     ];
+
+    /**
+     * Generate question button HTML with pagination (max 3 questions per page).
+     * If 4+ questions, adds Next and Exit buttons.
+     * @param {Array} filteredQuestions - Array of filtered question objects
+     * @param {number} booking_number - The booking number
+     * @param {string} customer_name - The customer name
+     * @param {boolean} isMobile - Whether rendering for mobile
+     * @returns {string} HTML string for question buttons
+     */
+    function generateQuestionButtonsHTML(filteredQuestions, booking_number, customer_name, isMobile) {
+      const MAX_QUESTIONS_PER_PAGE = 3;
+      const currentPage = questionPageIndex[booking_number] || 0;
+      const totalQuestions = filteredQuestions.length;
+      const totalPages = Math.ceil(totalQuestions / MAX_QUESTIONS_PER_PAGE);
+      
+      // Get questions for current page
+      const startIdx = currentPage * MAX_QUESTIONS_PER_PAGE;
+      const endIdx = Math.min(startIdx + MAX_QUESTIONS_PER_PAGE, totalQuestions);
+      const pageQuestions = filteredQuestions.slice(startIdx, endIdx);
+      
+      const baseClasses = isMobile 
+        ? 'action-button px-2 py-1 rounded-md border font-medium text-xs'
+        : 'action-button px-2 py-1 rounded-md border font-medium text-xs';
+      const btnClass = isMobile ? 'mobile-btn-ask' : 'btn-ask';
+      
+      // Generate question buttons
+      const questionButtons = pageQuestions.map(q => {
+        const classes = `${baseClasses} ${btnClass} flex-1`;
+        const fnCall = `handleQuestion(${booking_number}, '${customer_name}', '${q.question.replace(/'/g, "\\'")}')`;
+        const onclickHandler = isMobile 
+          ? `${fnCall}` 
+          : `${fnCall}; setTimeout(() => this.blur(), 100);`;
+        return `<button onclick="${onclickHandler}" class="${classes}">${q.question}</button>`;
+      });
+      
+      // Add Next and Exit buttons if there are 4+ questions
+      if (totalQuestions >= 4) {
+        const exitBaseClasses = isMobile 
+          ? 'action-button px-2 py-1 rounded-md border font-medium text-xs'
+          : 'action-button px-2 py-1 rounded-md border font-medium text-xs';
+        const exitBtnClass = isMobile ? 'mobile-btn-cancel' : 'btn-cancel';
+        const nextBtnClass = isMobile ? 'mobile-btn-ask' : 'btn-ask';
+        
+        // Next button (navigates to next page, wraps around)
+        const nextOnclick = isMobile
+          ? `handleNextQuestion(${booking_number})`
+          : `handleNextQuestion(${booking_number}); setTimeout(() => this.blur(), 100);`;
+        const nextButton = `<button onclick="${nextOnclick}" class="${exitBaseClasses} ${nextBtnClass} flex-1">Next</button>`;
+        
+        // Exit button
+        const exitOnclick = isMobile
+          ? `handleExitAsk(${booking_number})`
+          : `handleExitAsk(${booking_number}); setTimeout(() => this.blur(), 100);`;
+        const exitButton = `<button onclick="${exitOnclick}" class="${exitBaseClasses} ${exitBtnClass} flex-1">Exit</button>`;
+        
+        // Wrap Next and Exit in a container div so they take up the same space as one question button
+        const nextExitContainer = `<div class="flex gap-1.5 flex-1">${nextButton}${exitButton}</div>`;
+        questionButtons.push(nextExitContainer);
+      } else {
+        // Only Exit button if 3 or fewer questions
+        const exitBaseClasses = isMobile 
+          ? 'action-button px-2 py-1 rounded-md border font-medium text-xs'
+          : 'action-button px-2 py-1 rounded-md border font-medium text-xs';
+        const exitBtnClass = isMobile ? 'mobile-btn-cancel' : 'btn-cancel';
+        const exitOnclick = isMobile
+          ? `handleExitAsk(${booking_number})`
+          : `handleExitAsk(${booking_number}); setTimeout(() => this.blur(), 100);`;
+        const exitButton = `<button onclick="${exitOnclick}" class="${exitBaseClasses} ${exitBtnClass} flex-1">Exit</button>`;
+        questionButtons.push(exitButton);
+      }
+      
+      return questionButtons.join('\n');
+    }
+
+    /**
+     * Get filtered questions based on customer's pax count and q_level.
+     * Only returns questions where minPax <= customerPax AND q_level >= customer's q_level.
+     * If question has q_level_min, customer's q_level must be >= q_level_min.
+     * Also excludes questions that have already been asked (exist in mockChatList).
+     * @param {number} customerPax - The number of people in the party
+     * @param {number} booking_number - The booking number to lookup q_level from mockWaitlist
+     * @returns {Array} Filtered array of question objects
+     */
+    function getFilteredQuestions(customerPax, booking_number) {
+      // Find the customer's q_level and booking_list_id from mockWaitlist
+      const customer = mockWaitlist.find(item => item.booking_number === booking_number);
+      const customerQLevel = customer ? customer.q_level : 0;
+      const bookingListId = customer ? customer.booking_list_id : null;
+      
+      // Get all questions from chat history for this booking_list_id
+      const askedQuestions = new Set();
+      if (bookingListId) {
+        mockChatList
+          .filter(chat => chat.booking_list_id === bookingListId)
+          .forEach(chat => {
+            // Extract question from "Q: <question text>" format
+            const match = chat.qna.match(/^Q:\s*(.+)/);
+            if (match) {
+              askedQuestions.add(match[1]);
+            }
+          });
+      }
+      
+      return mockAskQuestions.filter(q => {
+        // Check basic conditions
+        if (q.minPax > customerPax) return false;
+        if (q.q_level < customerQLevel) return false;
+        if (askedQuestions.has(q.question)) return false;
+        
+        // If q_level_min exists, customer's q_level must be >= q_level_min
+        if (q.q_level_min !== undefined && customerQLevel < q.q_level_min) {
+          return false;
+        }
+        
+        return true;
+      });
+    }
+
+    /**
+     * Generate question button HTML with pagination (max 3 questions per page).
+     * If 4+ questions, adds Next and Exit buttons.
+     * @param {Array} filteredQuestions - Array of filtered question objects
+     * @param {number} booking_number - The booking number
+     * @param {string} customer_name - The customer name
+     * @param {boolean} isMobile - Whether rendering for mobile
+     * @returns {string} HTML string for question buttons
+     */
+    function generateQuestionButtonsHTML(filteredQuestions, booking_number, customer_name, isMobile) {
+      const MAX_QUESTIONS_PER_PAGE = 3;
+      const currentPage = questionPageIndex[booking_number] || 0;
+      const totalQuestions = filteredQuestions.length;
+      const totalPages = Math.ceil(totalQuestions / MAX_QUESTIONS_PER_PAGE);
+      
+      // Get questions for current page
+      const startIdx = currentPage * MAX_QUESTIONS_PER_PAGE;
+      const endIdx = Math.min(startIdx + MAX_QUESTIONS_PER_PAGE, totalQuestions);
+      const pageQuestions = filteredQuestions.slice(startIdx, endIdx);
+      
+      const baseClasses = isMobile 
+        ? 'action-button px-2 py-1 rounded-md border font-medium text-xs'
+        : 'action-button px-2 py-1 rounded-md border font-medium text-xs';
+      const btnClass = isMobile ? 'mobile-btn-ask' : 'btn-ask';
+      
+      // Generate question buttons
+      const questionButtons = pageQuestions.map(q => {
+        const classes = `${baseClasses} ${btnClass} flex-1`;
+        const fnCall = `handleQuestion(${booking_number}, '${customer_name}', '${q.question.replace(/'/g, "\\'")}')`;
+        const onclickHandler = isMobile 
+          ? `${fnCall}` 
+          : `${fnCall}; setTimeout(() => this.blur(), 100);`;
+        return `<button onclick="${onclickHandler}" class="${classes}">${q.question}</button>`;
+      });
+      
+      // Add Next and Exit buttons if there are 4+ questions
+      if (totalQuestions >= 4) {
+        const exitBaseClasses = isMobile 
+          ? 'action-button px-2 py-1 rounded-md border font-medium text-xs'
+          : 'action-button px-2 py-1 rounded-md border font-medium text-xs';
+        const exitBtnClass = isMobile ? 'mobile-btn-cancel' : 'btn-cancel';
+        const nextBtnClass = isMobile ? 'mobile-btn-ask' : 'btn-ask';
+        
+        // Next button (navigates to next page, wraps around)
+        const nextOnclick = isMobile
+          ? `handleNextQuestion(${booking_number})`
+          : `handleNextQuestion(${booking_number}); setTimeout(() => this.blur(), 100);`;
+        const nextButton = `<button onclick="${nextOnclick}" class="${exitBaseClasses} ${nextBtnClass} flex-1">Next</button>`;
+        
+        // Exit button
+        const exitOnclick = isMobile
+          ? `handleExitAsk(${booking_number})`
+          : `handleExitAsk(${booking_number}); setTimeout(() => this.blur(), 100);`;
+        const exitButton = `<button onclick="${exitOnclick}" class="${exitBaseClasses} ${exitBtnClass} flex-1">Exit</button>`;
+        
+        // Wrap Next and Exit in a container div so they take up the same space as one question button
+        const nextExitContainer = `<div class="flex gap-1.5 flex-1">${nextButton}${exitButton}</div>`;
+        questionButtons.push(nextExitContainer);
+      } else {
+        // Only Exit button if 3 or fewer questions
+        const exitBaseClasses = isMobile 
+          ? 'action-button px-2 py-1 rounded-md border font-medium text-xs'
+          : 'action-button px-2 py-1 rounded-md border font-medium text-xs';
+        const exitBtnClass = isMobile ? 'mobile-btn-cancel' : 'btn-cancel';
+        const exitOnclick = isMobile
+          ? `handleExitAsk(${booking_number})`
+          : `handleExitAsk(${booking_number}); setTimeout(() => this.blur(), 100);`;
+        const exitButton = `<button onclick="${exitOnclick}" class="${exitBaseClasses} ${exitBtnClass} flex-1">Exit</button>`;
+        questionButtons.push(exitButton);
+      }
+      
+      return questionButtons.join('\n');
+    }
 
     const waitlistBody = document.getElementById('waitlist-body');
     const messageBox = document.getElementById('message-box');
@@ -571,6 +767,7 @@
     let rowHeight = 0; // 단일 행의 높이 (Check-In/Cancel 시 initialScrollTop 업데이트에 사용)
     let expandedRowId = null; // 현재 확장된 행의 ID (모바일용)
     let askModeItems = new Set(); // Track which items are in "Ask mode" showing question buttons
+    let questionPageIndex = {}; // Track current question page for each booking_number (default 0)
 
     // --- Action Button Definitions ---
     const actionButtonDefinitions = [
@@ -662,7 +859,7 @@
 
     /**
      * Mobile: Toggle mobile action row for a specific item
-     * Desktop: Toggle row highlight
+     * Desktop: Toggle row highlight and exit Ask mode for other rows
      */
     function toggleMobileActions(booking_number, event) {
       // Check if we're on mobile (screen width <= 768px)
@@ -675,6 +872,15 @@
           }
           event.preventDefault();
           event.stopPropagation();
+        }
+        
+        // Exit Ask mode for other rows when clicking a different row
+        const askModeItemsArray = Array.from(askModeItems);
+        if (askModeItemsArray.length > 0 && !askModeItems.has(booking_number)) {
+          askModeItems.clear();
+          console.log(`ASK_MODE: Auto-exited for items ${askModeItemsArray.join(', ')} when clicking row #${booking_number} (desktop)`);
+          // Re-render to update the UI
+          renderWaitlist();
         }
         
         // Toggle persistent highlight on the row
@@ -727,6 +933,11 @@
           // Force reflow
           void prevRow.offsetHeight;
         }
+        // Exit Ask mode for the previous row
+        if (askModeItems.has(expandedRowId)) {
+          askModeItems.delete(expandedRowId);
+          console.log(`ASK_MODE: Auto-exited for #${expandedRowId} when switching to #${booking_number}`);
+        }
       }
 
       // Add highlight to the newly selected row immediately
@@ -748,19 +959,10 @@
       
       // Check if this item is in Ask mode
       if (askModeItems.has(item.booking_number)) {
-        // Show question buttons + Exit button (mobile)
-        buttonHTMLs = mockAskQuestions.map(q => {
-          const baseClasses = 'action-button px-2 py-1 rounded-md border font-medium text-xs';
-          const classes = `${baseClasses} mobile-btn-ask flex-1`;
-          const fnCall = `handleQuestion(${item.booking_number}, '${item.customer_name}', '${q.question.replace(/'/g, "\\'")}', event)`;
-          return `<button onclick="${fnCall}" class="${classes}">${q.question}</button>`;
-        });
-        
-        // Add Exit button
-        const exitBaseClasses = 'action-button px-2 py-1 rounded-md border font-medium text-xs';
-        const exitClasses = `${exitBaseClasses} mobile-btn-cancel flex-1`;
-        const exitOnclick = `handleExitAsk(${item.booking_number})`;
-        buttonHTMLs.push(`<button onclick="${exitOnclick}" class="${exitClasses}">Exit</button>`);
+        // Show question buttons + Exit button (mobile) - filtered by pax and q_level
+        const filteredQuestions = getFilteredQuestions(item.pax, item.booking_number);
+        const questionButtonsHTML = generateQuestionButtonsHTML(filteredQuestions, item.booking_number, item.customer_name, true);
+        buttonHTMLs = [questionButtonsHTML];
       } else {
         // Show normal buttons
         const buttons = getButtonsForStatus(item.status);
@@ -1005,6 +1207,12 @@
         askModeItems.delete(booking_number);
         console.log(`ASK_MODE: Disabled for #${booking_number}. Current set:`, Array.from(askModeItems));
       } else {
+        // Exit Ask mode for all other items before enabling for this one
+        if (askModeItems.size > 0) {
+          const previousItems = Array.from(askModeItems);
+          askModeItems.clear();
+          console.log(`ASK_MODE: Auto-exited for items ${previousItems.join(', ')} when enabling for #${booking_number}`);
+        }
         askModeItems.add(booking_number);
         console.log(`ASK_MODE: Enabled for #${booking_number}. Current set:`, Array.from(askModeItems));
       }
@@ -1029,19 +1237,10 @@
             
             // Check if this item is in Ask mode
             if (askModeItems.has(item.booking_number)) {
-              // Show question buttons + Exit button (mobile)
-              buttonHTMLs = mockAskQuestions.map(q => {
-                const baseClasses = 'action-button px-2 py-1 rounded-md border font-medium text-xs';
-                const classes = `${baseClasses} mobile-btn-ask flex-1`;
-                const fnCall = `handleQuestion(${item.booking_number}, '${item.customer_name}', '${q.question.replace(/'/g, "\\'")}', event)`;
-                return `<button onclick="${fnCall}" class="${classes}">${q.question}</button>`;
-              });
-              
-              // Add Exit button
-              const exitBaseClasses = 'action-button px-2 py-1 rounded-md border font-medium text-xs';
-              const exitClasses = `${exitBaseClasses} mobile-btn-cancel flex-1`;
-              const exitOnclick = `handleExitAsk(${item.booking_number})`;
-              buttonHTMLs.push(`<button onclick="${exitOnclick}" class="${exitClasses}">Exit</button>`);
+              // Show question buttons + Exit button (mobile) - filtered by pax and q_level
+              const filteredQuestions = getFilteredQuestions(item.pax, item.booking_number);
+              const questionButtonsHTML = generateQuestionButtonsHTML(filteredQuestions, item.booking_number, item.customer_name, true);
+              buttonHTMLs = [questionButtonsHTML];
             } else {
               // Show normal buttons
               const buttons = getButtonsForStatus(item.status);
@@ -1073,13 +1272,57 @@
     /**
      * Handles question button click - logs the question
      */
-    function handleQuestion(booking_number, customer_name, question, event) {
+    function handleQuestion(booking_number, customer_name, question) {
       console.log(`QUESTION: Sending to ${customer_name} (#${booking_number}): ${question}`);
+    }
+
+    /**
+     * Navigate to next page of questions
+     */
+    function handleNextQuestion(booking_number) {
+      console.log(`ACTION: Next question page for booking #${booking_number}`);
+      const item = mockWaitlist.find(i => i.booking_number === booking_number);
+      if (!item) return;
       
-      // Flash button on desktop
+      const filteredQuestions = getFilteredQuestions(item.pax, booking_number);
+      const MAX_QUESTIONS_PER_PAGE = 3;
+      const totalPages = Math.ceil(filteredQuestions.length / MAX_QUESTIONS_PER_PAGE);
+      
+      // Increment page index and wrap around
+      const currentPage = questionPageIndex[booking_number] || 0;
+      questionPageIndex[booking_number] = (currentPage + 1) % totalPages;
+      
+      console.log(`QUESTION_PAGE: #${booking_number} moved to page ${questionPageIndex[booking_number]} of ${totalPages}`);
+      
+      // Re-render to show next page of questions
+      renderWaitlist();
+      
+      // On mobile, re-open the action row after rendering
       const isMobile = window.innerWidth <= 768;
-      if (!isMobile) {
-        flashButton(event);
+      if (isMobile) {
+        requestAnimationFrame(() => {
+          const mainRow = document.querySelector(`tr[data-item-id="${booking_number}"]`);
+          if (mainRow) {
+            expandedRowId = booking_number;
+            const questionButtonsHTML = generateQuestionButtonsHTML(filteredQuestions, booking_number, item.customer_name, true);
+            
+            const mobileActionRowId = `mobile-actions-${booking_number}`;
+            const mobileRow = document.createElement('tr');
+            mobileRow.id = mobileActionRowId;
+            mobileRow.className = 'mobile-action-row';
+            mobileRow.innerHTML = `
+              <td colspan="5" class="px-2 py-3">
+                <div class="flex gap-1.5">
+                  ${questionButtonsHTML}
+                </div>
+              </td>
+            `;
+            
+            mainRow.insertAdjacentElement('afterend', mobileRow);
+            mainRow.classList.add('row-selected');
+            console.log(`MOBILE: Re-opened action row for #${booking_number} after Next`);
+          }
+        });
       }
     }
 
@@ -1089,6 +1332,8 @@
     function handleExitAsk(booking_number) {
       console.log(`ACTION: Exiting Ask mode for booking #${booking_number}`);
       askModeItems.delete(booking_number);
+      // Reset question page when exiting Ask mode
+      delete questionPageIndex[booking_number];
       renderWaitlist();
     }
 
@@ -1621,29 +1866,24 @@
         
         // Check if this item is in Ask mode
         const isInAskMode = askModeItems.has(item.booking_number);
-        console.log(`RENDER: Item #${item.booking_number} - isInAskMode: ${isInAskMode}`);
+        //console.log(`RENDER: Item #${item.booking_number} - isInAskMode: ${isInAskMode}`);
         
         if (isInAskMode) {
-          // Show question buttons + Exit button (with ask-mode-btn class for 2-per-row layout)
-          buttonHTMLs = mockAskQuestions.map(q => {
-            const baseClasses = 'action-button px-2 py-1 rounded-md border font-medium text-xs';
-            const classes = `${baseClasses} btn-ask flex-1 ask-mode-btn`;
-            const fnCall = `handleQuestion(${item.booking_number}, '${item.customer_name}', '${q.question.replace(/'/g, "\\'")}', event)`;
-            const onclickHandler = `${fnCall}; setTimeout(() => this.blur(), 100);`;
-            return `<button onclick="${onclickHandler}" class="${classes}">${q.question}</button>`;
+          // Show question buttons + Exit button (with ask-mode-btn class for 2-per-row layout) - filtered by pax and q_level
+          const filteredQuestions = getFilteredQuestions(item.pax, item.booking_number);
+          const questionButtonsHTML = generateQuestionButtonsHTML(filteredQuestions, item.booking_number, item.customer_name, false);
+          
+          // Split the HTML string into individual button elements and add ask-mode-btn class
+          buttonHTMLs = questionButtonsHTML.split('\n').map(btnHTML => {
+            // Add ask-mode-btn class to each button for desktop 2-per-row layout
+            return btnHTML.replace('flex-1', 'flex-1 ask-mode-btn');
           });
           
-          // Add Exit button (also with ask-mode-btn class)
-          const exitBaseClasses = 'action-button px-2 py-1 rounded-md border font-medium text-xs';
-          const exitClasses = `${exitBaseClasses} btn-cancel flex-1 ask-mode-btn`;
-          const exitOnclick = `handleExitAsk(${item.booking_number}); setTimeout(() => this.blur(), 100);`;
-          buttonHTMLs.push(`<button onclick="${exitOnclick}" class="${exitClasses}">Exit</button>`);
-          
-          console.log(`RENDER: Generated ${buttonHTMLs.length} question buttons for #${item.booking_number}`);
+          //console.log(`RENDER: Generated ${buttonHTMLs.length} question buttons for #${item.booking_number} (pax: ${item.pax}, filtered from ${mockAskQuestions.length})`);
         } else {
           // Show normal buttons
           buttonHTMLs = buttons.map(btnDef => generateButtonHTML(btnDef, item.booking_number, item.customer_name, false));
-          console.log(`RENDER: Generated ${buttonHTMLs.length} normal buttons for #${item.booking_number}`);
+          //console.log(`RENDER: Generated ${buttonHTMLs.length} normal buttons for #${item.booking_number}`);
         }
         
         const actionButtons = buttonHTMLs.join('\n');
