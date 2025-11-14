@@ -1,0 +1,448 @@
+/* Inter font application and base style - Dark Modern Theme */
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+
+/* Status Colors for Icon - Neon effect for dark theme */
+.status-waiting {
+  color: #fbbf24;
+  text-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
+}
+
+.status-called {
+  color: #fb923c;
+  text-shadow: 0 0 8px rgba(251, 146, 60, 0.5);
+}
+
+.status-checkedin {
+  color: #8b5cf6;
+  text-shadow: 0 0 8px rgba(139, 92, 246, 0.5);
+}
+
+.status-cancelled {
+  color: #f87171;
+  text-shadow: 0 0 8px rgba(248, 113, 113, 0.5);
+}
+
+/* Dark Modern Button Styles */
+.action-button {
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.action-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.4);
+}
+
+/* Desktop: Remove all button hover/active background effects - only row highlights */
+@media (min-width: 769px) {
+  .action-button {
+    transition: none !important;
+  }
+
+  .action-button:hover:not(:disabled) {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+}
+
+/* Outline button styles - Ready */
+.btn-ready {
+  background-color: transparent;
+  border-color: #34d399;
+  color: #34d399;
+}
+
+/* Outline button styles - Ask */
+.btn-ask {
+  background-color: transparent;
+  border-color: #60a5fa;
+  color: #60a5fa;
+}
+
+/* Outline button styles - Arrive */
+.btn-arrive {
+  background-color: transparent;
+  border-color: #8b5cf6;
+  color: #8b5cf6;
+}
+
+/* Outline button styles - Cancel (Danger) */
+.btn-cancel {
+  background-color: transparent;
+  border-color: #f87171;
+  color: #f87171;
+}
+
+/* Outline button styles - Undo */
+.btn-undo {
+  background-color: transparent;
+  border-color: #fbbf24;
+  color: #fbbf24;
+}
+
+/* Outline button styles - Next (yellow/amber) */
+.btn-next {
+  background-color: transparent;
+  border-color: #fbbf24;
+  color: #fbbf24;
+}
+
+/* Disabled button state */
+.action-button:disabled {
+  background-color: #475569;
+  border-color: #475569;
+  color: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Highlight animation for completed items - Yellow border */
+.arrive-highlight {
+  outline: 2px solid #fbbf24 !important;
+  outline-offset: -2px !important;
+  transition: all 0.3s ease-in-out;
+}
+
+.cancel-highlight {
+  outline: 2px solid #fbbf24 !important;
+  outline-offset: -2px !important;
+  transition: all 0.3s ease-in-out;
+}
+
+.fade-out-highlight {
+  outline: none !important;
+  transition: all 0.7s ease-out;
+}
+
+/* Button click highlight - brief flash effect */
+tbody tr.button-click-highlight,
+/* Flash effect for button clicks - yellow border */
+tbody tr.button-click-highlight,
+tbody tr.button-click-highlight:hover,
+tbody tr.row-hover.button-click-highlight,
+tbody tr.row-hover.button-click-highlight:hover,
+tbody tr.bg-slate-900.button-click-highlight,
+tbody tr.bg-slate-900.button-click-highlight:hover {
+  outline: 2px solid #fbbf24 !important;
+  outline-offset: -2px !important;
+  transition: none !important;
+}
+
+/* Persistent row highlight (toggle on/off by clicking row) - yellow border */
+tbody tr.row-persistent-highlight,
+tbody tr.row-persistent-highlight:hover,
+tbody tr.row-hover.row-persistent-highlight,
+tbody tr.row-hover.row-persistent-highlight:hover,
+tbody tr.bg-slate-900.row-persistent-highlight,
+tbody tr.bg-slate-900.row-persistent-highlight:hover {
+  outline: 2px solid #fbbf24 !important;
+  outline-offset: -2px !important;
+}
+
+/* Row hover effect - yellow border */
+.row-hover:hover {
+  outline: 2px solid #fbbf24 !important;
+  outline-offset: -2px !important;
+}
+
+/* Completed row style */
+.row-completed {
+  background-color: #1e293b;
+}
+
+.row-completed:hover {
+  outline: 2px solid #fbbf24 !important;
+  outline-offset: -2px !important;
+}
+
+/* Disable hover during scroll to prevent unwanted highlights */
+.disable-hover .row-hover:hover,
+.disable-hover .row-completed:hover {
+  outline: none !important;
+}
+
+/* Desktop: Ensure row-selected has no effect */
+@media (min-width: 769px) {
+  .row-selected {
+    background-color: inherit !important;
+    border-left: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+
+  /* Remove focus styles from rows on desktop (except intentional highlights) */
+  .row-clickable:focus,
+  .row-clickable:focus-visible,
+  .row-clickable:focus-within,
+  tr:focus,
+  tr:focus-visible,
+  tr:focus-within {
+    outline: none !important;
+  }
+
+  /* But allow hover and persistent highlight outlines */
+  .row-hover:focus.row-persistent-highlight,
+  .row-completed:focus.row-persistent-highlight {
+    outline: 2px solid #fbbf24 !important;
+    outline-offset: -2px !important;
+  }
+
+  /* Disable pointer events on row onclick for desktop */
+  .row-clickable {
+    pointer-events: auto;
+    cursor: default !important;
+  }
+}
+
+/* Desktop: Force action column to maintain fixed width and prevent overflow */
+@media (min-width: 769px) {
+  .action-column-cell {
+    max-width: 45%;
+    overflow: visible;
+  }
+
+  .action-column-cell>div {
+    flex-wrap: wrap;
+    max-width: 100%;
+    gap: 0.375rem;
+  }
+
+  .action-column-cell .action-button {
+    min-width: 0;
+    flex-shrink: 1;
+    white-space: normal;
+    overflow: visible;
+    word-wrap: break-word;
+    line-height: 1.2;
+  }
+
+  /* Ask mode: 2 buttons per row */
+  .action-column-cell .action-button.ask-mode-btn {
+    flex-basis: calc(50% - 0.1875rem);
+    max-width: calc(50% - 0.1875rem);
+  }
+}
+
+/* Mobile: Hide Action column header and cells */
+@media (max-width: 768px) {
+
+  .action-column-header,
+  .action-column-cell {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+
+  /* Mobile row cursor */
+  .row-clickable {
+    cursor: pointer;
+    transition: none !important;
+  }
+
+  /* Make only the row itself clickable, not its children */
+  .row-clickable>td {
+    pointer-events: auto;
+  }
+
+  .row-clickable>td>* {
+    pointer-events: none !important;
+  }
+
+  /* Disable all button interactions on mobile (buttons are hidden anyway) */
+  .action-column-cell button,
+  .action-column-cell .action-button {
+    pointer-events: none !important;
+    transition: none !important;
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+
+  /* Force disable all button states on mobile */
+  .action-column-cell .btn-ask,
+  .action-column-cell .btn-ask:hover,
+  .action-column-cell .btn-ask:active,
+  .action-column-cell .btn-ask:focus,
+  .action-column-cell .btn-ask:focus-visible {
+    background-color: transparent !important;
+    transition: none !important;
+    pointer-events: none !important;
+  }
+
+  .action-column-cell .btn-ready,
+  .action-column-cell .btn-ready:hover,
+  .action-column-cell .btn-ready:active,
+  .action-column-cell .btn-ready:focus,
+  .action-column-cell .btn-ready:focus-visible {
+    background-color: transparent !important;
+    transition: none !important;
+    pointer-events: none !important;
+  }
+
+  .action-column-cell .btn-cancel,
+  .action-column-cell .btn-cancel:hover,
+  .action-column-cell .btn-cancel:active,
+  .action-column-cell .btn-cancel:focus,
+  .action-column-cell .btn-cancel:focus-visible {
+    background-color: transparent !important;
+    transition: none !important;
+    pointer-events: none !important;
+  }
+
+  .action-column-cell .btn-arrive,
+  .action-column-cell .btn-arrive:hover,
+  .action-column-cell .btn-arrive:active,
+  .action-column-cell .btn-arrive:focus,
+  .action-column-cell .btn-arrive:focus-visible {
+    background-color: #8b5cf6 !important;
+    transition: none !important;
+    pointer-events: none !important;
+  }
+
+  /* Disable hover effect on mobile to avoid confusion */
+  .row-hover,
+  .row-completed {
+    transition: none !important;
+  }
+
+  .row-hover:hover,
+  .row-completed:hover {
+    background-color: inherit !important;
+    box-shadow: none !important;
+    outline: none !important;
+    transition: none !important;
+  }
+
+  /* Selected row highlight on mobile - Yellow border on outer edges only */
+  .row-selected {
+    border-top: 2px solid #fbbf24 !important;
+    border-left: 2px solid #fbbf24 !important;
+    border-right: 2px solid #fbbf24 !important;
+    border-bottom: none !important;
+    /* No bottom border - will be on action row */
+    transition: none !important;
+  }
+
+  .row-selected:hover {
+    border-top: 2px solid #fbbf24 !important;
+    border-left: 2px solid #fbbf24 !important;
+    border-right: 2px solid #fbbf24 !important;
+  }
+
+  /* Mobile action row - complete the border box */
+  .mobile-action-row {
+    background-color: #1e293b;
+    border-left: 2px solid #fbbf24 !important;
+    border-right: 2px solid #fbbf24 !important;
+    border-bottom: 2px solid #fbbf24 !important;
+    border-top: 1px solid #475569 !important;
+    /* Keep original border between rows */
+  }
+
+  .mobile-action-row td {
+    padding: 12px 8px;
+  }
+
+  /* Mobile button styles - No transition for instant feedback */
+  .mobile-btn,
+  .mobile-btn-call,
+  .mobile-btn-ask,
+  .mobile-btn-checkin,
+  .mobile-btn-cancel {
+    transition: none !important;
+  }
+
+  /* Mobile Ready button */
+  .mobile-btn-ready {
+    background-color: transparent;
+    border: 1px solid #34d399;
+    color: #34d399;
+  }
+
+  .mobile-btn-ready:active {
+    background-color: #34d399;
+    color: #ffffff;
+    transition: none !important;
+  }
+
+  /* Mobile Ask button */
+  .mobile-btn-ask {
+    background-color: transparent;
+    border: 1px solid #60a5fa;
+    color: #60a5fa;
+  }
+
+  .mobile-btn-ask:active {
+    background-color: #60a5fa;
+    color: #ffffff;
+    transition: none !important;
+  }
+
+  /* Mobile Arrive button */
+  .mobile-btn-arrive {
+    background-color: transparent;
+    border: 1px solid #8b5cf6;
+    color: #8b5cf6;
+  }
+
+  .mobile-btn-arrive:active {
+    background-color: #8b5cf6;
+    color: #ffffff;
+    transition: none !important;
+  }
+
+  /* Mobile Cancel button */
+  .mobile-btn-cancel {
+    background-color: transparent;
+    border: 1px solid #f87171;
+    color: #f87171;
+  }
+
+  .mobile-btn-cancel:active {
+    background-color: #f87171;
+    color: #ffffff;
+    transition: none !important;
+  }
+
+  /* Mobile Undo button */
+  .mobile-btn-undo {
+    background-color: transparent;
+    border: 1px solid #fbbf24;
+    color: #fbbf24;
+  }
+
+  .mobile-btn-undo:active {
+    background-color: #fbbf24;
+    color: #ffffff;
+    transition: none !important;
+  }
+
+  /* Mobile Next button */
+  .mobile-btn-next {
+    background-color: transparent;
+    border: 1px solid #fbbf24;
+    color: #fbbf24;
+  }
+
+  .mobile-btn-next:active {
+    background-color: #fbbf24;
+    color: #ffffff;
+    transition: none !important;
+  }
+
+  /* Adjust table widths for mobile */
+  .mobile-adjusted-width {
+    width: auto !important;
+  }
+}
+
+/* Desktop: Hide mobile action rows */
+@media (min-width: 769px) {
+  .mobile-action-row {
+    display: none !important;
+  }
+}
