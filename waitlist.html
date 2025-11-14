@@ -574,6 +574,7 @@
       { Id: 3, question: "Is split table OK?", q_level: 200, minPax: 5 },
       { Id: 4, question: "Is sharing table OK?", q_level: 200, minPax: 1 },
       { Id: 5, question: "Table passed to next customer", q_level: 300, q_level_min: 300, minPax: 1 },
+      { Id: 6, question: "Is standing table OK?", q_level: 200, minPax: 1 },
     ];
 
     /**
@@ -603,8 +604,8 @@
       
       // Generate question buttons
       const questionButtons = pageQuestions.map(q => {
-        // On mobile with 4+ questions, use flex-[3] for questions so Next/Exit container can be flex-[1] (1/4 width)
-        const flexClass = (isMobile && totalQuestions >= 4) ? 'flex-[3]' : 'flex-1';
+        // Mobile: flex-1 (auto width), Desktop: flex-1 (equal distribution)
+        const flexClass = 'flex-1';
         const classes = `${baseClasses} ${btnClass} ${flexClass}`;
         const fnCall = `handleQuestion(${booking_number}, '${customer_name}', '${q.question.replace(/'/g, "\\'")}')`;
         const onclickHandler = isMobile 
@@ -634,8 +635,8 @@
         const exitButton = `<button onclick="${exitOnclick}" class="${exitBaseClasses} ${exitBtnClass} flex-1">Exit</button>`;
         
         // Wrap Next and Exit in a container div
-        // On mobile: use flex-[1] for fixed 1/4 width, on desktop: use flex-1 for equal sizing
-        const containerFlex = isMobile ? 'flex-[1]' : 'flex-1';
+        // Mobile: w-1/4 flex-none (fixed 1/4 width), Desktop: flex-1 (equal distribution)
+        const containerFlex = isMobile ? 'w-1/4 flex-none' : 'flex-1';
         const nextExitContainer = `<div class="flex gap-1.5 ${containerFlex}">${nextButton}${exitButton}</div>`;
         questionButtons.push(nextExitContainer);
       } else {
@@ -644,10 +645,12 @@
           ? 'action-button px-2 py-1 rounded-md border font-medium text-xs'
           : 'action-button px-2 py-1 rounded-md border font-medium text-xs';
         const exitBtnClass = isMobile ? 'mobile-btn-cancel' : 'btn-cancel';
+        // Mobile: w-1/4 flex-none (fixed 1/4 width), Desktop: flex-1 (equal distribution)
+        const exitFlexClass = isMobile ? 'w-1/4 flex-none' : 'flex-1';
         const exitOnclick = isMobile
           ? `handleExitAsk(${booking_number})`
           : `handleExitAsk(${booking_number}); setTimeout(() => this.blur(), 100);`;
-        const exitButton = `<button onclick="${exitOnclick}" class="${exitBaseClasses} ${exitBtnClass} flex-1">Exit</button>`;
+        const exitButton = `<button onclick="${exitOnclick}" class="${exitBaseClasses} ${exitBtnClass} ${exitFlexClass}">Exit</button>`;
         questionButtons.push(exitButton);
       }
       
@@ -725,8 +728,8 @@
       
       // Generate question buttons
       const questionButtons = pageQuestions.map(q => {
-        // On mobile with 4+ questions, use flex-[3] for questions so Next/Exit container can be flex-[1] (1/4 width)
-        const flexClass = (isMobile && totalQuestions >= 4) ? 'flex-[3]' : 'flex-1';
+        // Mobile: flex-1 (auto width), Desktop: flex-1 (equal distribution)
+        const flexClass = 'flex-1';
         const classes = `${baseClasses} ${btnClass} ${flexClass}`;
         const fnCall = `handleQuestion(${booking_number}, '${customer_name}', '${q.question.replace(/'/g, "\\'")}')`;
         const onclickHandler = isMobile 
@@ -756,8 +759,8 @@
         const exitButton = `<button onclick="${exitOnclick}" class="${exitBaseClasses} ${exitBtnClass} flex-1">Exit</button>`;
         
         // Wrap Next and Exit in a container div
-        // On mobile: use flex-[1] for fixed 1/4 width, on desktop: use flex-1 for equal sizing
-        const containerFlex = isMobile ? 'flex-[1]' : 'flex-1';
+        // Mobile: w-1/4 flex-none (fixed 1/4 width), Desktop: flex-1 (equal distribution)
+        const containerFlex = isMobile ? 'w-1/4 flex-none' : 'flex-1';
         const nextExitContainer = `<div class="flex gap-1.5 ${containerFlex}">${nextButton}${exitButton}</div>`;
         questionButtons.push(nextExitContainer);
       } else {
@@ -766,10 +769,12 @@
           ? 'action-button px-2 py-1 rounded-md border font-medium text-xs'
           : 'action-button px-2 py-1 rounded-md border font-medium text-xs';
         const exitBtnClass = isMobile ? 'mobile-btn-cancel' : 'btn-cancel';
+        // Mobile: w-1/4 flex-none (fixed 1/4 width), Desktop: flex-1 (equal distribution)
+        const exitFlexClass = isMobile ? 'w-1/4 flex-none' : 'flex-1';
         const exitOnclick = isMobile
           ? `handleExitAsk(${booking_number})`
           : `handleExitAsk(${booking_number}); setTimeout(() => this.blur(), 100);`;
-        const exitButton = `<button onclick="${exitOnclick}" class="${exitBaseClasses} ${exitBtnClass} flex-1">Exit</button>`;
+        const exitButton = `<button onclick="${exitOnclick}" class="${exitBaseClasses} ${exitBtnClass} ${exitFlexClass}">Exit</button>`;
         questionButtons.push(exitButton);
       }
       
