@@ -616,6 +616,12 @@
       
       // Add Next and Exit buttons if there are 4+ questions
       if (totalQuestions >= 4) {
+        // Desktop: Add dummy button if current page has only 2 questions
+        if (!isMobile && pageQuestions.length === 2) {
+          const dummyButton = `<button class="${baseClasses} ${btnClass} flex-1 invisible">Dummy</button>`;
+          questionButtons.push(dummyButton);
+        }
+        
         const exitBaseClasses = isMobile 
           ? 'action-button px-2 py-1 rounded-md border font-medium text-xs'
           : 'action-button px-2 py-1 rounded-md border font-medium text-xs';
@@ -740,6 +746,12 @@
       
       // Add Next and Exit buttons if there are 4+ questions
       if (totalQuestions >= 4) {
+        // Desktop: Add dummy button if current page has only 2 questions
+        if (!isMobile && pageQuestions.length === 2) {
+          const dummyButton = `<button class="${baseClasses} ${btnClass} flex-1 invisible">Dummy</button>`;
+          questionButtons.push(dummyButton);
+        }
+        
         const exitBaseClasses = isMobile 
           ? 'action-button px-2 py-1 rounded-md border font-medium text-xs'
           : 'action-button px-2 py-1 rounded-md border font-medium text-xs';
