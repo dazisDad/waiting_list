@@ -1,3 +1,38 @@
+
+
+
+// --- Database Connection ---
+// Connector 인스턴스 생성 (preProd 환경, urlPrefix는 waitlist.html 기준 상대 경로)
+const connector = new Connector('preProd', '');
+
+// 페이지 로딩 시 booking_list 테이블 데이터 가져오기
+async function fetchBookingList() {
+  try {
+    // booking_list 테이블의 모든 데이터 가져오기
+    // whereData를 빈 객체로 전달하면 모든 데이터 조회
+    const result = await connector.selectWhere('waitlist', 'booking_list', {
+      template: '1=1',  // 모든 데이터를 가져오기 위한 조건
+      values: [],
+      types: ''
+    });
+    
+    console.log('=== booking_list 테이블 데이터 ===');
+    console.log(result);
+    
+    if (result.success && result.data) {
+      console.log(`총 ${result.data.length}개의 레코드를 가져왔습니다.`);
+      console.table(result.data);
+    } else {
+      console.error('데이터 조회 실패:', result.error);
+    }
+  } catch (error) {
+    console.error('fetchBookingList 오류:', error);
+  }
+}
+
+// 페이지 로딩 시 데이터 가져오기 실행
+fetchBookingList();
+
 // Create mock waitlist data based on current time
 // Extended list for testing minRowDisplay functionality
 const mockWaitlist = [
