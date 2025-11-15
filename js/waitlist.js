@@ -92,9 +92,9 @@ fetchBookingList();
 fetchChatHistory();
 fetchAskQList();
 
-// Create mock waitlist data based on current time
+// Create waitlist data based on current time
 // Extended list for testing minRowDisplay functionality
-const mockWaitlist = [
+let waitlist = [
   // Completed items (will be sorted to the top) - with time_cleared set
   { booking_number: 1005, customer_name: "Haneul Jung", pax: 2, time_created: Date.now() - 45 * 60 * 1000, time_cleared: Date.now() - 40 * 60 * 1000, status: "Cancelled", booking_list_id: "123", customer_phone: "010-1111-1111", subscriber_id: "sub_aaa", q_level: 500 },
   { booking_number: 1008, customer_name: "Jimin Lee", pax: 3, time_created: Date.now() - 50 * 60 * 1000, time_cleared: Date.now() - 45 * 60 * 1000, status: "Arrived", booking_list_id: "234", customer_phone: "010-2222-2222", subscriber_id: "sub_bbb", q_level: 500 },
@@ -110,7 +110,7 @@ const mockWaitlist = [
   { booking_number: 1009, customer_name: "Taehyun Lee", pax: 2, time_created: Date.now() - 5 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "763", customer_phone: "010-0000-0000", subscriber_id: "sub_jjj", q_level: 100 },
 ];
 
-const mockChatList = [
+let chatlist = [
   { Id: 1, booking_list_id: "123", dateTime: Date.now() - 45 * 60 * 1000, qna: "Waiting" },
   { Id: 2, booking_list_id: "234", dateTime: Date.now() - 50 * 60 * 1000, qna: "Waiting" },
   { Id: 3, booking_list_id: "456", dateTime: Date.now() - 55 * 60 * 1000, qna: "Waiting" },
@@ -130,7 +130,7 @@ const mockChatList = [
   { Id: 13, booking_list_id: "763", dateTime: Date.now() - 5 * 60 * 1000, qna: "Waiting" },
 ];
 
-const mockAskQuestions = [
+let askedQuestions = [
   { Id: 1, question: "Table is Ready. Coming?", q_level: 300, minPax: 1 },
   { Id: 2, question: "Is outdoor seating OK?", q_level: 200, minPax: 1 },
   { Id: 3, question: "Is split table OK?", q_level: 200, minPax: 5 },
@@ -229,21 +229,21 @@ function generateQuestionButtonsHTML(filteredQuestions, booking_number, customer
  * Get filtered questions based on customer's pax count and q_level.
  * Only returns questions where minPax <= customerPax AND q_level >= customer's q_level.
  * If question has q_level_min, customer's q_level must be >= q_level_min.
- * Also excludes questions that have already been asked (exist in mockChatList).
+ * Also excludes questions that have already been asked (exist in chatlist).
  * @param {number} customerPax - The number of people in the party
- * @param {number} booking_number - The booking number to lookup q_level from mockWaitlist
+ * @param {number} booking_number - The booking number to lookup q_level from waitlist
  * @returns {Array} Filtered array of question objects
  */
 function getFilteredQuestions(customerPax, booking_number) {
-  // Find the customer's q_level and booking_list_id from mockWaitlist
-  const customer = mockWaitlist.find(item => item.booking_number === booking_number);
+  // Find the customer's q_level and booking_list_id from waitlist
+  const customer = waitlist.find(item => item.booking_number === booking_number);
   const customerQLevel = customer ? customer.q_level : 0;
   const bookingListId = customer ? customer.booking_list_id : null;
 
   // Get all questions from chat history for this booking_list_id
   const askedQuestions = new Set();
   if (bookingListId) {
-    mockChatList
+    chatlist
       .filter(chat => chat.booking_list_id === bookingListId)
       .forEach(chat => {
         // Extract question from "Q: <question text>" format
@@ -254,7 +254,7 @@ function getFilteredQuestions(customerPax, booking_number) {
       });
   }
 
-  return mockAskQuestions.filter(q => {
+  return askedQuestions.filter(q => {
     // Check basic conditions
     if (q.minPax > customerPax) return false;
     if (q.q_level < customerQLevel) return false;
@@ -557,7 +557,7 @@ function toggleMobileActions(booking_number, event) {
 
   // Expand the clicked row
   expandedRowId = booking_number;
-  const item = mockWaitlist.find(i => i.booking_number === booking_number);
+  const item = waitlist.find(i => i.booking_number === booking_number);
   if (!item) return;
 
   // Get buttons for this item's status
@@ -790,7 +790,7 @@ function handleReady(booking_number, customer_name, event) {
   }
 
   // Just update the status, don't change UI
-  const item = mockWaitlist.find(item => item.booking_number === booking_number);
+  const item = waitlist.find(item => item.booking_number === booking_number);
   if (item) {
     item.status = 'Ready';
   }
@@ -835,7 +835,7 @@ function handleAsk(booking_number, customer_name, event) {
       if (mainRow) {
         // Simulate the expansion logic
         expandedRowId = booking_number;
-        const item = mockWaitlist.find(i => i.booking_number === booking_number);
+        const item = waitlist.find(i => i.booking_number === booking_number);
         if (!item) return;
 
         const mobileActionRowId = `mobile-actions-${booking_number}`;
@@ -887,7 +887,7 @@ function handleQuestion(booking_number, customer_name, question) {
  */
 function handleNextQuestion(booking_number) {
   console.log(`ACTION: Next question page for booking #${booking_number}`);
-  const item = mockWaitlist.find(i => i.booking_number === booking_number);
+  const item = waitlist.find(i => i.booking_number === booking_number);
   if (!item) return;
 
   const filteredQuestions = getFilteredQuestions(item.pax, booking_number);
@@ -948,7 +948,7 @@ function handleExitAsk(booking_number) {
  */
 function handleArrive(booking_number, customer_name) {
   console.log(`ACTION: Customer ${customer_name} (#${booking_number}) has arrived.`);
-  const item = mockWaitlist.find(item => item.booking_number === booking_number);
+  const item = waitlist.find(item => item.booking_number === booking_number);
   let shouldScroll = false;
 
   if (item) {
@@ -1028,7 +1028,7 @@ function handleArrive(booking_number, customer_name) {
  */
 function handleCancel(booking_number, customer_name) {
   console.log(`ACTION: Cancelling customer ${customer_name} (#${booking_number}).`);
-  const item = mockWaitlist.find(item => item.booking_number === booking_number);
+  const item = waitlist.find(item => item.booking_number === booking_number);
   let shouldScroll = false;
 
   if (item) {
@@ -1109,7 +1109,7 @@ function handleCancel(booking_number, customer_name) {
  */
 function handleUndo(booking_number, customer_name) {
   console.log(`ACTION: Undo for customer ${customer_name} (#${booking_number}).`);
-  const item = mockWaitlist.find(item => item.booking_number === booking_number);
+  const item = waitlist.find(item => item.booking_number === booking_number);
 
   if (item && (item.status === 'Arrived' || item.status === 'Cancelled')) {
     const wasCompleted = true;
@@ -1181,9 +1181,9 @@ function updateScrollAndButtonState() {
 
   // 1. Determine the height to scroll past (completed items)
   let totalHeightToScroll = 0;
-  const completedItemsCount = mockWaitlist.filter(item => getSortPriority(item.status) === 0).length;
+  const completedItemsCount = waitlist.filter(item => getSortPriority(item.status) === 0).length;
   const hasCompletedItems = completedItemsCount > 0;
-  const totalRows = mockWaitlist.length;
+  const totalRows = waitlist.length;
   const shouldEnableScrolling = totalRows > displayedRows && hasCompletedItems;
 
   if (shouldEnableScrolling) {
@@ -1358,7 +1358,7 @@ function renderWaitlist() {
   }
 
   // 1. Sort the entire list: Completed items first (by time_cleared), then Active items by time_created (oldest first).
-  mockWaitlist.sort((a, b) => {
+  waitlist.sort((a, b) => {
     const priorityA = getSortPriority(a.status);
     const priorityB = getSortPriority(b.status);
 
@@ -1376,13 +1376,13 @@ function renderWaitlist() {
     }
   });
 
-  const completedItemsCount = mockWaitlist.filter(item => getSortPriority(item.status) === 0).length;
-  console.log(`RENDER: Sorted list. Total items: ${mockWaitlist.length}, Completed items count: ${completedItemsCount}`);
+  const completedItemsCount = waitlist.filter(item => getSortPriority(item.status) === 0).length;
+  console.log(`RENDER: Sorted list. Total items: ${waitlist.length}, Completed items count: ${completedItemsCount}`);
 
   waitlistBody.innerHTML = ''; // Clear table content
 
   let tableHTML = '';
-  mockWaitlist.forEach((item) => {
+  waitlist.forEach((item) => {
     const statusPriority = getSortPriority(item.status);
     const rowClass = statusPriority === 0 ? 'row-completed' : 'row-hover bg-slate-900';
     const statusData = getStatusIconAndClass(item.status);
@@ -1395,7 +1395,7 @@ function renderWaitlist() {
     const timeClass = statusPriority === 0 ? 'text-slate-200' : 'text-amber-400';
 
     // Get chat history for this booking_list_id
-    const chatHistory = mockChatList
+    const chatHistory = chatlist
       .filter(chat => chat.booking_list_id === item.booking_list_id)
       .sort((a, b) => a.dateTime - b.dateTime); // Sort by dateTime ascending
 
@@ -1485,7 +1485,7 @@ function renderWaitlist() {
         return btnHTML.replace('flex-1', 'flex-1 ask-mode-btn');
       });
 
-      //console.log(`RENDER: Generated ${buttonHTMLs.length} question buttons for #${item.booking_number} (pax: ${item.pax}, filtered from ${mockAskQuestions.length})`);
+      //console.log(`RENDER: Generated ${buttonHTMLs.length} question buttons for #${item.booking_number} (pax: ${item.pax}, filtered from ${askedQuestions.length})`);
     } else {
       // Show normal buttons
       buttonHTMLs = buttons.map(btnDef => generateButtonHTML(btnDef, item.booking_number, item.customer_name, false));
@@ -1559,7 +1559,7 @@ function renderWaitlist() {
  * Also updates ongoing chat message elapsed times.
  */
 function updateElapsedTimes() {
-  mockWaitlist.forEach(item => {
+  waitlist.forEach(item => {
     const timeElement = document.getElementById(`time-${item.booking_number}`);
     if (timeElement) {
       const timeData = formatElapsedTime(item);
@@ -1632,7 +1632,7 @@ requestAnimationFrame(() => {
 
   // 1. 초기 스크롤 목표 위치를 계산하고 동적 높이 설정을 업데이트합니다.
   const scrollTarget = updateScrollAndButtonState();
-  const completedItemsCount = mockWaitlist.filter(item => getSortPriority(item.status) === 0).length;
+  const completedItemsCount = waitlist.filter(item => getSortPriority(item.status) === 0).length;
 
   const rows = waitlistBody.getElementsByTagName('tr');
   // NEW: Calculate row height based on a rendered row (must be done after render)
@@ -1644,7 +1644,7 @@ requestAnimationFrame(() => {
   console.log(`INIT: Calculated scrollTarget = ${scrollTarget.toFixed(2)}px. Completed items = ${completedItemsCount}`);
 
   // 2. 총 행 수가 displayedRows를 초과하고, Active Queue를 건너뛸 기록이 있고, 스크롤이 가능하며, 현재 Active Queue 위치에 있지 않은 경우 활성화
-  const totalRows = mockWaitlist.length;
+  const totalRows = waitlist.length;
   const shouldScrollToActive = totalRows > displayedRows && completedItemsCount > 0;
   console.log(`INIT: Total rows: ${totalRows}, displayedRows: ${displayedRows}, shouldScrollToActive: ${shouldScrollToActive}`);
 
