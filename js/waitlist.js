@@ -118,10 +118,11 @@ async function fetchAskQList() {
   }
 }
 
-// 페이지 로딩 시 데이터 초기화 함수
-async function initOnLoad() {
+// 서버 사이드 업데이트 함수 - 데이터베이스에서 최신 데이터를 가져와서 전역 변수를 업데이트하고 렌더링
+// 페이지 로딩 시 초기화와 수동 데이터 새로고침 모두에 사용됨
+async function getServerSideUpdate() {
   try {
-    console.log('INIT: Starting data initialization...');
+    console.log('SERVER_UPDATE: Starting server-side data update...');
     
     // 모든 데이터를 병렬로 가져오기
     const [waitlistData, chatData, questionsData] = await Promise.all([
@@ -130,116 +131,28 @@ async function initOnLoad() {
       fetchAskQList()
     ]);
     
-    console.log('INIT: All data loaded successfully');
+    console.log('SERVER_UPDATE: All data loaded successfully');
     console.log('- Waitlist items:', waitlistData?.length || 0);
     console.log('- Chat records:', chatData?.length || 0); 
     console.log('- Questions:', questionsData?.length || 0);
 
+    // 전역 변수 오버라이드
     waitlist = waitlistData;
     chatlist = chatData;
     questionnaire = questionsData;
 
-    console.log(questionnaire)
-
-    console.log('INIT: Data loaded successfully, starting initial setup...');
+    console.log('SERVER_UPDATE: Global variables updated, re-rendering waitlist...');
     
-    // Initial rendering of the table content after data is loaded
-    renderWaitlist(); // This now calls updateScrollAndButtonState() once
-
+    // 새 데이터로 렌더링
+    renderWaitlist();
+    
+    console.log('SERVER_UPDATE: Update completed successfully');
     
   } catch (error) {
-    console.error('INIT: Error during initialization:', error);
+    console.error('SERVER_UPDATE: Error during server-side update:', error);
   }
 }
 
-// 페이지 로딩 시 초기화는 Initial Setup 섹션에서 실행됨
-
-
-/**
- * Generate question button HTML with pagination (max 3 questions per page).
- * If 4+ questions, adds Next and Exit buttons.
- * @param {Array} filteredQuestions - Array of filtered question objects
- * @param {number} booking_number - The booking number
- * @param {string} customer_name - The customer name
- * @param {boolean} isMobile - Whether rendering for mobile
- * @returns {string} HTML string for question buttons
- */
-function generateQuestionButtonsHTML(filteredQuestions, booking_number, customer_name, isMobile) {
-  const MAX_QUESTIONS_PER_PAGE = 3;
-  const currentPage = questionPageIndex[booking_number] || 0;
-  const totalQuestions = filteredQuestions.length;
-  const totalPages = Math.ceil(totalQuestions / MAX_QUESTIONS_PER_PAGE);
-
-  // Get questions for current page
-  const startIdx = currentPage * MAX_QUESTIONS_PER_PAGE;
-  const endIdx = Math.min(startIdx + MAX_QUESTIONS_PER_PAGE, totalQuestions);
-  const pageQuestions = filteredQuestions.slice(startIdx, endIdx);
-
-  const baseClasses = isMobile
-    ? 'action-button px-2 py-1 rounded-md border font-medium text-xs'
-    : 'action-button px-2 py-1 rounded-md border font-medium text-xs';
-  const btnClass = isMobile ? 'mobile-btn-ask' : 'btn-ask';
-
-  // Generate question buttons
-  const questionButtons = pageQuestions.map(q => {
-    // Mobile: flex-1 (auto width), Desktop: flex-1 (equal distribution)
-    const flexClass = 'flex-1';
-    const classes = `${baseClasses} ${btnClass} ${flexClass}`;
-    const fnCall = `handleQuestion(${booking_number}, '${customer_name}', '${q.question.replace(/'/g, "\\'")}')`;
-    const onclickHandler = isMobile
-      ? `${fnCall}`
-      : `${fnCall}; setTimeout(() => this.blur(), 100);`;
-    return `<button onclick="${onclickHandler}" class="${classes}">${q.question}</button>`;
-  });
-
-  // Add Next and Exit buttons if there are 4+ questions
-  if (totalQuestions >= 4) {
-    // Desktop: Add dummy button if current page has only 2 questions
-    if (!isMobile && pageQuestions.length === 2) {
-      const dummyButton = `<button class="${baseClasses} ${btnClass} flex-1 invisible">Dummy</button>`;
-      questionButtons.push(dummyButton);
-    }
-
-    const exitBaseClasses = isMobile
-      ? 'action-button px-2 py-1 rounded-md border font-medium text-xs'
-      : 'action-button px-2 py-1 rounded-md border font-medium text-xs';
-    const exitBtnClass = isMobile ? 'mobile-btn-cancel' : 'btn-cancel';
-    const nextBtnClass = isMobile ? 'mobile-btn-next' : 'btn-next';
-
-    // Next button (navigates to next page, wraps around)
-    const nextOnclick = isMobile
-      ? `handleNextQuestion(${booking_number})`
-      : `handleNextQuestion(${booking_number}); setTimeout(() => this.blur(), 100);`;
-    const nextButton = `<button onclick="${nextOnclick}" class="${exitBaseClasses} ${nextBtnClass} flex-1">Next</button>`;
-
-    // Exit button
-    const exitOnclick = isMobile
-      ? `handleExitAsk(${booking_number})`
-      : `handleExitAsk(${booking_number}); setTimeout(() => this.blur(), 100);`;
-    const exitButton = `<button onclick="${exitOnclick}" class="${exitBaseClasses} ${exitBtnClass} flex-1">Exit</button>`;
-
-    // Wrap Next and Exit in a container div
-    // Mobile: w-1/4 flex-none (fixed 1/4 width), Desktop: flex-1 (equal distribution)
-    const containerFlex = isMobile ? 'w-1/4 flex-none' : 'flex-1';
-    const nextExitContainer = `<div class="flex gap-1.5 ${containerFlex}">${nextButton}${exitButton}</div>`;
-    questionButtons.push(nextExitContainer);
-  } else {
-    // Only Exit button if 3 or fewer questions
-    const exitBaseClasses = isMobile
-      ? 'action-button px-2 py-1 rounded-md border font-medium text-xs'
-      : 'action-button px-2 py-1 rounded-md border font-medium text-xs';
-    const exitBtnClass = isMobile ? 'mobile-btn-cancel' : 'btn-cancel';
-    // Mobile: w-1/4 flex-none (fixed 1/4 width), Desktop: flex-1 (equal distribution)
-    const exitFlexClass = isMobile ? 'w-1/4 flex-none' : 'flex-1';
-    const exitOnclick = isMobile
-      ? `handleExitAsk(${booking_number})`
-      : `handleExitAsk(${booking_number}); setTimeout(() => this.blur(), 100);`;
-    const exitButton = `<button onclick="${exitOnclick}" class="${exitBaseClasses} ${exitBtnClass} ${exitFlexClass}">Exit</button>`;
-    questionButtons.push(exitButton);
-  }
-
-  return questionButtons.join('\n');
-}
 
 /**
  * Get filtered questions based on customer's pax count and q_level.
@@ -315,7 +228,10 @@ function generateQuestionButtonsHTML(filteredQuestions, booking_number, customer
     // Mobile: flex-1 (auto width), Desktop: flex-1 (equal distribution)
     const flexClass = 'flex-1';
     const classes = `${baseClasses} ${btnClass} ${flexClass}`;
-    const fnCall = `handleQuestion(${booking_number}, '${customer_name}', '${q.question.replace(/'/g, "\\'")}')`;
+    // Find booking_list_id from waitlist using booking_number
+    const customer = waitlist.find(item => item.booking_number === booking_number);
+    const bookingListId = customer ? customer.booking_list_id : null;
+    const fnCall = `handleQuestion(${bookingListId}, '${q.question.replace(/'/g, "\\'")}', ${q.q_level})`;
     const onclickHandler = isMobile
       ? `${fnCall}`
       : `${fnCall}; setTimeout(() => this.blur(), 100);`;
@@ -792,10 +708,10 @@ function flashButton(event) {
 /**
  * Handles customer actions. Updates status without changing buttons.
  */
-function handleReady(booking_number, customer_name, event) {
+async function handleReady(booking_number, customer_name, event) {
   console.log(`ACTION: Marking customer ${customer_name} (#${booking_number}) as ready.`);
   console.log(`INFO: [${customer_name}, #${booking_number}] 고객님께 테이블이 준비되었음을 알립니다.`);
-
+  
   // Check if mobile - on desktop, highlight the row and flash button
   const isMobile = window.innerWidth <= 768;
 
@@ -805,10 +721,41 @@ function handleReady(booking_number, customer_name, event) {
     flashButton(event);
   }
 
-  // Just update the status, don't change UI
   const item = waitlist.find(item => item.booking_number === booking_number);
+  handleQuestion(item.booking_list_id, 'Table is Ready. Coming?');
+
+  // Update database and local data
   if (item) {
-    item.status = 'Ready';
+    try {
+      // 1. Update database first
+      const updateResult = await connector.updateDataArr(
+        'waitlist', // dbKey
+        'booking_list', // tableName
+        [{
+          booking_list_id: item.booking_list_id, // Include the ID for WHERE condition
+          status: 'Ready',
+          time_cleared: null,
+          q_level: 300
+        }], // dataSetArr
+        ['booking_list_id'], // whereSet - will match against booking_list_id
+        'booking_list_id' // primaryKey - use booking_list_id as primary key
+      );
+      
+      if (!updateResult.success) {
+        console.error('Database update failed:', updateResult.error);
+        return; // Exit if database update failed
+      }
+      
+      console.log('Database updated successfully for booking #' + booking_number);
+      
+      // 2. Update local data after successful database update
+      item.status = 'Ready';
+      item.q_level = 300; // Update q_level to match database
+      
+    } catch (error) {
+      console.error('Error updating database:', error);
+      return; // Exit if there's an error
+    }
   }
 }
 
@@ -892,10 +839,81 @@ function handleAsk(booking_number, customer_name, event) {
 }
 
 /**
- * Handles question button click - logs the question
+ * Handles question button click - logs the question and inserts into database
  */
-function handleQuestion(booking_number, customer_name, question) {
-  console.log(`QUESTION: Sending to ${customer_name} (#${booking_number}): ${question}`);
+async function handleQuestion(booking_list_id, question, q_level = null) {
+  console.log(`QUESTION: booking_list_id: ${booking_list_id}, question: ${question}, q_level: ${q_level}`);
+
+  try {
+    // Format current time for database insertion
+    const currentTime = new Date();
+    const formattedTime = currentTime.getFullYear() + '-' + 
+      String(currentTime.getMonth() + 1).padStart(2, '0') + '-' + 
+      String(currentTime.getDate()).padStart(2, '0') + ' ' +
+      String(currentTime.getHours()).padStart(2, '0') + ':' +
+      String(currentTime.getMinutes()).padStart(2, '0') + ':' +
+      String(currentTime.getSeconds()).padStart(2, '0');
+
+    // Insert question into history_chat table
+    const updateResult = await connector.updateDataArr(
+      'waitlist', // dbKey
+      'history_chat', // tableName
+      [{
+        booking_list_id: booking_list_id,
+        dateTime: formattedTime,
+        qna: `Q: ${question}`
+      }], // dataSetArr
+    );
+
+    if (!updateResult.success) {
+      console.error('Database insert failed:', updateResult.error);
+      return; // Exit if database insert failed
+    }
+
+    console.log('Question inserted successfully into history_chat for booking_list_id:', booking_list_id);
+
+    // Update q_level in booking_list table if provided
+    if (q_level !== null) {
+      const qLevelUpdateResult = await connector.updateDataArr(
+        'waitlist', // dbKey
+        'booking_list', // tableName
+        [{
+          booking_list_id: booking_list_id, // Include the ID for WHERE condition
+          q_level: q_level,
+        }], // dataSetArr
+        ['booking_list_id'], // whereSet - will match against booking_list_id
+        'booking_list_id' // primaryKey - use booking_list_id as primary key
+      );
+
+      if (!qLevelUpdateResult.success) {
+        console.error('Q-level database update failed:', qLevelUpdateResult.error);
+      } else {
+        console.log('Q-level updated successfully for booking_list_id:', booking_list_id, 'to:', q_level);
+        
+        // Update local waitlist data
+        const item = waitlist.find(item => item.booking_list_id === booking_list_id);
+        if (item) {
+          item.q_level = q_level;
+          console.log('Local q_level updated for booking_list_id:', booking_list_id);
+        }
+      }
+    }
+
+    // Add the new chat record to local chatlist for immediate UI update
+    const newChatRecord = {
+      booking_list_id: booking_list_id,
+      dateTime: Date.now(), // Use current timestamp in milliseconds for local data
+      qna: `Q: ${question}`,
+      Id: Date.now() // Use timestamp as temporary ID
+    };
+    chatlist.push(newChatRecord);
+
+    // Re-render to show the new question in chat history
+    renderWaitlist();
+
+  } catch (error) {
+    console.error('Error inserting question into database:', error);
+  }
 }
 
 /**
@@ -987,8 +1005,7 @@ async function handleArrive(booking_number, customer_name) {
         [{
           booking_list_id: item.booking_list_id, // Include the ID for WHERE condition
           status: 'Arrived',
-          time_cleared: formattedTime,
-          q_level: 500
+          time_cleared: formattedTime
         }], // dataSetArr
         ['booking_list_id'], // whereSet - will match against booking_list_id
         'booking_list_id' // primaryKey - use booking_list_id as primary key
@@ -1080,7 +1097,7 @@ async function handleArrive(booking_number, customer_name) {
 /**
  * Handles customer actions (Cancel). Updates initialScrollTop and performs scroll.
  */
-function handleCancel(booking_number, customer_name) {
+async function handleCancel(booking_number, customer_name) {
   console.log(`ACTION: Cancelling customer ${customer_name} (#${booking_number}).`);
   const item = waitlist.find(item => item.booking_number === booking_number);
   let shouldScroll = false;
@@ -1088,18 +1105,54 @@ function handleCancel(booking_number, customer_name) {
   if (item) {
     // Check if item was active before status change (Waiting or Ready)
     const wasActive = item.status === 'Waiting' || item.status === 'Ready';
-    item.status = 'Cancelled';
-    item.time_cleared = Date.now(); // Set time_cleared when cancelling
+    
+    try {
+      // 1. Update database first
+      const currentTime = new Date();
+      const formattedTime = currentTime.getFullYear() + '-' + 
+        String(currentTime.getMonth() + 1).padStart(2, '0') + '-' + 
+        String(currentTime.getDate()).padStart(2, '0') + ' ' +
+        String(currentTime.getHours()).padStart(2, '0') + ':' +
+        String(currentTime.getMinutes()).padStart(2, '0') + ':' +
+        String(currentTime.getSeconds()).padStart(2, '0');
+      
+      const updateResult = await connector.updateDataArr(
+        'waitlist', // dbKey
+        'booking_list', // tableName
+        [{
+          booking_list_id: item.booking_list_id, // Include the ID for WHERE condition
+          status: 'Cancelled',
+          time_cleared: formattedTime
+        }], // dataSetArr
+        ['booking_list_id'], // whereSet - will match against booking_list_id
+        'booking_list_id' // primaryKey - use booking_list_id as primary key
+      );
+      
+      if (!updateResult.success) {
+        console.error('Database update failed:', updateResult.error);
+        return; // Exit if database update failed
+      }
+      
+      console.log('Database updated successfully for booking #' + booking_number);
+      
+      // 2. Update local data after successful database update
+      item.status = 'Cancelled';
+      item.time_cleared = Date.now(); // Set time_cleared when cancelling
 
-    if (wasActive && rowHeight > 0) {
-      // 1. Update initialScrollTop by moving up one row's height to show the cleared item
-      initialScrollTop -= rowHeight;
-      console.log(`SCROLL_UPDATE: Cancel. Subtracting rowHeight (${rowHeight.toFixed(2)}px) from initialScrollTop.`);
-      console.log(`SCROLL_UPDATE: New initialScrollTop: ${initialScrollTop.toFixed(2)}px`);
-      shouldScroll = true;
+      if (wasActive && rowHeight > 0) {
+        // 3. Update initialScrollTop by moving up one row's height to show the cleared item
+        initialScrollTop -= rowHeight;
+        console.log(`SCROLL_UPDATE: Cancel. Subtracting rowHeight (${rowHeight.toFixed(2)}px) from initialScrollTop.`);
+        console.log(`SCROLL_UPDATE: New initialScrollTop: ${initialScrollTop.toFixed(2)}px`);
+        shouldScroll = true;
+      }
+    } catch (error) {
+      console.error('Error updating database:', error);
+      return; // Exit if there's an error
     }
   }
-  // Rerender after action to update the table structure and sort order
+  
+  // 4. Rerender after successful database update and local data update
   renderWaitlist();
 
   // IMPORTANT FIX: Scroll must happen AFTER the DOM is updated by renderWaitlist.
@@ -1161,20 +1214,50 @@ function handleCancel(booking_number, customer_name) {
  * Handles Undo action for completed items (Arrived/Cancelled).
  * Restores the item to "Waiting" status with highlight effect.
  */
-function handleUndo(booking_number, customer_name) {
+async function handleUndo(booking_number, customer_name) {
   console.log(`ACTION: Undo for customer ${customer_name} (#${booking_number}).`);
   const item = waitlist.find(item => item.booking_number === booking_number);
 
   if (item && (item.status === 'Arrived' || item.status === 'Cancelled')) {
     const wasCompleted = true;
-    item.status = 'Waiting';
-    item.time_cleared = null; // Clear the completion time
+    
+    try {
+      // 1. Update database first
+      // Determine status based on q_level: Ready if q_level >= 300, otherwise Waiting
+      const newStatus = (item.q_level >= 300) ? 'Ready' : 'Waiting';
+      
+      const updateResult = await connector.updateDataArr(
+        'waitlist', // dbKey
+        'booking_list', // tableName
+        [{
+          booking_list_id: item.booking_list_id, // Include the ID for WHERE condition
+          status: newStatus,
+          time_cleared: null,
+        }], // dataSetArr
+        ['booking_list_id'], // whereSet - will match against booking_list_id
+        'booking_list_id' // primaryKey - use booking_list_id as primary key
+      );
+      
+      if (!updateResult.success) {
+        console.error('Database update failed:', updateResult.error);
+        return; // Exit if database update failed
+      }
+      
+      console.log('Database updated successfully for booking #' + booking_number);
+      
+      // 2. Update local data after successful database update
+      item.status = newStatus;
+      item.time_cleared = null; // Clear the completion time
 
-    if (wasCompleted && rowHeight > 0) {
-      // Adjust initialScrollTop when moving item from completed to active
-      initialScrollTop += rowHeight;
-      console.log(`SCROLL_UPDATE: Undo. Adding rowHeight (${rowHeight.toFixed(2)}px) to initialScrollTop.`);
-      console.log(`SCROLL_UPDATE: New initialScrollTop: ${initialScrollTop.toFixed(2)}px`);
+      if (wasCompleted && rowHeight > 0) {
+        // Adjust initialScrollTop when moving item from completed to active
+        initialScrollTop += rowHeight;
+        console.log(`SCROLL_UPDATE: Undo. Adding rowHeight (${rowHeight.toFixed(2)}px) to initialScrollTop.`);
+        console.log(`SCROLL_UPDATE: New initialScrollTop: ${initialScrollTop.toFixed(2)}px`);
+      }
+    } catch (error) {
+      console.error('Error updating database:', error);
+      return; // Exit if there's an error
     }
   }
 
@@ -1680,7 +1763,7 @@ waitlistContainer.addEventListener('scroll', updateScrollAndButtonState);
 async function startInitialization() {
   try {
     // Load all data first
-    await initOnLoad();
+    await getServerSideUpdate();
     
     // Initial scroll setup: Set position and initial button state after data is loaded and rendered
     // requestAnimationFrame을 사용하여 DOM이 렌더링된 후 정확한 위치로 이동합니다.
