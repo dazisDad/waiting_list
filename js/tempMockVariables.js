@@ -36,7 +36,7 @@ let chatlist = [
   { Id: 13, booking_list_id: "763", dateTime: Date.now() - 5 * 60 * 1000, qna: "Waiting" },
 ];
 
-let askedQuestions = [
+let questionnaire = [
   { Id: 1, question: "Table is Ready. Coming?", q_level: 300, minPax: 1 },
   { Id: 2, question: "Is outdoor seating OK?", q_level: 200, minPax: 1 },
   { Id: 3, question: "Is split table OK?", q_level: 200, minPax: 5 },

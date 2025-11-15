@@ -1,97 +1,5 @@
 const store_id = 'DL_Sunway_Geo';
 
-// --- Database Connection ---
-// Connector 인스턴스 생성 (preProd 환경, urlPrefix는 waitlist.html 기준 상대 경로)
-const connector = new Connector('preProd', '');
-
-// 페이지 로딩 시 booking_list 테이블 데이터 가져오기
-async function fetchBookingList(booking_from = 'QR') {
-  try {
-    // Get today's date in YYYY-MM-DD format for filtering
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
-    
-    // booking_list 테이블에서 조건에 맞는 데이터 가져오기
-    const result = await connector.selectWhere('waitlist', 'booking_list', {
-      template: 'store_id = ? AND booking_from = ? AND DATE(time_created) = ?',
-      values: [store_id, booking_from, todayStr],
-      types: 'sss' // string, string, string
-    });
-    
-    console.log('=== booking_list 테이블 데이터 (필터링됨) ===');
-    console.log('필터 조건: store_id=DL_Sunway_Geo, booking_from=QR, 오늘 날짜');
-    console.log(result);
-    
-    if (result.success && result.data) {
-      console.log(`총 ${result.data.length}개의 레코드를 가져왔습니다.`);
-      console.table(result.data);
-    } else {
-      console.error('데이터 조회 실패:', result.error);
-    }
-  } catch (error) {
-    console.error('fetchBookingList 오류:', error);
-  }
-}
-
-// 페이지 로딩 시 history_chat 테이블 데이터 가져오기
-async function fetchChatHistory() {
-  try {
-    // Get today's date in YYYY-MM-DD format for filtering
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
-    
-    // history_chat 테이블에서 오늘 날짜의 데이터 가져오기
-    const result = await connector.selectWhere('waitlist', 'history_chat', {
-      template: 'DATE(dateTime) = ?',
-      values: [todayStr],
-      types: 's' // string
-    });
-    
-    console.log('=== history_chat 테이블 데이터 (필터링됨) ===');
-    console.log('필터 조건: 오늘 날짜');
-    console.log(result);
-    
-    if (result.success && result.data) {
-      console.log(`총 ${result.data.length}개의 채팅 레코드를 가져왔습니다.`);
-      console.table(result.data);
-    } else {
-      console.error('데이터 조회 실패:', result.error);
-    }
-  } catch (error) {
-    console.error('fetchChatHistory 오류:', error);
-  }
-}
-
-// 페이지 로딩 시 ask_question_list 테이블 데이터 가져오기
-async function fetchAskQList() {
-  try {
-    // ask_question_list 테이블에서 store_id로 필터링하여 데이터 가져오기
-    const result = await connector.selectWhere('waitlist', 'ask_question_list', {
-      template: 'store_id = ?',
-      values: [store_id],
-      types: 's' // string
-    });
-    
-    console.log('=== ask_question_list 테이블 데이터 (필터링됨) ===');
-    console.log('필터 조건: store_id=DL_Sunway_Geo');
-    console.log(result);
-    
-    if (result.success && result.data) {
-      console.log(`총 ${result.data.length}개의 질문 레코드를 가져왔습니다.`);
-      console.table(result.data);
-    } else {
-      console.error('데이터 조회 실패:', result.error);
-    }
-  } catch (error) {
-    console.error('fetchAskQList 오류:', error);
-  }
-}
-
-// 페이지 로딩 시 데이터 가져오기 실행
-fetchBookingList();
-fetchChatHistory();
-fetchAskQList();
-
 // Create waitlist data based on current time
 // Extended list for testing minRowDisplay functionality
 let waitlist = [
@@ -130,7 +38,7 @@ let chatlist = [
   { Id: 13, booking_list_id: "763", dateTime: Date.now() - 5 * 60 * 1000, qna: "Waiting" },
 ];
 
-let askedQuestions = [
+let questionnaire = [
   { Id: 1, question: "Table is Ready. Coming?", q_level: 300, minPax: 1 },
   { Id: 2, question: "Is outdoor seating OK?", q_level: 200, minPax: 1 },
   { Id: 3, question: "Is split table OK?", q_level: 200, minPax: 5 },
@@ -138,6 +46,174 @@ let askedQuestions = [
   { Id: 5, question: "Table passed to next customer", q_level: 300, q_level_min: 300, minPax: 1 },
   { Id: 6, question: "Is standing table OK?", q_level: 200, minPax: 1 },
 ];
+
+
+// --- Database Connection ---
+// Connector 인스턴스 생성 (preProd 환경, urlPrefix는 waitlist.html 기준 상대 경로)
+const connector = new Connector('preProd', '');
+
+// 페이지 로딩 시 booking_list 테이블 데이터 가져오기
+async function fetchBookingList(booking_from = 'QR') {
+  try {
+    // Get today's date in YYYY-MM-DD format for filtering
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    // booking_list 테이블에서 조건에 맞는 데이터 가져오기
+    const result = await connector.selectWhere('waitlist', 'booking_list', {
+      template: 'store_id = ? AND booking_from = ? AND DATE(time_created) = ?',
+      values: [store_id, booking_from, todayStr],
+      types: 'sss' // string, string, string
+    });
+    
+    console.log('=== booking_list 테이블 데이터 (필터링됨) ===');
+    console.log('필터 조건: store_id=DL_Sunway_Geo, booking_from=QR, 오늘 날짜');
+    console.log(result);
+    
+    if (result.success && result.data) {
+      console.log(`총 ${result.data.length}개의 레코드를 가져왔습니다.`);
+      console.table(result.data);
+      
+      // 날짜 필드들을 timestamp (밀리초)로 변환
+      const processedData = result.data.map(item => {
+        const processedItem = { ...item };
+        
+        // time_created 변환
+        if (processedItem.time_created) {
+          processedItem.time_created = new Date(processedItem.time_created).getTime();
+        }
+        
+        // time_cleared 변환 (null일 수 있음)
+        if (processedItem.time_cleared) {
+          processedItem.time_cleared = new Date(processedItem.time_cleared).getTime();
+        }
+        
+        // dine_dateTime 변환 (null일 수 있음)
+        if (processedItem.dine_dateTime) {
+          processedItem.dine_dateTime = new Date(processedItem.dine_dateTime).getTime();
+        }
+        
+        return processedItem;
+      });
+      
+      return processedData;
+    } else {
+      console.error('데이터 조회 실패:', result.error);
+      return [];
+    }
+  } catch (error) {
+    console.error('fetchBookingList 오류:', error);
+    return [];
+  }
+}
+
+// 페이지 로딩 시 history_chat 테이블 데이터 가져오기
+async function fetchChatHistory() {
+  try {
+    // Get today's date in YYYY-MM-DD format for filtering
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    // history_chat 테이블에서 오늘 날짜의 데이터 가져오기
+    const result = await connector.selectWhere('waitlist', 'history_chat', {
+      template: 'DATE(dateTime) = ?',
+      values: [todayStr],
+      types: 's' // string
+    });
+    
+    console.log('=== history_chat 테이블 데이터 (필터링됨) ===');
+    console.log('필터 조건: 오늘 날짜');
+    console.log(result);
+    
+    if (result.success && result.data) {
+      console.log(`총 ${result.data.length}개의 채팅 레코드를 가져왔습니다.`);
+      console.table(result.data);
+      
+      // dateTime 필드를 timestamp (밀리초)로 변환
+      const processedData = result.data.map(item => {
+        const processedItem = { ...item };
+        
+        // dateTime 변환
+        if (processedItem.dateTime) {
+          processedItem.dateTime = new Date(processedItem.dateTime).getTime();
+        }
+        
+        return processedItem;
+      });
+      
+      return processedData;
+    } else {
+      console.error('데이터 조회 실패:', result.error);
+      return [];
+    }
+  } catch (error) {
+    console.error('fetchChatHistory 오류:', error);
+    return [];
+  }
+}
+
+// 페이지 로딩 시 ask_question_list 테이블 데이터 가져오기
+async function fetchAskQList() {
+  try {
+    // ask_question_list 테이블에서 store_id로 필터링하여 데이터 가져오기
+    const result = await connector.selectWhere('waitlist', 'ask_question_list', {
+      template: 'store_id = ?',
+      values: [store_id],
+      types: 's' // string
+    });
+    
+    console.log('=== ask_question_list 테이블 데이터 (필터링됨) ===');
+    console.log('필터 조건: store_id=DL_Sunway_Geo');
+    console.log(result);
+    
+    if (result.success && result.data) {
+      console.log(`총 ${result.data.length}개의 질문 레코드를 가져왔습니다.`);
+      console.table(result.data);
+      return result.data;
+    } else {
+      console.error('데이터 조회 실패:', result.error);
+      return [];
+    }
+  } catch (error) {
+    console.error('fetchAskQList 오류:', error);
+    return [];
+  }
+}
+
+// 페이지 로딩 시 데이터 초기화 함수
+async function initOnLoad() {
+  try {
+    console.log('INIT: Starting data initialization...');
+    
+    // 모든 데이터를 병렬로 가져오기
+    const [waitlistData, chatData, questionsData] = await Promise.all([
+      fetchBookingList(),
+      fetchChatHistory(),
+      fetchAskQList()
+    ]);
+    
+    console.log('INIT: All data loaded successfully');
+    console.log('- Waitlist items:', waitlistData?.length || 0);
+    console.log('- Chat records:', chatData?.length || 0); 
+    console.log('- Questions:', questionsData?.length || 0);
+
+    console.log('Default',waitlist[0]);
+
+    waitlist = waitlistData;
+    chatlist = chatData;
+    questionnaire = questionsData;
+
+    renderWaitlist();
+
+    
+  } catch (error) {
+    console.error('INIT: Error during initialization:', error);
+  }
+}
+
+// 페이지 로딩 시 초기화 실행
+initOnLoad();
+
 
 /**
  * Generate question button HTML with pagination (max 3 questions per page).
@@ -241,7 +317,7 @@ function getFilteredQuestions(customerPax, booking_number) {
   const bookingListId = customer ? customer.booking_list_id : null;
 
   // Get all questions from chat history for this booking_list_id
-  const askedQuestions = new Set();
+  const questionnaire = new Set();
   if (bookingListId) {
     chatlist
       .filter(chat => chat.booking_list_id === bookingListId)
@@ -249,16 +325,16 @@ function getFilteredQuestions(customerPax, booking_number) {
         // Extract question from "Q: <question text>" format
         const match = chat.qna.match(/^Q:\s*(.+)/);
         if (match) {
-          askedQuestions.add(match[1]);
+          questionnaire.add(match[1]);
         }
       });
   }
 
-  return askedQuestions.filter(q => {
+  return questionnaire.filter(q => {
     // Check basic conditions
     if (q.minPax > customerPax) return false;
     if (q.q_level < customerQLevel) return false;
-    if (askedQuestions.has(q.question)) return false;
+    if (questionnaire.has(q.question)) return false;
 
     // If q_level_min exists, customer's q_level must be >= q_level_min
     if (q.q_level_min !== undefined && customerQLevel < q.q_level_min) {
@@ -1485,7 +1561,7 @@ function renderWaitlist() {
         return btnHTML.replace('flex-1', 'flex-1 ask-mode-btn');
       });
 
-      //console.log(`RENDER: Generated ${buttonHTMLs.length} question buttons for #${item.booking_number} (pax: ${item.pax}, filtered from ${askedQuestions.length})`);
+      //console.log(`RENDER: Generated ${buttonHTMLs.length} question buttons for #${item.booking_number} (pax: ${item.pax}, filtered from ${questionnaire.length})`);
     } else {
       // Show normal buttons
       buttonHTMLs = buttons.map(btnDef => generateButtonHTML(btnDef, item.booking_number, item.customer_name, false));
