@@ -1,22 +1,25 @@
-
-
+const store_id = 'DL_Sunway_Geo';
 
 // --- Database Connection ---
 // Connector 인스턴스 생성 (preProd 환경, urlPrefix는 waitlist.html 기준 상대 경로)
 const connector = new Connector('preProd', '');
 
 // 페이지 로딩 시 booking_list 테이블 데이터 가져오기
-async function fetchBookingList() {
+async function fetchBookingList(booking_from = 'QR') {
   try {
-    // booking_list 테이블의 모든 데이터 가져오기
-    // whereData를 빈 객체로 전달하면 모든 데이터 조회
+    // Get today's date in YYYY-MM-DD format for filtering
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    // booking_list 테이블에서 조건에 맞는 데이터 가져오기
     const result = await connector.selectWhere('waitlist', 'booking_list', {
-      template: '1=1',  // 모든 데이터를 가져오기 위한 조건
-      values: [],
-      types: ''
+      template: 'store_id = ? AND booking_from = ? AND DATE(time_created) = ?',
+      values: [store_id, booking_from, todayStr],
+      types: 'sss' // string, string, string
     });
     
-    console.log('=== booking_list 테이블 데이터 ===');
+    console.log('=== booking_list 테이블 데이터 (필터링됨) ===');
+    console.log('필터 조건: store_id=DL_Sunway_Geo, booking_from=QR, 오늘 날짜');
     console.log(result);
     
     if (result.success && result.data) {
@@ -30,8 +33,64 @@ async function fetchBookingList() {
   }
 }
 
+// 페이지 로딩 시 history_chat 테이블 데이터 가져오기
+async function fetchChatHistory() {
+  try {
+    // Get today's date in YYYY-MM-DD format for filtering
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    // history_chat 테이블에서 오늘 날짜의 데이터 가져오기
+    const result = await connector.selectWhere('waitlist', 'history_chat', {
+      template: 'DATE(dateTime) = ?',
+      values: [todayStr],
+      types: 's' // string
+    });
+    
+    console.log('=== history_chat 테이블 데이터 (필터링됨) ===');
+    console.log('필터 조건: 오늘 날짜');
+    console.log(result);
+    
+    if (result.success && result.data) {
+      console.log(`총 ${result.data.length}개의 채팅 레코드를 가져왔습니다.`);
+      console.table(result.data);
+    } else {
+      console.error('데이터 조회 실패:', result.error);
+    }
+  } catch (error) {
+    console.error('fetchChatHistory 오류:', error);
+  }
+}
+
+// 페이지 로딩 시 ask_question_list 테이블 데이터 가져오기
+async function fetchAskQList() {
+  try {
+    // ask_question_list 테이블에서 store_id로 필터링하여 데이터 가져오기
+    const result = await connector.selectWhere('waitlist', 'ask_question_list', {
+      template: 'store_id = ?',
+      values: [store_id],
+      types: 's' // string
+    });
+    
+    console.log('=== ask_question_list 테이블 데이터 (필터링됨) ===');
+    console.log('필터 조건: store_id=DL_Sunway_Geo');
+    console.log(result);
+    
+    if (result.success && result.data) {
+      console.log(`총 ${result.data.length}개의 질문 레코드를 가져왔습니다.`);
+      console.table(result.data);
+    } else {
+      console.error('데이터 조회 실패:', result.error);
+    }
+  } catch (error) {
+    console.error('fetchAskQList 오류:', error);
+  }
+}
+
 // 페이지 로딩 시 데이터 가져오기 실행
 fetchBookingList();
+fetchChatHistory();
+fetchAskQList();
 
 // Create mock waitlist data based on current time
 // Extended list for testing minRowDisplay functionality
