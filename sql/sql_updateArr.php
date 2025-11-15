@@ -1,5 +1,7 @@
 <?php
 // PHP 오류 로깅을 활성화합니다.
+// 버전 v1.1.0
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -88,7 +90,10 @@ foreach ($dataArray as $dataSet) {
             $whereValues[] = $dataSet[$col];
         }
         $whereClause = implode(' AND ', $whereClauses);
-        $selectSql = "SELECT Id FROM `{$tableName}` WHERE {$whereClause}";
+        
+        // primaryKey 파라미터가 제공되면 사용, 없으면 기본값 'Id' 사용
+        $primaryKeyColumn = isset($fullPayload['primaryKey']) && !empty($fullPayload['primaryKey']) ? $fullPayload['primaryKey'] : 'Id';
+        $selectSql = "SELECT {$primaryKeyColumn} FROM `{$tableName}` WHERE {$whereClause}";
         
         if ($stmt = $connection->prepare($selectSql)) {
             $stmt->bind_param($whereTypes, ...$whereValues);
@@ -108,20 +113,24 @@ foreach ($dataArray as $dataSet) {
         $updateSet = [];
         $updateTypes = '';
         $updateValues = [];
+        
+        // primaryKey 파라미터가 제공되면 사용, 없으면 기본값 'Id' 사용
+        $primaryKeyColumn = isset($fullPayload['primaryKey']) && !empty($fullPayload['primaryKey']) ? $fullPayload['primaryKey'] : 'Id';
+        
         foreach ($dataSet as $key => $value) {
-            // whereSet에 포함되지 않은 필드만 업데이트 대상으로 합니다.
-            if (!in_array($key, $whereColumns) && $key !== 'Id') {
+            // whereSet에 포함되지 않은 필드와 primary key 컬럼은 업데이트 대상에서 제외
+            if (!in_array($key, $whereColumns) && $key !== $primaryKeyColumn) {
                 $updateSet[] = "`{$key}` = ?";
                 $updateTypes .= 's'; // 모든 값은 문자열로 가정
                 $updateValues[] = $value;
             }
         }
         $updateSetClause = implode(', ', $updateSet);
-        $updateSql = "UPDATE `{$tableName}` SET {$updateSetClause} WHERE `Id` = ?";
+        $updateSql = "UPDATE `{$tableName}` SET {$updateSetClause} WHERE `{$primaryKeyColumn}` = ?";
 
         if ($stmt = $connection->prepare($updateSql)) {
             $updateValues[] = $existingId;
-            $updateTypes .= 'i'; // Id는 정수이므로 'i'를 추가
+            $updateTypes .= 'i'; // primary key는 정수이므로 'i'를 추가
             $stmt->bind_param($updateTypes, ...$updateValues);
             $stmt->execute();
             if ($stmt->affected_rows > 0) {

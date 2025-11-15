@@ -1,52 +1,8 @@
 const store_id = 'DL_Sunway_Geo';
 
-// Create waitlist data based on current time
-// Extended list for testing minRowDisplay functionality
-let waitlist = [
-  // Completed items (will be sorted to the top) - with time_cleared set
-  { booking_number: 1005, customer_name: "Haneul Jung", pax: 2, time_created: Date.now() - 45 * 60 * 1000, time_cleared: Date.now() - 40 * 60 * 1000, status: "Cancelled", booking_list_id: "123", customer_phone: "010-1111-1111", subscriber_id: "sub_aaa", q_level: 500 },
-  { booking_number: 1008, customer_name: "Jimin Lee", pax: 3, time_created: Date.now() - 50 * 60 * 1000, time_cleared: Date.now() - 45 * 60 * 1000, status: "Arrived", booking_list_id: "234", customer_phone: "010-2222-2222", subscriber_id: "sub_bbb", q_level: 500 },
-
-  // Active items (Waiting/Ready) - no time_cleared
-  { booking_number: 1010, customer_name: "Yuna Choi", pax: 4, time_created: Date.now() - 55 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "456", customer_phone: "010-3333-3333", subscriber_id: "sub_ccc", q_level: 100 },
-  { booking_number: 1001, customer_name: "Minji Kim", pax: 4, time_created: Date.now() - 35 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "235", customer_phone: "010-4444-4444", subscriber_id: "sub_ddd", q_level: 100 },
-  { booking_number: 1002, customer_name: "Juno Lee", pax: 2, time_created: Date.now() - 30 * 60 * 1000, time_cleared: null, status: "Ready", booking_list_id: "335", customer_phone: "010-5555-5555", subscriber_id: "sub_eee", q_level: 300 },
-  { booking_number: 1003, customer_name: "Seyeon Park", pax: 3, time_created: Date.now() - 25 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "347", customer_phone: "010-6666-6666", subscriber_id: "sub_fff", q_level: 100 },
-  { booking_number: 1004, customer_name: "Eunwoo Choi", pax: 5, time_created: Date.now() - 20 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "156", customer_phone: "010-7777-7777", subscriber_id: "sub_ggg", q_level: 100 },
-  { booking_number: 1006, customer_name: "Jihoon Kim", pax: 3, time_created: Date.now() - 15 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "287", customer_phone: "010-8888-8888", subscriber_id: "sub_hhh", q_level: 100 },
-  { booking_number: 1007, customer_name: "Somin Park", pax: 6, time_created: Date.now() - 10 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "563", customer_phone: "010-9999-9999", subscriber_id: "sub_iii", q_level: 100 },
-  { booking_number: 1009, customer_name: "Taehyun Lee", pax: 2, time_created: Date.now() - 5 * 60 * 1000, time_cleared: null, status: "Waiting", booking_list_id: "763", customer_phone: "010-0000-0000", subscriber_id: "sub_jjj", q_level: 100 },
-];
-
-let chatlist = [
-  { Id: 1, booking_list_id: "123", dateTime: Date.now() - 45 * 60 * 1000, qna: "Waiting" },
-  { Id: 2, booking_list_id: "234", dateTime: Date.now() - 50 * 60 * 1000, qna: "Waiting" },
-  { Id: 3, booking_list_id: "456", dateTime: Date.now() - 55 * 60 * 1000, qna: "Waiting" },
-
-  { Id: 4, booking_list_id: "235", dateTime: Date.now() - 35 * 60 * 1000, qna: "Waiting" },
-  { Id: 5, booking_list_id: "335", dateTime: Date.now() - 30 * 60 * 1000, qna: "Waiting" },
-  { Id: 6, booking_list_id: "347", dateTime: Date.now() - 25 * 60 * 1000, qna: "Waiting" },
-
-  { Id: 7, booking_list_id: "335", dateTime: Date.now() - 23 * 60 * 1000, qna: "Q: Table is Ready. Coming?" },
-  { Id: 8, booking_list_id: "335", dateTime: Date.now() - 22 * 60 * 1000, qna: "A: Coming in 5 mins" },
-
-  { Id: 9, booking_list_id: "156", dateTime: Date.now() - 20 * 60 * 1000, qna: "Waiting" },
-  { Id: 10, booking_list_id: "156", dateTime: Date.now() - 19 * 60 * 1000, qna: "Q: Is outdoor seating OK?" },
-
-  { Id: 11, booking_list_id: "287", dateTime: Date.now() - 15 * 60 * 1000, qna: "Waiting" },
-  { Id: 12, booking_list_id: "563", dateTime: Date.now() - 10 * 60 * 1000, qna: "Waiting" },
-  { Id: 13, booking_list_id: "763", dateTime: Date.now() - 5 * 60 * 1000, qna: "Waiting" },
-];
-
-let questionnaire = [
-  { Id: 1, question: "Table is Ready. Coming?", q_level: 300, minPax: 1 },
-  { Id: 2, question: "Is outdoor seating OK?", q_level: 200, minPax: 1 },
-  { Id: 3, question: "Is split table OK?", q_level: 200, minPax: 5 },
-  { Id: 4, question: "Is sharing table OK?", q_level: 200, minPax: 1 },
-  { Id: 5, question: "Table passed to next customer", q_level: 300, q_level_min: 300, minPax: 1 },
-  { Id: 6, question: "Is standing table OK?", q_level: 200, minPax: 1 },
-];
-
+let waitlist = [];
+let chatlist = [];
+let questionnaire = [];
 
 // --- Database Connection ---
 // Connector 인스턴스 생성 (preProd 환경, urlPrefix는 waitlist.html 기준 상대 경로)
@@ -66,13 +22,7 @@ async function fetchBookingList(booking_from = 'QR') {
       types: 'sss' // string, string, string
     });
     
-    console.log('=== booking_list 테이블 데이터 (필터링됨) ===');
-    console.log('필터 조건: store_id=DL_Sunway_Geo, booking_from=QR, 오늘 날짜');
-    console.log(result);
-    
     if (result.success && result.data) {
-      console.log(`총 ${result.data.length}개의 레코드를 가져왔습니다.`);
-      console.table(result.data);
       
       // 날짜 필드들을 timestamp (밀리초)로 변환
       const processedData = result.data.map(item => {
@@ -121,13 +71,7 @@ async function fetchChatHistory() {
       types: 's' // string
     });
     
-    console.log('=== history_chat 테이블 데이터 (필터링됨) ===');
-    console.log('필터 조건: 오늘 날짜');
-    console.log(result);
-    
     if (result.success && result.data) {
-      console.log(`총 ${result.data.length}개의 채팅 레코드를 가져왔습니다.`);
-      console.table(result.data);
       
       // dateTime 필드를 timestamp (밀리초)로 변환
       const processedData = result.data.map(item => {
@@ -162,13 +106,7 @@ async function fetchAskQList() {
       types: 's' // string
     });
     
-    console.log('=== ask_question_list 테이블 데이터 (필터링됨) ===');
-    console.log('필터 조건: store_id=DL_Sunway_Geo');
-    console.log(result);
-    
     if (result.success && result.data) {
-      console.log(`총 ${result.data.length}개의 질문 레코드를 가져왔습니다.`);
-      console.table(result.data);
       return result.data;
     } else {
       console.error('데이터 조회 실패:', result.error);
@@ -197,13 +135,16 @@ async function initOnLoad() {
     console.log('- Chat records:', chatData?.length || 0); 
     console.log('- Questions:', questionsData?.length || 0);
 
-    console.log('Default',waitlist[0]);
-
     waitlist = waitlistData;
     chatlist = chatData;
     questionnaire = questionsData;
 
-    renderWaitlist();
+    console.log(questionnaire)
+
+    console.log('INIT: Data loaded successfully, starting initial setup...');
+    
+    // Initial rendering of the table content after data is loaded
+    renderWaitlist(); // This now calls updateScrollAndButtonState() once
 
     
   } catch (error) {
@@ -211,8 +152,7 @@ async function initOnLoad() {
   }
 }
 
-// 페이지 로딩 시 초기화 실행
-initOnLoad();
+// 페이지 로딩 시 초기화는 Initial Setup 섹션에서 실행됨
 
 
 /**
@@ -317,7 +257,7 @@ function getFilteredQuestions(customerPax, booking_number) {
   const bookingListId = customer ? customer.booking_list_id : null;
 
   // Get all questions from chat history for this booking_list_id
-  const questionnaire = new Set();
+  const askedQuestions = new Set();
   if (bookingListId) {
     chatlist
       .filter(chat => chat.booking_list_id === bookingListId)
@@ -325,7 +265,7 @@ function getFilteredQuestions(customerPax, booking_number) {
         // Extract question from "Q: <question text>" format
         const match = chat.qna.match(/^Q:\s*(.+)/);
         if (match) {
-          questionnaire.add(match[1]);
+          askedQuestions.add(match[1]);
         }
       });
   }
@@ -334,7 +274,7 @@ function getFilteredQuestions(customerPax, booking_number) {
     // Check basic conditions
     if (q.minPax > customerPax) return false;
     if (q.q_level < customerQLevel) return false;
-    if (questionnaire.has(q.question)) return false;
+    if (askedQuestions.has(q.question)) return false;
 
     // If q_level_min exists, customer's q_level must be >= q_level_min
     if (q.q_level_min !== undefined && customerQLevel < q.q_level_min) {
@@ -1022,7 +962,7 @@ function handleExitAsk(booking_number) {
 /**
  * Handles customer actions (Arrive). Updates initialScrollTop and performs scroll.
  */
-function handleArrive(booking_number, customer_name) {
+async function handleArrive(booking_number, customer_name) {
   console.log(`ACTION: Customer ${customer_name} (#${booking_number}) has arrived.`);
   const item = waitlist.find(item => item.booking_number === booking_number);
   let shouldScroll = false;
@@ -1030,18 +970,56 @@ function handleArrive(booking_number, customer_name) {
   if (item) {
     // Check if item was active before status change (Waiting or Ready)
     const wasActive = item.status === 'Waiting' || item.status === 'Ready';
-    item.status = 'Arrived';
-    item.time_cleared = Date.now(); // Set time_cleared when arrived
+    
+    try {
+      // 1. Update database first
+      const currentTime = new Date();
+      const formattedTime = currentTime.getFullYear() + '-' + 
+        String(currentTime.getMonth() + 1).padStart(2, '0') + '-' + 
+        String(currentTime.getDate()).padStart(2, '0') + ' ' +
+        String(currentTime.getHours()).padStart(2, '0') + ':' +
+        String(currentTime.getMinutes()).padStart(2, '0') + ':' +
+        String(currentTime.getSeconds()).padStart(2, '0');
+      
+      const updateResult = await connector.updateDataArr(
+        'waitlist', // dbKey
+        'booking_list', // tableName
+        [{
+          booking_list_id: item.booking_list_id, // Include the ID for WHERE condition
+          status: 'Arrived',
+          time_cleared: formattedTime,
+          q_level: 500
+        }], // dataSetArr
+        ['booking_list_id'], // whereSet - will match against booking_list_id
+        'booking_list_id' // primaryKey - use booking_list_id as primary key
+      );
+      
+      if (!updateResult.success) {
+        console.error('Database update failed:', updateResult.error);
+        return; // Exit if database update failed
+      }
+      
+      console.log('Database updated successfully for booking #' + booking_number);
+      
+      // 2. Update local data after successful database update
+      item.status = 'Arrived';
+      item.time_cleared = Date.now(); // Set time_cleared when arrived
+      item.q_level = 500; // Update q_level to match database
 
-    if (wasActive && rowHeight > 0) {
-      // 1. Update initialScrollTop by moving up one row's height to show the cleared item
-      initialScrollTop -= rowHeight;
-      console.log(`SCROLL_UPDATE: Arrive. Subtracting rowHeight (${rowHeight.toFixed(2)}px) from initialScrollTop.`);
-      console.log(`SCROLL_UPDATE: New initialScrollTop: ${initialScrollTop.toFixed(2)}px`);
-      shouldScroll = true;
+      if (wasActive && rowHeight > 0) {
+        // 3. Update initialScrollTop by moving up one row's height to show the cleared item
+        initialScrollTop -= rowHeight;
+        console.log(`SCROLL_UPDATE: Arrive. Subtracting rowHeight (${rowHeight.toFixed(2)}px) from initialScrollTop.`);
+        console.log(`SCROLL_UPDATE: New initialScrollTop: ${initialScrollTop.toFixed(2)}px`);
+        shouldScroll = true;
+      }
+    } catch (error) {
+      console.error('Error updating database:', error);
+      return; // Exit if there's an error
     }
   }
-  // Rerender after action to update the table structure and sort order
+  
+  // 4. Rerender after successful database update and local data update
   renderWaitlist();
 
   // IMPORTANT FIX: Scroll must happen AFTER the DOM is updated by renderWaitlist.
@@ -1694,16 +1672,19 @@ document.querySelectorAll('.mobile-action-row').forEach(row => {
   row.remove();
 });
 
-// 1. Initial rendering of the table content
-renderWaitlist(); // This now calls updateScrollAndButtonState() once
-
-// 2. Add scroll event listener. 
+// 1. Add scroll event listener
 // 사용자가 스크롤을 시작하면 버튼 상태가 동적으로 업데이트됩니다.
 waitlistContainer.addEventListener('scroll', updateScrollAndButtonState);
 
-// 3. Initial scroll setup: Set position and initial button state immediately after render.
-// requestAnimationFrame을 사용하여 DOM이 렌더링된 후 정확한 위치로 이동합니다.
-requestAnimationFrame(() => {
+// 2. Initialize data loading and setup after completion
+async function startInitialization() {
+  try {
+    // Load all data first
+    await initOnLoad();
+    
+    // Initial scroll setup: Set position and initial button state after data is loaded and rendered
+    // requestAnimationFrame을 사용하여 DOM이 렌더링된 후 정확한 위치로 이동합니다.
+    requestAnimationFrame(() => {
   console.log("INIT: DOM rendered. Starting initial scroll/state calculation.");
 
   // 1. 초기 스크롤 목표 위치를 계산하고 동적 높이 설정을 업데이트합니다.
@@ -1782,10 +1763,20 @@ requestAnimationFrame(() => {
   updateScrollAndButtonState();
   console.log("INIT: Final button state check completed.");
 
-  // 4. 초기 설정이 완료되었음을 플래그로 표시합니다. 
-  isInitialScrollDone = true;
-  console.log("INIT: isInitialScrollDone set to TRUE. Enabling dynamic button logic.");
-});
+    // 4. 초기 설정이 완료되었음을 플래그로 표시합니다. 
+    isInitialScrollDone = true;
+    console.log("INIT: isInitialScrollDone set to TRUE. Enabling dynamic button logic.");
+    });
+    
+  } catch (error) {
+    console.error('INIT: Error during initialization:', error);
+    // Fallback: render with mock data if database loading fails
+    renderWaitlist();
+  }
+}
+
+// 3. Start the initialization process
+startInitialization();
 
 // 4. Set up the non-rendering interval:
 // Updates elapsed times every second.

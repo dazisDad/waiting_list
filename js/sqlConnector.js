@@ -1,5 +1,6 @@
 /**
  * 데이터베이스 연결 및 SQL 작업을 위한 Connector 클래스
+ * 버전 v1.1.0
  */
 class Connector {
   /**
@@ -22,9 +23,10 @@ class Connector {
    * @param {Array<string>} [whereSet] - 레코드 존재 여부를 판단할 컬럼들 (선택적)
    * - 제공되면: 기존 레코드 찾아서 있으면 UPDATE, 없으면 INSERT
    * - 제공되지 않으면: 바로 INSERT만 실행
+   * @param {string} [primaryKey] - 테이블의 primary key 컬럼명 (선택적, 기본값: 'Id') v1.1.0 추가
    * @returns {Promise<object>} 작업의 성공 여부와 결과를 포함하는 JSON 응답을 반환합니다.
    */
-  async updateDataArr(dbKey, tableName, dataSetArr, whereSet) {
+  async updateDataArr(dbKey, tableName, dataSetArr, whereSet, primaryKey = null) {
     // dbKey 필수 체크
     if (!dbKey) {
       console.error('Error: dbKey is required for updateDataArr function. Please provide one of: "eInvoice", "pos", "portal"');
@@ -40,7 +42,8 @@ class Connector {
       tableName_key: tableName,
       dataSet: dataSetArr,
       whereSet: whereSet,
-      db_key: dbKey
+      db_key: dbKey,
+      primaryKey: primaryKey
     };
     let stringfied = JSON.stringify(toSendObj);
 
