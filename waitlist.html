@@ -11,11 +11,12 @@
   <link rel="stylesheet" href="css/waitlist.css">
 </head>
 
-<body class="p-4 sm:p-8">
+<body class="h-screen overflow-hidden p-4 sm:p-8">
   <!-- Dark Modern container -->
   <div class="max-w-5xl mx-auto bg-slate-800 rounded-xl shadow-2xl p-4 sm:p-6 border border-slate-700">
     <header class="mb-6 border-b border-slate-600 pb-3">
       <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-100 flex items-center">
+        <!--
         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
           class="w-8 h-8 text-violet-400 mr-3">
@@ -24,9 +25,20 @@
           <path d="M2 22h20" />
           <path d="M2 17h20" />
         </svg>
-        Waitlist Management System
+        -->
+        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="2" />
+
+          <line x1="6" y1="7.5" x2="15" y2="7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          <line x1="6" y1="11.5" x2="12" y2="11.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+
+          <circle cx="16.5" cy="16.5" r="4.2" fill="none" stroke="currentColor" stroke-width="2" />
+          <path d="M16.5 13.5V16.5H19.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+        &nbsp;Waitlist Manager
       </h1>
-      <p class="text-slate-400 mt-1">Real-time queue status and customer service management</p>
+      <!-- <p class="text-slate-400 mt-1">Real-time queue status and customer service management</p> -->
     </header>
 
     <!-- Scroll to Active Button -->
@@ -60,7 +72,8 @@
               <th class="px-2 py-2 text-center text-xs font-semibold text-slate-300 uppercase tracking-wider w-[12%]">
                 Elapsed</th>
               <!-- Adjusted width for Action column - Hidden on mobile -->
-              <th class="action-column-header px-2 py-2 text-center text-xs font-semibold text-slate-300 uppercase tracking-wider w-[45%]">
+              <th
+                class="action-column-header px-2 py-2 text-center text-xs font-semibold text-slate-300 uppercase tracking-wider w-[45%]">
                 Action</th>
             </tr>
           </thead>
@@ -72,7 +85,7 @@
     </div>
 
     <footer class="mt-6 text-center text-slate-500 text-sm">
-      <p>Data is generated as a mockup; production environments use Firestore.</p>
+      <p>&copy; 2025 Waitlist Manager. All rights reserved.</p>
     </footer>
   </div>
 
