@@ -186,6 +186,7 @@ function getFilteredQuestions(customerPax, booking_number) {
   return questionnaire.filter(q => {
     // Check basic conditions
     if (q.minPax > customerPax) return false;
+    if (q.maxPax && q.maxPax < customerPax) return false;
     if (q.q_level < customerQLevel) return false;
     if (askedQuestions.has(q.question)) return false;
 
@@ -405,8 +406,22 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
     }
   }
 
-  // Determine if event parameter is needed
-  const needsEvent = ['handleReady', 'handleAsk'].includes(buttonDef.functionName);
+  // Special handling for Ready button - use touchstart/mousedown instead of click for long press
+  if (buttonDef.functionName === 'handleReady' && !isDisabled) {
+    // Ready button needs special event handling for long press
+    const readyHandlerCall = `handleReadyWithLongPress(${booking_number}, '${customer_name}', event)`;
+    const onTouchStart = `ontouchstart="${readyHandlerCall}"`;
+    const onMouseDown = `onmousedown="${readyHandlerCall}"`;
+    // Add blur for desktop after long press completes
+    const preventClick = isMobile 
+      ? `onclick="event.preventDefault(); return false;"`
+      : `onclick="event.preventDefault(); setTimeout(() => this.blur(), 100); return false;"`;
+    
+    return `<button ${onTouchStart} ${onMouseDown} ${preventClick} class="${classes}">${buttonDef.label}</button>`;
+  }
+
+  // Standard button handling for all other buttons
+  const needsEvent = ['handleAsk'].includes(buttonDef.functionName);
   const fnCall = needsEvent
     ? `${buttonDef.functionName}(${booking_number}, '${customer_name}', event)`
     : `${buttonDef.functionName}(${booking_number}, '${customer_name}')`;
@@ -734,9 +749,146 @@ function flashButton(event) {
 }
 
 /**
+ * Check if user performed a long press (0.5 seconds or more)
+ * Optimized for both desktop (mouse) and mobile (touch) events
+ * @param {Event} event - The mouse/touch event (mousedown, touchstart, or click)
+ * @param {number} duration - Duration in milliseconds (default: 500ms)
+ * @returns {Promise<boolean>} Promise that resolves to true if long press, false otherwise
+ */
+function isLongPress(event, duration = 500) {
+  return new Promise((resolve) => {
+    if (!event || !event.target) {
+      resolve(false);
+      return;
+    }
+
+    const button = event.target;
+    let isPressed = true;
+    let longPressTimer;
+    let startX, startY;
+    const moveThreshold = 10; // Allow small movement (10px)
+
+    // Prevent default browser actions (context menu, text selection)
+    event.preventDefault();
+
+    // Visual feedback - darken button during press
+    const originalOpacity = button.style.opacity;
+    button.style.opacity = '0.7';
+
+    // For touch events, get initial touch coordinates
+    if (event.type === 'touchstart' && event.touches && event.touches[0]) {
+      startX = event.touches[0].clientX;
+      startY = event.touches[0].clientY;
+    } else if (event.type === 'mousedown') {
+      startX = event.clientX;
+      startY = event.clientY;
+    }
+
+    // Set timer for long press detection
+    longPressTimer = setTimeout(() => {
+      if (isPressed) {
+        // Long press successful
+        button.style.opacity = originalOpacity;
+        cleanupListeners();
+        resolve(true);
+      }
+    }, duration);
+
+    // Handle movement (cancel long press if moved too much)
+    const handleMove = (moveEvent) => {
+      if (!isPressed) return;
+      
+      let currentX, currentY;
+      if (moveEvent.type === 'touchmove' && moveEvent.touches && moveEvent.touches[0]) {
+        currentX = moveEvent.touches[0].clientX;
+        currentY = moveEvent.touches[0].clientY;
+      } else if (moveEvent.type === 'mousemove') {
+        currentX = moveEvent.clientX;
+        currentY = moveEvent.clientY;
+      } else {
+        return;
+      }
+
+      const deltaX = Math.abs(currentX - startX);
+      const deltaY = Math.abs(currentY - startY);
+      
+      if (deltaX > moveThreshold || deltaY > moveThreshold) {
+        // Moved too much - cancel long press
+        handleEnd();
+      }
+    };
+
+    // Handle press end events
+    const handleEnd = () => {
+      if (!isPressed) return; // Already handled
+      
+      isPressed = false;
+      button.style.opacity = originalOpacity;
+      clearTimeout(longPressTimer);
+      
+      // Short press - not long enough
+      cleanupListeners();
+      resolve(false);
+    };
+
+    // Clean up all event listeners
+    const cleanupListeners = () => {
+      // Always try to remove both types of events to be safe
+      // Mouse events
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('mousemove', handleMove);
+      button.removeEventListener('mouseleave', handleEnd);
+      
+      // Touch events (remove with same options as added)
+      document.removeEventListener('touchend', handleEnd, { passive: false });
+      document.removeEventListener('touchcancel', handleEnd, { passive: false });
+      document.removeEventListener('touchmove', handleMove, { passive: false });
+    };
+
+    // Add event listeners based on actual input type (not device capability)
+    if (event.type === 'touchstart') {
+      // Actual touch event - use touch events with passive: false to allow preventDefault
+      document.addEventListener('touchend', handleEnd, { passive: false });
+      document.addEventListener('touchcancel', handleEnd, { passive: false });
+      document.addEventListener('touchmove', handleMove, { passive: false });
+    } else {
+      // Mouse event (mousedown) - use mouse events
+      document.addEventListener('mouseup', handleEnd);
+      document.addEventListener('mousemove', handleMove);
+      button.addEventListener('mouseleave', handleEnd);
+    }
+  });
+}
+
+/**
+ * Special wrapper for Ready button that handles long press detection
+ * This function is called from touchstart/mousedown events on Ready buttons
+ */
+async function handleReadyWithLongPress(booking_number, customer_name, event) {
+  // Check for long press first
+  const longPress = await isLongPress(event);
+  if (!longPress) {
+    console.log(`ACTION: Ready button press too short for ${customer_name} (#${booking_number}). Long press required.`);
+    toastMsg('Long-press required for \'Ready\'', 2000);
+    return; // Exit if not a long press
+  }
+
+  // Call the actual Ready handler
+  await handleReadyInternal(booking_number, customer_name, event);
+}
+
+/**
  * Handles customer actions. Updates status without changing buttons.
  */
 async function handleReady(booking_number, customer_name, event) {
+  // This is kept for backward compatibility with other callers
+  await handleReadyInternal(booking_number, customer_name, event);
+}
+
+/**
+ * Internal Ready handler that performs the actual ready action
+ */
+async function handleReadyInternal(booking_number, customer_name, event) {
   console.log(`ACTION: Marking customer ${customer_name} (#${booking_number}) as ready.`);
   console.log(`INFO: [${customer_name}, #${booking_number}] 고객님께 테이블이 준비되었음을 알립니다.`);
   
@@ -779,6 +931,9 @@ async function handleReady(booking_number, customer_name, event) {
       // 2. Update local data after successful database update
       item.status = 'Ready';
       item.q_level = 300; // Update q_level to match database
+      
+      // 3. Re-render to immediately update button state
+      renderWaitlist();
       
     } catch (error) {
       console.error('Error updating database:', error);
@@ -1049,7 +1204,6 @@ async function handleArrive(booking_number, customer_name) {
       // 2. Update local data after successful database update
       item.status = 'Arrived';
       item.time_cleared = Date.now(); // Set time_cleared when arrived
-      item.q_level = 500; // Update q_level to match database
 
       if (wasActive && rowHeight > 0) {
         // 3. Update initialScrollTop by moving up one row's height to show the cleared item
