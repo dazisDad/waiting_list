@@ -1520,9 +1520,18 @@ function updateScrollAndButtonState() {
   const shouldEnableScrolling = totalRows > displayedRows && hasCompletedItems;
 
   if (shouldEnableScrolling) {
-    // Calculate height of completed rows (only if we should scroll)
-    for (let i = 0; i < completedItemsCount && i < rows.length; i++) {
-      totalHeightToScroll += rows[i].offsetHeight;
+    // Calculate ACTUAL height of completed rows including mobile action rows
+    let completedRowsFound = 0;
+    for (let i = 0; i < rows.length && completedRowsFound < completedItemsCount; i++) {
+      const row = rows[i];
+      // Only count main data rows (not mobile action rows)
+      if (!row.classList.contains('mobile-action-row')) {
+        totalHeightToScroll += row.offsetHeight;
+        completedRowsFound++;
+      } else if (completedRowsFound < completedItemsCount) {
+        // Include mobile action rows that belong to completed items
+        totalHeightToScroll += row.offsetHeight;
+      }
     }
   }
 
@@ -1534,49 +1543,20 @@ function updateScrollAndButtonState() {
   */
 
   // --- Dynamic Height/Scroll Activation ---
-  if (shouldEnableScrolling) {
-    // Force height to show exactly displayedRows number of rows
-    //console.log(`HEIGHT: Forcing container height to show exactly ${displayedRows} rows.`);
-    let displayedRowsHeight = 0;
-    // Calculate height of exactly displayedRows number of rows
-    for (let i = 0; i < Math.min(displayedRows, rows.length); i++) {
-      displayedRowsHeight += rows[i].offsetHeight;
-    }
-    const headerHeight = waitlistContainer.querySelector('thead').offsetHeight;
-    const forcedHeight = displayedRowsHeight + headerHeight + 5;
-
-    //console.log(`HEIGHT: Setting forced height to ${forcedHeight.toFixed(2)}px (${displayedRows} rows + header)`);
-    waitlistContainer.classList.remove(MAX_HEIGHT_CLASS);
-    waitlistContainer.style.height = `${forcedHeight}px`;
-  } else {
-    // Revert to max-height setup when scrolling is not needed
-    //console.log("HEIGHT: Reverting to max-height (no scrolling needed).");
-
-    // DEBUG: Check if we should calculate exact height even when no scrolling needed
-    if (totalRows === displayedRows) {
-      let allRowsHeight = 0;
-      for (let i = 0; i < rows.length; i++) {
-        allRowsHeight += rows[i].offsetHeight;
-      }
-      const headerHeight = waitlistContainer.querySelector('thead').offsetHeight;
-      const exactHeight = allRowsHeight + headerHeight + 10; // Extra padding for safety
-
-      //console.log(`HEIGHT: Total rows equals displayedRows (${displayedRows}). Setting exact height to ${exactHeight.toFixed(2)}px`);
-      waitlistContainer.classList.remove(MAX_HEIGHT_CLASS);
-      waitlistContainer.style.height = `${exactHeight}px`;
-    } else {
-      waitlistContainer.classList.add(MAX_HEIGHT_CLASS);
-      waitlistContainer.style.height = '';
-    }
-  }
+  // Remove any JavaScript-imposed height restrictions to let flex handle it
+  waitlistContainer.classList.remove(MAX_HEIGHT_CLASS);
+  waitlistContainer.style.height = '';
+  waitlistContainer.style.maxHeight = '';
+  
+  // Let CSS flex-1 handle the height - no JavaScript interference needed
 
   // Recalculate scroll state after potential height adjustments
   const isNowScrollable = waitlistContainer.scrollHeight > waitlistContainer.clientHeight;
 
-  // Check if the current position is the Active Queue position (tolerance of 10px for browser precision)
+  // Check if the current position is the Active Queue position (increased tolerance for variable heights)
   const isScrolledToActive = shouldEnableScrolling && totalHeightToScroll > 0 &&
-    waitlistContainer.scrollTop >= (totalHeightToScroll - 10) &&
-    waitlistContainer.scrollTop <= (totalHeightToScroll + 10);
+    waitlistContainer.scrollTop >= (totalHeightToScroll - 30) &&
+    waitlistContainer.scrollTop <= (totalHeightToScroll + 30);
 
   /*
   console.log(`--- Current Scroll State ---`);
