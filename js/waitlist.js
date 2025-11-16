@@ -4,6 +4,9 @@ let waitlist = [];
 let chatlist = [];
 let questionnaire = [];
 
+const minPax_for_bigTable = 5;
+const maxPax_for_smallTable = 1;
+
 // --- Database Connection ---
 // Connector 인스턴스 생성 (preProd 환경, urlPrefix는 waitlist.html 기준 상대 경로)
 const connector = new Connector('preProd', '');
@@ -564,7 +567,7 @@ function toggleMobileActions(booking_number, event) {
     mobileRow.id = mobileActionRowId;
     mobileRow.className = 'mobile-action-row';
     mobileRow.innerHTML = `
-          <td colspan="5" class="px-2 py-3">
+          <td colspan="4" class="px-2 py-3">
             <div class="flex gap-1.5">
               ${actionButtons}
             </div>
@@ -1019,7 +1022,7 @@ function handleAsk(booking_number, customer_name, event) {
         mobileRow.id = mobileActionRowId;
         mobileRow.className = 'mobile-action-row';
         mobileRow.innerHTML = `
-              <td colspan="5" class="px-2 py-3">
+              <td colspan="4" class="px-2 py-3">
                 <div class="flex gap-1.5">
                   ${actionButtons}
                 </div>
@@ -1148,7 +1151,7 @@ function handleNextQuestion(booking_number) {
         mobileRow.id = mobileActionRowId;
         mobileRow.className = 'mobile-action-row';
         mobileRow.innerHTML = `
-              <td colspan="5" class="px-2 py-3">
+              <td colspan="4" class="px-2 py-3">
                 <div class="flex gap-1.5">
                   ${questionButtonsHTML}
                 </div>
@@ -1835,10 +1838,9 @@ function renderWaitlist() {
                     <tr class="${rowClass} ${rowClickableClass}" data-item-id="${item.booking_number}" ${onclickAttr}>
                         <td class="px-2 py-2 whitespace-nowrap text-sm font-medium ${idClass} text-center">${item.booking_number}</td>
                         <td class="px-2 py-2 text-sm">
-                            <div class="font-semibold ${nameClass}">${item.customer_name}</div>
+                            <div class="font-semibold ${nameClass}"><span class="${item.pax >= minPax_for_bigTable ? (statusPriority === 0 ? 'bg-white text-slate-800 px-1 py-0.5 rounded font-bold' : 'bg-yellow-400 text-slate-800 px-1 py-0.5 rounded font-bold') : (item.pax <= maxPax_for_smallTable ? (statusPriority === 0 ? 'border border-slate-100 px-1 py-0.5 rounded font-bold' : 'border border-amber-400 px-1 py-0.5 rounded font-bold') : '')}">${item.customer_name} <span class="${item.pax >= minPax_for_bigTable ? 'font-bold' : (item.pax <= maxPax_for_smallTable ? 'font-bold' : 'text-xs font-normal opacity-75')}">(Pax: <span class="${item.pax >= minPax_for_bigTable ? 'font-bold' : (item.pax <= maxPax_for_smallTable ? 'font-bold' : 'text-sm')}">${item.pax}</span>)</span></span></div>
                             ${chatHistoryHTML}
                         </td>
-                        <td class="px-2 py-2 whitespace-nowrap text-sm ${paxClass} font-bold text-center">${item.pax}</td>
                         <td id="time-${item.booking_number}" class="px-2 py-2 whitespace-nowrap text-sm text-center ${timeClass}">
                             ${timeHTML}
                         </td>
