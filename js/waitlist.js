@@ -1578,8 +1578,7 @@ function updateScrollAndButtonState() {
     //console.log(`--- BUTTON STATE DECISION ---`);
     //console.log("BUTTON: DISABLED. Reason: Initial setup (isInitialScrollDone=false).");
     scrollButton.disabled = true;
-    scrollButton.textContent = "@ Active Queue";
-    scrollButton.classList.remove('bg-yellow-600', 'text-slate-900', 'hover:bg-yellow-700', 'border-yellow-500');
+    scrollButton.classList.remove('bg-amber-400', 'text-slate-900', 'hover:bg-amber-500', 'border-amber-400');
     scrollButton.classList.add('bg-slate-700', 'text-slate-500', 'cursor-not-allowed', 'border-slate-600');
     console.groupEnd();
     return totalHeightToScroll; // Early exit during initial setup
@@ -1598,35 +1597,16 @@ function updateScrollAndButtonState() {
     //console.log(`BUTTON: ENABLED. Reason: Active history exists, scrollable, and user is not at the Active Queue.`);
 
     scrollButton.disabled = false;
-    scrollButton.textContent = "Scroll to Active";
     scrollButton.classList.remove('bg-slate-700', 'text-slate-500', 'cursor-not-allowed', 'border-slate-600');
-    scrollButton.classList.add('bg-yellow-600', 'text-slate-900', 'hover:bg-yellow-700', 'border-yellow-500');
+    scrollButton.classList.add('bg-amber-400', 'text-slate-900', 'hover:bg-amber-500', 'border-amber-400');
   } else {
     // DISABLED: At the active queue, no history, or not scrollable.
 
     scrollButton.disabled = true;
 
-    // Display appropriate text for the disabled state
-    if (isScrolledToActive) {
-      //console.log(`BUTTON: DISABLED. Reason: Already at the Active Queue position.`);
-      scrollButton.textContent = "@ Active Queue";
-    } else if (!shouldEnableScrolling) {
-      if (totalRows <= displayedRows) {
-        //console.log(`BUTTON: DISABLED. Reason: Total rows (${totalRows}) <= displayedRows (${displayedRows}). All items visible.`);
-        scrollButton.textContent = "Showing All";
-      } else {
-        //console.log(`BUTTON: DISABLED. Reason: No completed history to scroll past.`);
-        scrollButton.textContent = "Scroll to Active";
-      }
-    } else if (!isNowScrollable) {
-      //console.log(`BUTTON: DISABLED. Reason: Container is not scrollable (list is short).`);
-      scrollButton.textContent = "Scroll to Active";
-    } else {
-      //console.log(`BUTTON: DISABLED. Reason: Default disabled state.`);
-      scrollButton.textContent = "Scroll to Active";
-    }
+    // Button is disabled - no text content needed since we use an icon
 
-    scrollButton.classList.remove('bg-yellow-600', 'text-slate-900', 'hover:bg-yellow-700', 'border-yellow-500');
+    scrollButton.classList.remove('bg-amber-400', 'text-slate-900', 'hover:bg-amber-500', 'border-amber-400');
     scrollButton.classList.add('bg-slate-700', 'text-slate-500', 'cursor-not-allowed', 'border-slate-600');
   }
 
