@@ -613,7 +613,7 @@ function formatElapsedTime(item) {
       durationString = `${seconds} sec`;
     }
 
-    return { time: timeString, duration: durationString, isTwoLine: true };
+    return { time: durationString, duration: '', isTwoLine: false };
   } else {
     // Active items - calculate current elapsed time
     const elapsedMs = Date.now() - item.time_created;
@@ -1771,11 +1771,18 @@ function renderWaitlist() {
         return `<div class="text-xs ${messageChatClass} leading-relaxed" ${dataAttr}>↳ [${elapsedTime}] ${chat.qna}</div>`; //arrow
       }).join('');
 
-      // Add status message if item is Arrived or Cancelled (without elapsed time)
+      // Add status message if item is Arrived or Cancelled with completion time
       if (hasStatusMessage) {
         // Apply color based on status: purple for Arrived (#8b5cf6), red for Cancelled (#f87171)
         const statusColor = item.status === 'Arrived' ? 'text-purple-500' : 'text-red-400';
-        chatHistoryHTML += `<div class="text-xs ${statusColor} leading-relaxed">↳ ${item.status}</div>`;
+        const completionTime = new Date(item.time_cleared);
+        const timeString = completionTime.toLocaleTimeString('en-GB', {
+          hour12: false,
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+        chatHistoryHTML += `<div class="text-xs ${statusColor} leading-relaxed">↳ ${item.status} @ ${timeString}</div>`;
       }
     }
 
