@@ -141,6 +141,8 @@ async function getServerSideUpdate() {
     chatlist = chatData;
     questionnaire = questionsData;
 
+    console.log(questionnaire);
+
     console.log('SERVER_UPDATE: Global variables updated, re-rendering waitlist...');
     
     // 새 데이터로 렌더링
@@ -184,6 +186,9 @@ function getFilteredQuestions(customerPax, booking_number) {
   }
 
   return questionnaire.filter(q => {
+    // Only include questions that are triggered by Ask button
+    if (q.invokedWithBtn !== 'Ask') return false;
+    
     // Check basic conditions
     if (q.minPax > customerPax) return false;
     if (q.maxPax && q.maxPax < customerPax) return false;
@@ -902,7 +907,16 @@ async function handleReadyInternal(booking_number, customer_name, event) {
   }
 
   const item = waitlist.find(item => item.booking_number === booking_number);
-  handleQuestion(item.booking_list_id, 'Table is Ready. Coming?');
+  
+  // Find the Ready button question from questionnaire
+  const readyQuestion = questionnaire.find(q => q.invokedWithBtn === 'Ready');
+  if (readyQuestion) {
+    handleQuestion(item.booking_list_id, readyQuestion.question);
+  } else {
+    // Fallback to default question if no Ready question found in questionnaire
+    console.warn('No Ready button question found in questionnaire, using fallback');
+    handleQuestion(item.booking_list_id, 'Table is Ready. Coming?');
+  }
 
   // Update database and local data
   if (item) {
