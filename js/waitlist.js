@@ -238,13 +238,14 @@ function generateQuestionButtonsHTML(filteredQuestions, booking_number, customer
     return `<button onclick="${onclickHandler}" class="${classes}">${q.question}</button>`;
   });
 
+  // Desktop: Add dummy button if current page has only 2 questions (regardless of total question count)
+  if (!isMobile && pageQuestions.length === 2) {
+    const dummyButton = `<button class="${baseClasses} ${btnClass} flex-1 invisible">Dummy</button>`;
+    questionButtons.push(dummyButton);
+  }
+
   // Add Next and Exit buttons if there are 4+ questions
   if (totalQuestions >= 4) {
-    // Desktop: Add dummy button if current page has only 2 questions
-    if (!isMobile && pageQuestions.length === 2) {
-      const dummyButton = `<button class="${baseClasses} ${btnClass} flex-1 invisible">Dummy</button>`;
-      questionButtons.push(dummyButton);
-    }
 
     const exitBaseClasses = isMobile
       ? 'action-button px-2 py-1 rounded-md border font-medium text-xs'
@@ -379,7 +380,30 @@ function getButtonsForStatus(status) {
 function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) {
   const baseClasses = 'action-button px-3 py-1.5 rounded-md border font-medium text-sm';
   const btnClass = isMobile ? buttonDef.mobileBtnClass : buttonDef.desktopBtnClass;
-  const classes = `${baseClasses} ${btnClass} flex-1`;
+  let classes = `${baseClasses} ${btnClass} flex-1`;
+
+  // Special handling for Ask and Ready buttons
+  let isDisabled = false;
+  const item = waitlist.find(i => i.booking_number === booking_number);
+  
+  if (buttonDef.functionName === 'handleAsk') {
+    if (item) {
+      const filteredQuestions = getFilteredQuestions(item.pax, booking_number);
+      if (filteredQuestions.length === 0) {
+        // No questions available - make button grey and disabled
+        isDisabled = true;
+        const disabledBtnClass = isMobile ? 'mobile-btn-disabled' : 'btn-disabled';
+        classes = `${baseClasses} ${disabledBtnClass} flex-1`;
+      }
+    }
+  } else if (buttonDef.functionName === 'handleReady') {
+    if (item && item.q_level >= 300) {
+      // Already ready (q_level >= 300) - make button grey and disabled
+      isDisabled = true;
+      const disabledBtnClass = isMobile ? 'mobile-btn-disabled' : 'btn-disabled';
+      classes = `${baseClasses} ${disabledBtnClass} flex-1`;
+    }
+  }
 
   // Determine if event parameter is needed
   const needsEvent = ['handleReady', 'handleAsk'].includes(buttonDef.functionName);
@@ -392,7 +416,11 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
     ? `${fnCall}`
     : `${fnCall}; setTimeout(() => this.blur(), 100);`;
 
-  return `<button onclick="${onclickHandler}" class="${classes}">${buttonDef.label}</button>`;
+  // If disabled, prevent onclick
+  const finalOnclickHandler = isDisabled ? '' : `onclick="${onclickHandler}"`;
+  const disabledAttr = isDisabled ? 'disabled' : '';
+
+  return `<button ${finalOnclickHandler} ${disabledAttr} class="${classes}">${buttonDef.label}</button>`;
 }
 
 /**
