@@ -7,22 +7,38 @@ let questionnaire = [];
 const minPax_for_bigTable = 5;
 const maxPax_for_smallTable = 1;
 
+const isEnableReadyAskBtn_for_reservation = false; // 추후에 과금 가능한 상황에서 메세지 보낼 시 활성화
+
 // --- Database Connection ---
 // Connector 인스턴스 생성 (preProd 환경, urlPrefix는 waitlist.html 기준 상대 경로)
 const connector = new Connector('preProd', '');
 
 // 페이지 로딩 시 booking_list 테이블 데이터 가져오기
-async function fetchBookingList(booking_from = 'QR') {
+async function fetchBookingList(booking_from = null) {
   try {
     // Get today's date in YYYY-MM-DD format for filtering
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
     
     // booking_list 테이블에서 조건에 맞는 데이터 가져오기
+    let template, values, types;
+    
+    if (booking_from !== null) {
+      // booking_from이 전달된 경우 - 3개 조건으로 검색
+      template = 'store_id = ? AND booking_from = ? AND DATE(dine_dateTime) = ?';
+      values = [store_id, booking_from, todayStr];
+      types = 'sss'; // string, string, string
+    } else {
+      // booking_from이 null인 경우 - 2개 조건으로 검색
+      template = 'store_id = ? AND DATE(dine_dateTime) = ?';
+      values = [store_id, todayStr];
+      types = 'ss'; // string, string
+    }
+    
     const result = await connector.selectWhere('waitlist', 'booking_list', {
-      template: 'store_id = ? AND booking_from = ? AND DATE(time_created) = ?',
-      values: [store_id, booking_from, todayStr],
-      types: 'sss' // string, string, string
+      template: template,
+      values: values,
+      types: types
     });
     
     if (result.success && result.data) {
@@ -31,9 +47,9 @@ async function fetchBookingList(booking_from = 'QR') {
       const processedData = result.data.map(item => {
         const processedItem = { ...item };
         
-        // time_created 변환
-        if (processedItem.time_created) {
-          processedItem.time_created = new Date(processedItem.time_created).getTime();
+        // dine_dateTime 변환
+        if (processedItem.dine_dateTime) {
+          processedItem.dine_dateTime = new Date(processedItem.dine_dateTime).getTime();
         }
         
         // time_cleared 변환 (null일 수 있음)
@@ -144,7 +160,7 @@ async function getServerSideUpdate() {
     chatlist = chatData;
     questionnaire = questionsData;
 
-    console.log(questionnaire);
+    console.log(waitlist);
 
     console.log('SERVER_UPDATE: Global variables updated, re-rendering waitlist...');
     
@@ -397,20 +413,29 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
   
   if (buttonDef.functionName === 'handleAsk') {
     if (item) {
-      const filteredQuestions = getFilteredQuestions(item.pax, booking_number);
-      if (filteredQuestions.length === 0) {
-        // No questions available - make button grey and disabled
+      // Disable Ask button for WEB bookings (based on isEnableReadyAskBtn_for_reservation setting) or when no questions available
+      if (item.booking_from === 'WEB' && !isEnableReadyAskBtn_for_reservation) {
+        isDisabled = true;
+        const disabledBtnClass = isMobile ? 'mobile-btn-disabled' : 'btn-disabled';
+        classes = `${baseClasses} ${disabledBtnClass} flex-1`;
+      } else {
+        const filteredQuestions = getFilteredQuestions(item.pax, booking_number);
+        if (filteredQuestions.length === 0) {
+          // No questions available - make button grey and disabled
+          isDisabled = true;
+          const disabledBtnClass = isMobile ? 'mobile-btn-disabled' : 'btn-disabled';
+          classes = `${baseClasses} ${disabledBtnClass} flex-1`;
+        }
+      }
+    }
+  } else if (buttonDef.functionName === 'handleReady') {
+    if (item) {
+      // Disable Ready button for WEB bookings (based on isEnableReadyAskBtn_for_reservation setting) or when already ready
+      if ((item.booking_from === 'WEB' && !isEnableReadyAskBtn_for_reservation) || item.q_level >= 300) {
         isDisabled = true;
         const disabledBtnClass = isMobile ? 'mobile-btn-disabled' : 'btn-disabled';
         classes = `${baseClasses} ${disabledBtnClass} flex-1`;
       }
-    }
-  } else if (buttonDef.functionName === 'handleReady') {
-    if (item && item.q_level >= 300) {
-      // Already ready (q_level >= 300) - make button grey and disabled
-      isDisabled = true;
-      const disabledBtnClass = isMobile ? 'mobile-btn-disabled' : 'btn-disabled';
-      classes = `${baseClasses} ${disabledBtnClass} flex-1`;
     }
   }
 
@@ -582,7 +607,7 @@ function toggleMobileActions(booking_number, event) {
 
 /**
  * For completed items (Check-In/Cancelled), returns object with completion time and duration.
- * For active items (Waiting/Called), shows current elapsed time from time_created.
+ * For active items (Waiting/Called), shows current elapsed time from dine_dateTime.
  */
 function formatElapsedTime(item) {
   if (item.time_cleared) {
@@ -596,7 +621,7 @@ function formatElapsedTime(item) {
     });
 
     // Calculate duration
-    const durationMs = item.time_cleared - item.time_created;
+    const durationMs = item.time_cleared - item.dine_dateTime;
     const totalSeconds = Math.floor(durationMs / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
@@ -619,8 +644,19 @@ function formatElapsedTime(item) {
     return { time: durationString, duration: '', isTwoLine: false };
   } else {
     // Active items - calculate current elapsed time
-    const elapsedMs = Date.now() - item.time_created;
+    const elapsedMs = Date.now() - item.dine_dateTime;
     const totalSeconds = Math.floor(elapsedMs / 1000);
+
+    // Handle negative time (future reservations) with simplified format
+    if (totalSeconds < 0) {
+      const absMinutes = Math.floor(Math.abs(totalSeconds) / 60);
+      if (absMinutes >= 60) {
+        const hours = Math.floor(absMinutes / 60);
+        return { time: `-${hours} h`, duration: '', isTwoLine: false };
+      } else {
+        return { time: `-${absMinutes} min`, duration: '', isTwoLine: false };
+      }
+    }
 
     let minutes = Math.floor(totalSeconds / 60);
     const seconds = String(totalSeconds % 60).padStart(2, '0');
@@ -1653,7 +1689,7 @@ function renderWaitlist() {
     expandedRowId = null;
   }
 
-  // 1. Sort the entire list: Completed items first (by time_cleared), then Active items by time_created (oldest first).
+  // 1. Sort the entire list: Completed items first (by time_cleared), then Active items by dine_dateTime (oldest first).
   waitlist.sort((a, b) => {
     const priorityA = getSortPriority(a.status);
     const priorityB = getSortPriority(b.status);
@@ -1667,8 +1703,8 @@ function renderWaitlist() {
       // Both are completed items - sort by time_cleared (oldest first, recent last)
       return (a.time_cleared || 0) - (b.time_cleared || 0);
     } else {
-      // Both are active items - sort by time_created (oldest first)
-      return a.time_created - b.time_created;
+      // Both are active items - sort by dine_dateTime (oldest first)
+      return a.dine_dateTime - b.dine_dateTime;
     }
   });
 
@@ -1697,7 +1733,38 @@ function renderWaitlist() {
 
     // Build chat history HTML with elapsed time
     let chatHistoryHTML = '';
-    if (chatHistory.length > 0) {
+    
+    // Check if this is a WEB booking - show simple reservation info instead of chat history
+    if (item.booking_from === 'WEB') {
+      const chatClass = statusPriority === 0 ? 'text-slate-400' : 'text-slate-400';
+      
+      // Format dine_dateTime for display
+      const dineTime = new Date(item.dine_dateTime);
+      const timeString = dineTime.toLocaleTimeString('en-GB', {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      // Show "Reservation @ dine_dateTime" line with background highlight (similar to PAX >= 5 style but maintaining gray color)
+      const reservationHighlight = statusPriority === 0 ? 'bg-slate-600 text-slate-200 px-1 py-0.5 rounded font-bold' : 'bg-slate-700 text-slate-300 px-1 py-0.5 rounded font-bold';
+      chatHistoryHTML = `<div class="text-xs ${chatClass} leading-relaxed">↳ <span class="${reservationHighlight}">Reservation @ ${timeString}</span></div>`;
+      
+      // Add status message if item is Arrived or Cancelled with completion time
+      if (item.status === 'Arrived' || item.status === 'Cancelled') {
+        // Apply color based on status: purple for Arrived (#8b5cf6), red for Cancelled (#f87171)
+        const statusColor = item.status === 'Arrived' ? 'text-purple-500' : 'text-red-400';
+        const completionTime = new Date(item.time_cleared);
+        const timeString = completionTime.toLocaleTimeString('en-GB', {
+          hour12: false,
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+        chatHistoryHTML += `<div class="text-xs ${statusColor} leading-relaxed">↳ ${item.status} @ ${timeString}</div>`;
+      }
+    } else if (chatHistory.length > 0) {
+      // Regular chat history for non-WEB bookings
       const chatClass = statusPriority === 0 ? 'text-slate-400' : 'text-slate-400';
       const hasStatusMessage = item.status === 'Arrived' || item.status === 'Cancelled';
 
@@ -1814,11 +1881,15 @@ function renderWaitlist() {
     const onclickAttr = `onclick="toggleMobileActions(${item.booking_number}, event)"`;
     const rowClickableClass = 'row-clickable';
 
+    // Add margin bottom for highlighted names
+    const hasHighlight = item.pax >= minPax_for_bigTable || item.pax <= maxPax_for_smallTable;
+    const nameMarginClass = hasHighlight ? 'mb-1.5' : '';
+
     tableHTML += `
                     <tr class="${rowClass} ${rowClickableClass}" data-item-id="${item.booking_number}" ${onclickAttr}>
                         <td class="px-2 py-2 whitespace-nowrap text-sm font-medium ${idClass} text-center">${item.booking_number}</td>
                         <td class="px-2 py-2 text-sm">
-                            <div class="font-semibold ${nameClass}"><span class="${item.pax >= minPax_for_bigTable ? (statusPriority === 0 ? 'bg-white text-slate-800 px-1 py-0.5 rounded font-bold' : 'bg-yellow-400 text-slate-800 px-1 py-0.5 rounded font-bold') : (item.pax <= maxPax_for_smallTable ? (statusPriority === 0 ? 'border border-slate-100 px-1 py-0.5 rounded font-bold' : 'border border-amber-400 px-1 py-0.5 rounded font-bold') : '')}">${item.customer_name} <span class="${item.pax >= minPax_for_bigTable ? 'font-bold' : (item.pax <= maxPax_for_smallTable ? 'font-bold' : 'text-xs font-normal opacity-75')}">(Pax: <span class="${item.pax >= minPax_for_bigTable ? 'font-bold' : (item.pax <= maxPax_for_smallTable ? 'font-bold' : 'text-sm')}">${item.pax}</span>)</span></span></div>
+                            <div class="font-semibold ${nameClass} ${nameMarginClass}"><span class="${item.pax >= minPax_for_bigTable ? (statusPriority === 0 ? 'bg-white text-slate-800 px-1 py-0.5 rounded font-bold' : 'bg-yellow-400 text-slate-800 px-1 py-0.5 rounded font-bold') : (item.pax <= maxPax_for_smallTable ? (statusPriority === 0 ? 'border border-slate-100 px-1 py-0.5 rounded font-bold' : 'border border-amber-400 px-1 py-0.5 rounded font-bold') : '')}">${item.customer_name} <span class="${item.pax >= minPax_for_bigTable ? 'font-bold' : (item.pax <= maxPax_for_smallTable ? 'font-bold' : 'text-xs font-normal opacity-75')}">(Pax: <span class="${item.pax >= minPax_for_bigTable ? 'font-bold' : (item.pax <= maxPax_for_smallTable ? 'font-bold' : 'text-sm')}">${item.pax}</span>)</span></span></div>
                             ${chatHistoryHTML}
                         </td>
                         <td id="time-${item.booking_number}" class="px-2 py-2 whitespace-nowrap text-sm text-center ${timeClass}">

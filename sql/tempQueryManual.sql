@@ -28,7 +28,7 @@ INSERT INTO booking_list (
 (507, 'Eunwoo Choi', 5, FROM_UNIXTIME(UNIX_TIMESTAMP() - 480), NULL, 'Waiting', '7', '010-7777-7777', 'sub_ggg', 100, 'DL_Sunway_Geo', 'QR', FROM_UNIXTIME(UNIX_TIMESTAMP() - 480)),
 (308, 'Jihoon Kim', 3, FROM_UNIXTIME(UNIX_TIMESTAMP() - 420), NULL, 'Waiting', '8', '010-8888-8888', 'sub_hhh', 100, 'DL_Sunway_Geo', 'QR', FROM_UNIXTIME(UNIX_TIMESTAMP() - 420)),
 (609, 'Somin Park', 6, FROM_UNIXTIME(UNIX_TIMESTAMP() - 300), NULL, 'Waiting', '9', '010-9999-9999', 'sub_iii', 100, 'DL_Sunway_Geo', 'QR', FROM_UNIXTIME(UNIX_TIMESTAMP() - 300)),
-(210, 'Taehyun Lee', 2, FROM_UNIXTIME(UNIX_TIMESTAMP() - 180), NULL, 'Waiting', '10', '010-0000-0000', 'sub_jjj', 100, 'DL_Sunway_Geo', 'QR', FROM_UNIXTIME(UNIX_TIMESTAMP() - 180));
+(210, 'Taehyun Lee', 2, FROM_UNIXTIME(UNIX_TIMESTAMP() + 600), NULL, 'Waiting', '10', '010-0000-0000', 'sub_jjj', 100, 'DL_Sunway_Geo', 'QR', FROM_UNIXTIME(UNIX_TIMESTAMP() + 600));
 
 -- history_chat 테이블에 mockChatList 데이터 입력
 
@@ -48,6 +48,4 @@ INSERT INTO history_chat (
 (8, '5', FROM_UNIXTIME(UNIX_TIMESTAMP() - 542), 'A: Coming in 5 mins'),
 (9, '7', FROM_UNIXTIME(UNIX_TIMESTAMP() - 480), 'Waiting'),
 (10, '7', FROM_UNIXTIME(UNIX_TIMESTAMP() - 450), 'Q: Is outdoor seating OK?'),
-(11, '8', FROM_UNIXTIME(UNIX_TIMESTAMP() - 420), 'Waiting'),
-(12, '9', FROM_UNIXTIME(UNIX_TIMESTAMP() - 300), 'Waiting'),
-(13, '10', FROM_UNIXTIME(UNIX_TIMESTAMP() - 180), 'Waiting');
+(11, '8', FROM_UNIXTIME(UNIX_TIMESTAMP() - 420), 'Waiting')
