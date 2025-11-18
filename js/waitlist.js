@@ -1715,15 +1715,16 @@ function updateScrollAndButtonState() {
   const completedItemsCount = waitlist.filter(item => getSortPriority(item.status) === 0).length;
   const hasCompletedItems = completedItemsCount > 0;
   const totalRows = waitlist.length;
-  const shouldEnableScrolling = totalRows > displayedRows && hasCompletedItems;
+  // With dummy row, scrolling is always enabled when there are completed items
+  const shouldEnableScrolling = hasCompletedItems;
 
   if (shouldEnableScrolling) {
     // Calculate ACTUAL height of completed rows including mobile action rows
     let completedRowsFound = 0;
     for (let i = 0; i < rows.length && completedRowsFound < completedItemsCount; i++) {
       const row = rows[i];
-      // Only count main data rows (not mobile action rows)
-      if (!row.classList.contains('mobile-action-row')) {
+      // Only count main data rows (not mobile action rows or dummy row)
+      if (!row.classList.contains('mobile-action-row') && !row.classList.contains('dummy-spacer-row')) {
         totalHeightToScroll += row.offsetHeight;
         completedRowsFound++;
       } else if (completedRowsFound < completedItemsCount) {
@@ -2115,6 +2116,82 @@ function renderWaitlist() {
   waitlistBody.innerHTML = tableHTML;
   console.log("RENDER: Table HTML injected into DOM.");
 
+  // Add dummy row to ensure scrollability even with few items
+  requestAnimationFrame(() => {
+    const completedItemsCount = waitlist.filter(item => getSortPriority(item.status) === 0).length;
+    const hasCompletedItems = completedItemsCount > 0;
+
+    if (hasCompletedItems) {
+      // Calculate heights
+      const containerHeight = waitlistContainer.clientHeight;
+      const rows = waitlistBody.getElementsByTagName('tr');
+      
+      // Calculate total height of completed items
+      let completedItemsHeight = 0;
+      let completedRowsFound = 0;
+      for (let i = 0; i < rows.length && completedRowsFound < completedItemsCount; i++) {
+        const row = rows[i];
+        if (!row.classList.contains('mobile-action-row') && !row.classList.contains('dummy-spacer-row')) {
+          completedItemsHeight += row.offsetHeight;
+          completedRowsFound++;
+        } else if (completedRowsFound < completedItemsCount) {
+          completedItemsHeight += row.offsetHeight;
+        }
+      }
+
+      // Calculate total height of active items
+      let activeItemsHeight = 0;
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row.classList.contains('mobile-action-row') && !row.classList.contains('dummy-spacer-row')) {
+          const rowId = row.getAttribute('data-item-id');
+          if (rowId) {
+            const item = waitlist.find(w => w.booking_number === parseInt(rowId));
+            if (item && getSortPriority(item.status) === 1) {
+              activeItemsHeight += row.offsetHeight;
+            }
+          }
+        }
+      }
+
+      // Calculate remaining space in container
+      const remainingSpace = containerHeight - activeItemsHeight;
+
+      // Dummy row height = remaining space + completed items height
+      // This ensures we can scroll exactly by the completed items height
+      const dummyRowHeight = Math.max(0, remainingSpace + completedItemsHeight);
+
+      console.log(`DUMMY_ROW: Container height: ${containerHeight.toFixed(2)}px`);
+      console.log(`DUMMY_ROW: Completed items height: ${completedItemsHeight.toFixed(2)}px`);
+      console.log(`DUMMY_ROW: Active items height: ${activeItemsHeight.toFixed(2)}px`);
+      console.log(`DUMMY_ROW: Remaining space: ${remainingSpace.toFixed(2)}px`);
+      console.log(`DUMMY_ROW: Calculated dummy height: ${dummyRowHeight.toFixed(2)}px`);
+
+      if (dummyRowHeight > 0) {
+        // Remove existing dummy row if present
+        const existingDummy = waitlistBody.querySelector('.dummy-spacer-row');
+        if (existingDummy) {
+          existingDummy.remove();
+        }
+
+        // Create and append dummy row
+        const dummyRow = document.createElement('tr');
+        dummyRow.className = 'dummy-spacer-row';
+        dummyRow.innerHTML = `<td colspan="4" style="height: ${dummyRowHeight}px; padding: 0; border: none; background: transparent;"></td>`;
+        waitlistBody.appendChild(dummyRow);
+
+        console.log(`DUMMY_ROW: Added dummy spacer row with height ${dummyRowHeight.toFixed(2)}px`);
+      }
+    } else {
+      // No completed items - remove dummy row if it exists
+      const existingDummy = waitlistBody.querySelector('.dummy-spacer-row');
+      if (existingDummy) {
+        existingDummy.remove();
+        console.log('DUMMY_ROW: Removed dummy row (no completed items)');
+      }
+    }
+  });
+
   // Clean up any problematic styles and classes
   const allRows = waitlistBody.querySelectorAll('tr');
   allRows.forEach((row) => {
@@ -2232,87 +2309,92 @@ async function startInitialization() {
     // Initial scroll setup: Set position and initial button state after data is loaded and rendered
     // requestAnimationFrame을 사용하여 DOM이 렌더링된 후 정확한 위치로 이동합니다.
     requestAnimationFrame(() => {
-      console.log("INIT: DOM rendered. Starting initial scroll/state calculation.");
+      console.log("INIT: DOM rendered. Waiting for dummy row to be added...");
 
-      // 1. 초기 스크롤 목표 위치를 계산하고 동적 높이 설정을 업데이트합니다.
-      const scrollTarget = updateScrollAndButtonState();
-      const completedItemsCount = waitlist.filter(item => getSortPriority(item.status) === 0).length;
+      // Wait for dummy row to be added (it's added in another requestAnimationFrame in renderWaitlist)
+      requestAnimationFrame(() => {
+        console.log("INIT: Dummy row added. Starting initial scroll/state calculation.");
 
-      const rows = waitlistBody.getElementsByTagName('tr');
-      // NEW: Calculate row height based on a rendered row (must be done after render)
-      if (rows.length > 0) {
-        rowHeight = rows[0].offsetHeight;
-        console.log(`INIT: Measured single rowHeight for update: ${rowHeight.toFixed(2)}px`);
-      }
+        // 1. 초기 스크롤 목표 위치를 계산하고 동적 높이 설정을 업데이트합니다.
+        const scrollTarget = updateScrollAndButtonState();
+        const completedItemsCount = waitlist.filter(item => getSortPriority(item.status) === 0).length;
 
-      console.log(`INIT: Calculated scrollTarget = ${scrollTarget.toFixed(2)}px. Completed items = ${completedItemsCount}`);
+        const rows = waitlistBody.getElementsByTagName('tr');
+        // NEW: Calculate row height based on a rendered row (must be done after render)
+        if (rows.length > 0) {
+          rowHeight = rows[0].offsetHeight;
+          console.log(`INIT: Measured single rowHeight for update: ${rowHeight.toFixed(2)}px`);
+        }
 
-      // 2. 총 행 수가 displayedRows를 초과하고, Active Queue를 건너뛸 기록이 있고, 스크롤이 가능하며, 현재 Active Queue 위치에 있지 않은 경우 활성화
-      const totalRows = waitlist.length;
-      const shouldScrollToActive = totalRows > displayedRows && completedItemsCount > 0;
-      console.log(`INIT: Total rows: ${totalRows}, displayedRows: ${displayedRows}, shouldScrollToActive: ${shouldScrollToActive}`);
+        console.log(`INIT: Calculated scrollTarget = ${scrollTarget.toFixed(2)}px. Completed items = ${completedItemsCount}`);
 
-      if (shouldScrollToActive) {
-        // Disable hover temporarily during scroll
-        waitlistContainer.classList.add('disable-hover');
+        // 2. Completed items가 있으면 항상 스크롤 실행 (더미 row로 인해 항상 스크롤 가능)
+        const totalRows = waitlist.length;
+        const shouldScrollToActive = completedItemsCount > 0;
+        console.log(`INIT: Total rows: ${totalRows}, Completed items: ${completedItemsCount}, shouldScrollToActive: ${shouldScrollToActive}`);
 
-        // 스크롤 위치를 즉시 설정합니다. (비헤이비어 'auto')
-        waitlistContainer.scrollTop = scrollTarget;
-        console.log(`INIT: Forced scroll to position: ${scrollTarget.toFixed(2)}px`);
+        if (shouldScrollToActive) {
+          // Disable hover temporarily during scroll
+          waitlistContainer.classList.add('disable-hover');
 
-        // Re-enable hover only when the user actually interacts (mousemove or window focus)
-        const reenableHover = () => {
-          waitlistContainer.classList.remove('disable-hover');
-          console.log('INIT: Hover re-enabled after user interaction');
-          document.removeEventListener('mousemove', reenableHover);
-          window.removeEventListener('focus', reenableHover);
-          clearTimeout(reenableFallback);
-        };
+          // 스크롤 위치를 즉시 설정합니다. (비헤이비어 'auto')
+          waitlistContainer.scrollTop = scrollTarget;
+          console.log(`INIT: Forced scroll to position: ${scrollTarget.toFixed(2)}px`);
 
-        // If the user moves the mouse (or window gains focus), re-enable hover immediately
-        document.addEventListener('mousemove', reenableHover, { once: true });
-        window.addEventListener('focus', reenableHover, { once: true });
+          // Re-enable hover only when the user actually interacts (mousemove or window focus)
+          const reenableHover = () => {
+            waitlistContainer.classList.remove('disable-hover');
+            console.log('INIT: Hover re-enabled after user interaction');
+            document.removeEventListener('mousemove', reenableHover);
+            window.removeEventListener('focus', reenableHover);
+            clearTimeout(reenableFallback);
+          };
 
-        // Fallback: if no interaction occurs within 8s, re-enable to avoid permanently disabling hover
-        const reenableFallback = setTimeout(() => {
-          waitlistContainer.classList.remove('disable-hover');
-          console.log('INIT: Hover re-enabled by fallback after 8s');
-          document.removeEventListener('mousemove', reenableHover);
-          window.removeEventListener('focus', reenableHover);
-        }, 8000);
+          // If the user moves the mouse (or window gains focus), re-enable hover immediately
+          document.addEventListener('mousemove', reenableHover, { once: true });
+          window.addEventListener('focus', reenableHover, { once: true });
 
-        // 실제 스크롤된 위치를 다음 프레임에서 읽어서 정확한 값을 저장
-        requestAnimationFrame(() => {
-          // 더 정확한 스크롤을 위해 한 번 더 시도
-          const actualScrollTop = waitlistContainer.scrollTop;
-          if (Math.abs(actualScrollTop - scrollTarget) > 2) {
-            console.log(`INIT: Adjusting scroll position. First attempt: ${actualScrollTop.toFixed(2)}px`);
-            waitlistContainer.scrollTop = scrollTarget;
+          // Fallback: if no interaction occurs within 8s, re-enable to avoid permanently disabling hover
+          const reenableFallback = setTimeout(() => {
+            waitlistContainer.classList.remove('disable-hover');
+            console.log('INIT: Hover re-enabled by fallback after 8s');
+            document.removeEventListener('mousemove', reenableHover);
+            window.removeEventListener('focus', reenableHover);
+          }, 8000);
 
-            // 조정 후 다시 한번 확인
-            requestAnimationFrame(() => {
-              initialScrollTop = waitlistContainer.scrollTop;
-              console.log(`INIT: InitialScrollTop value recorded (final): ${initialScrollTop.toFixed(2)}px`);
-              console.log(`INIT: Final difference: ${(scrollTarget - initialScrollTop).toFixed(2)}px`);
-            });
-          } else {
-            initialScrollTop = actualScrollTop;
-            console.log(`INIT: InitialScrollTop value recorded (actual): ${initialScrollTop.toFixed(2)}px`);
-            console.log(`INIT: Difference between target and actual: ${(scrollTarget - initialScrollTop).toFixed(2)}px`);
-          }
-        });
-      } else {
-        initialScrollTop = 0; // Ensure it's 0 if no initial scroll occurred
-        console.log("INIT: No completed items, skipping initial forced scroll.");
-      }
+          // 실제 스크롤된 위치를 다음 프레임에서 읽어서 정확한 값을 저장
+          requestAnimationFrame(() => {
+            // 더 정확한 스크롤을 위해 한 번 더 시도
+            const actualScrollTop = waitlistContainer.scrollTop;
+            if (Math.abs(actualScrollTop - scrollTarget) > 2) {
+              console.log(`INIT: Adjusting scroll position. First attempt: ${actualScrollTop.toFixed(2)}px`);
+              waitlistContainer.scrollTop = scrollTarget;
 
-      // 3. 스크롤 위치 설정 직후 버튼 상태를 업데이트하여 즉시 비활성화하고 텍스트를 변경합니다.
-      updateScrollAndButtonState();
-      console.log("INIT: Final button state check completed.");
+              // 조정 후 다시 한번 확인
+              requestAnimationFrame(() => {
+                initialScrollTop = waitlistContainer.scrollTop;
+                console.log(`INIT: InitialScrollTop value recorded (final): ${initialScrollTop.toFixed(2)}px`);
+                console.log(`INIT: Final difference: ${(scrollTarget - initialScrollTop).toFixed(2)}px`);
+              });
+            } else {
+              initialScrollTop = actualScrollTop;
+              console.log(`INIT: InitialScrollTop value recorded (actual): ${initialScrollTop.toFixed(2)}px`);
+              console.log(`INIT: Difference between target and actual: ${(scrollTarget - initialScrollTop).toFixed(2)}px`);
+            }
+          });
+        } else {
+          initialScrollTop = 0; // Ensure it's 0 if no initial scroll occurred
+          console.log("INIT: No completed items, skipping initial forced scroll.");
+        }
 
-      // 4. 초기 설정이 완료되었음을 플래그로 표시합니다. 
-      isInitialScrollDone = true;
-      console.log("INIT: isInitialScrollDone set to TRUE. Enabling dynamic button logic.");
+        // 3. 스크롤 위치 설정 직후 버튼 상태를 업데이트하여 즉시 비활성화하고 텍스트를 변경합니다.
+        updateScrollAndButtonState();
+        console.log("INIT: Final button state check completed.");
+
+        // 4. 초기 설정이 완료되었음을 플래그로 표시합니다. 
+        isInitialScrollDone = true;
+        console.log("INIT: isInitialScrollDone set to TRUE. Enabling dynamic button logic.");
+      });
     });
 
   } catch (error) {
