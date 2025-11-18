@@ -2139,32 +2139,33 @@ function renderWaitlist() {
         }
       }
 
-      // Calculate total height of active items
-      let activeItemsHeight = 0;
+      // Calculate total height of ALL content (before adding dummy row)
+      // This is more accurate than summing individual items
+      let totalContentHeight = 0;
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
-        if (!row.classList.contains('mobile-action-row') && !row.classList.contains('dummy-spacer-row')) {
-          const rowId = row.getAttribute('data-item-id');
-          if (rowId) {
-            const item = waitlist.find(w => w.booking_number === parseInt(rowId));
-            if (item && getSortPriority(item.status) === 1) {
-              activeItemsHeight += row.offsetHeight;
-            }
-          }
+        if (!row.classList.contains('dummy-spacer-row')) {
+          totalContentHeight += row.offsetHeight;
         }
       }
+      
+      // Active items = total content - completed items
+      const activeItemsHeight = totalContentHeight - completedItemsHeight;
 
-      // Calculate remaining space in container
+      // Calculate remaining space in container after active items
       const remainingSpace = containerHeight - activeItemsHeight;
 
-      // Dummy row height = remaining space + completed items height
-      // This ensures we can scroll exactly by the completed items height
-      const dummyRowHeight = Math.max(0, remainingSpace + completedItemsHeight);
+      // Dummy row height = remaining space only
+      // Goal: scrollHeight - clientHeight = completedItemsHeight
+      // scrollHeight = completed + active + dummy
+      // We want: completed + active + dummy - clientHeight = completed
+      // Therefore: active + dummy = clientHeight
+      // dummy = clientHeight - active = remainingSpace
+      const dummyRowHeight = Math.max(0, remainingSpace);
 
       console.log(`DUMMY_ROW: Container height: ${containerHeight.toFixed(2)}px`);
       console.log(`DUMMY_ROW: Completed items height: ${completedItemsHeight.toFixed(2)}px`);
       console.log(`DUMMY_ROW: Active items height: ${activeItemsHeight.toFixed(2)}px`);
-      console.log(`DUMMY_ROW: Remaining space: ${remainingSpace.toFixed(2)}px`);
       console.log(`DUMMY_ROW: Calculated dummy height: ${dummyRowHeight.toFixed(2)}px`);
 
       if (dummyRowHeight > 0) {
@@ -2187,6 +2188,7 @@ function renderWaitlist() {
           const scrollHeight = waitlistContainer.scrollHeight;
           const clientHeight = waitlistContainer.clientHeight;
           const maxScrollTop = scrollHeight - clientHeight;
+          const shortfall = completedItemsHeight - maxScrollTop;
           
           console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
           console.log(`SCROLL_MEASURE: Container Analysis`);
@@ -2204,6 +2206,27 @@ function renderWaitlist() {
           console.log(`  Difference: ${(maxScrollTop - completedItemsHeight).toFixed(2)}px`);
           console.log(`\nGoal: Difference should be 0`);
           console.log(`  (Max scrollTop should equal Completed items height)`);
+          
+          // If there's a shortfall, adjust dummy row height
+          if (Math.abs(shortfall) > 1) {
+            console.log(`\n⚠️  ADJUSTING: Dummy row needs ${shortfall.toFixed(2)}px adjustment`);
+            const adjustedDummyHeight = dummyRowHeight + shortfall;
+            const dummyElement = waitlistBody.querySelector('.dummy-spacer-row td');
+            if (dummyElement) {
+              dummyElement.style.height = `${adjustedDummyHeight}px`;
+              console.log(`✓ Adjusted dummy row from ${dummyRowHeight.toFixed(2)}px to ${adjustedDummyHeight.toFixed(2)}px`);
+              
+              // Verify adjustment
+              requestAnimationFrame(() => {
+                const newScrollHeight = waitlistContainer.scrollHeight;
+                const newMaxScrollTop = newScrollHeight - clientHeight;
+                console.log(`✓ New scrollHeight: ${newScrollHeight.toFixed(2)}px`);
+                console.log(`✓ New maxScrollTop: ${newMaxScrollTop.toFixed(2)}px`);
+                console.log(`✓ Final difference: ${(newMaxScrollTop - completedItemsHeight).toFixed(2)}px`);
+              });
+            }
+          }
+          
           console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
         });
       }
