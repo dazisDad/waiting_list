@@ -5,6 +5,11 @@ body {
   color: #e2e8f0;
 }
 
+/* Table cell vertical alignment - Top alignment for all cells */
+td {
+  vertical-align: top !important;
+}
+
 /* Status Colors for Icon - Neon effect for dark theme */
 .status-waiting {
   color: #fbbf24;
@@ -173,23 +178,16 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
 /* Hover effects disabled globally for desktop - no longer needed */
 /* .disable-hover rules removed since hover effects are disabled */
 
-/* Desktop: Pre-allocate transparent borders to prevent layout shift */
+/* Desktop: Row styling */
 @media (min-width: 769px) {
   .row-clickable,
   .row-hover,
   .row-completed {
-    border-top: 1px solid transparent !important;
-    border-left: 1px solid transparent !important;
-    border-right: 1px solid transparent !important;
-    border-bottom: 1px solid transparent !important;
     box-sizing: border-box !important;
   }
 
   .row-selected {
-    border-top: 1px solid #fbbf24 !important;
-    border-left: 1px solid #fbbf24 !important;
-    border-right: 1px solid #fbbf24 !important;
-    border-bottom: 1px solid #fbbf24 !important;
+    border-left: 3px solid #fbbf24 !important;
     box-sizing: border-box !important;
     background-color: inherit !important;
   }
@@ -199,17 +197,14 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
     background-color: #1e293b !important;
   }
 
-  /* Force top border on selected rows with higher specificity */
+  /* Force left border on selected rows with higher specificity */
   .row-selected.row-clickable,
   .row-selected.row-hover,
   .row-selected.row-completed {
-    border-top: 1px solid #fbbf24 !important;
+    border-left: 3px solid #fbbf24 !important;
   }
 
-  /* Force top border on table cells within selected rows */
-  .row-selected td {
-    border-top: 1px solid #fbbf24 !important;
-  }
+
 
   /* Remove focus styles from rows on desktop (except intentional highlights) */
   .row-clickable:focus,
@@ -274,17 +269,13 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
     opacity: 0 !important;
   }
 
-  /* Pre-allocate transparent borders to prevent layout shift */
+  /* Mobile row styling */
   .row-clickable,
   .row-hover,
   .row-completed,
   tr.row-clickable,
   tr.row-hover,
   tr.row-completed {
-    border-top: 1px solid transparent !important;
-    border-left: 1px solid transparent !important;
-    border-right: 1px solid transparent !important;
-    border-bottom: 1px solid transparent !important;
     box-sizing: border-box !important;
   }
 
@@ -393,26 +384,20 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
     transition: none !important;
   }
 
-  /* Selected row highlight on mobile - Yellow border on top and sides only */
+  /* Selected row highlight on mobile - Yellow left border only */
   .row-selected,
   tr.row-selected {
-    border-top: 1px solid #fbbf24 !important;
-    border-left: 1px solid #fbbf24 !important;
-    border-right: 1px solid #fbbf24 !important;
-    border-bottom: 1px solid transparent !important;
-    /* Bottom border will be on action row */
+    border-left: 3px solid #fbbf24 !important;
     transition: none !important;
     box-sizing: border-box !important;
     background-color: inherit !important;
   }
 
-  /* Force selection borders with higher specificity */
+  /* Force selection borders with higher specificity - left border only */
   .row-selected.row-clickable,
   .row-selected.row-hover,
   .row-selected.row-completed {
-    border-top: 1px solid #fbbf24 !important;
-    border-left: 1px solid #fbbf24 !important;
-    border-right: 1px solid #fbbf24 !important;
+    border-left: 3px solid #fbbf24 !important;
     background-color: inherit !important;
   }
 
@@ -421,15 +406,10 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
     background-color: #1e293b !important;
   }
 
-  /* Apply selection border to table cells as well */
-  .row-selected td {
-    border-top: 1px solid #fbbf24 !important;
-  }
+
 
   .row-selected:hover {
-    border-top: 1px solid #fbbf24 !important;
-    border-left: 1px solid #fbbf24 !important;
-    border-right: 1px solid #fbbf24 !important;
+    border-left: 3px solid #fbbf24 !important;
     background-color: inherit !important;
   }
 
@@ -462,18 +442,13 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
   .row-selected + .mobile-action-row,
   tr.row-selected + tr.mobile-action-row,
   .mobile-action-row.selected-action-row {
-    border-left: 1px solid #fbbf24 !important;
-    border-right: 1px solid #fbbf24 !important;
-    border-bottom: 1px solid #fbbf24 !important;
+    border-left: 3px solid #fbbf24 !important;
     border-top: 1px solid #475569 !important;
     background-color: #1e293b !important;
     box-sizing: border-box !important;
   }
 
-  /* Force bottom border specifically */
-  .mobile-action-row.selected-action-row td {
-    border-bottom: 1px solid #fbbf24 !important;
-  }
+
 
   .mobile-action-row td {
     padding: 12px 8px;
