@@ -10,6 +10,11 @@ td {
   vertical-align: top !important;
 }
 
+/* Table header left border to prevent gap when row is selected */
+th:first-child {
+  border-left: 3px solid #1e293b;
+}
+
 /* Status Colors for Icon - Neon effect for dark theme */
 .status-waiting {
   color: #fbbf24;
@@ -173,6 +178,10 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
   background-color: #1e293b;
 }
 
+.row-completed td:first-child {
+  border-left: 3px solid #1e293b;
+}
+
 /* .row-completed:hover - removed for desktop consistency */
 
 /* Hover effects disabled globally for desktop - no longer needed */
@@ -186,10 +195,17 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
     box-sizing: border-box !important;
   }
 
+  .row-hover td:first-child {
+    border-left: 3px solid #0f172a;
+  }
+
   .row-selected {
-    border-left: 3px solid #fbbf24 !important;
     box-sizing: border-box !important;
     background-color: inherit !important;
+  }
+
+  .row-selected td:first-child {
+    border-left: 3px solid #fbbf24 !important;
   }
 
   /* Force completed rows to maintain their background color when selected */
@@ -197,10 +213,10 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
     background-color: #1e293b !important;
   }
 
-  /* Force left border on selected rows with higher specificity */
-  .row-selected.row-clickable,
-  .row-selected.row-hover,
-  .row-selected.row-completed {
+  /* Force yellow border on selected rows' first td with higher specificity */
+  .row-selected.row-clickable td:first-child,
+  .row-selected.row-hover td:first-child,
+  .row-selected.row-completed td:first-child {
     border-left: 3px solid #fbbf24 !important;
   }
 
@@ -387,17 +403,25 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
   /* Selected row highlight on mobile - Yellow left border only */
   .row-selected,
   tr.row-selected {
-    border-left: 3px solid #fbbf24 !important;
     transition: none !important;
     box-sizing: border-box !important;
     background-color: inherit !important;
   }
 
-  /* Force selection borders with higher specificity - left border only */
+  .row-selected td:first-child {
+    border-left: 3px solid #fbbf24 !important;
+  }
+
+  /* Force yellow border on selected rows' first td with higher specificity */
+  .row-selected.row-clickable td:first-child,
+  .row-selected.row-hover td:first-child,
+  .row-selected.row-completed td:first-child {
+    border-left: 3px solid #fbbf24 !important;
+  }
+
   .row-selected.row-clickable,
   .row-selected.row-hover,
   .row-selected.row-completed {
-    border-left: 3px solid #fbbf24 !important;
     background-color: inherit !important;
   }
 
@@ -409,8 +433,11 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
 
 
   .row-selected:hover {
-    border-left: 3px solid #fbbf24 !important;
     background-color: inherit !important;
+  }
+
+  .row-selected:hover td:first-child {
+    border-left: 3px solid #fbbf24 !important;
   }
 
   /* Additional mobile-specific rules to prevent background color change on completed rows */
@@ -442,10 +469,15 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
   .row-selected + .mobile-action-row,
   tr.row-selected + tr.mobile-action-row,
   .mobile-action-row.selected-action-row {
-    border-left: 3px solid #fbbf24 !important;
     border-top: 1px solid #475569 !important;
     background-color: #1e293b !important;
     box-sizing: border-box !important;
+  }
+
+  .row-selected + .mobile-action-row td:first-child,
+  tr.row-selected + tr.mobile-action-row td:first-child,
+  .mobile-action-row.selected-action-row td:first-child {
+    border-left: 3px solid #fbbf24 !important;
   }
 
 
