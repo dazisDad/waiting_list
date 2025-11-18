@@ -19,10 +19,10 @@ async function fetchBookingList(booking_from = null) {
     // Get today's date in YYYY-MM-DD format for filtering
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
-    
+
     // booking_list 테이블에서 조건에 맞는 데이터 가져오기
     let template, values, types;
-    
+
     if (booking_from !== null) {
       // booking_from이 전달된 경우 - 3개 조건으로 검색
       template = 'store_id = ? AND booking_from = ? AND DATE(dine_dateTime) = ?';
@@ -34,37 +34,37 @@ async function fetchBookingList(booking_from = null) {
       values = [store_id, todayStr];
       types = 'ss'; // string, string
     }
-    
+
     const result = await connector.selectWhere('waitlist', 'booking_list', {
       template: template,
       values: values,
       types: types
     });
-    
+
     if (result.success && result.data) {
-      
+
       // 날짜 필드들을 timestamp (밀리초)로 변환
       const processedData = result.data.map(item => {
         const processedItem = { ...item };
-        
+
         // dine_dateTime 변환
         if (processedItem.dine_dateTime) {
           processedItem.dine_dateTime = new Date(processedItem.dine_dateTime).getTime();
         }
-        
+
         // time_cleared 변환 (null일 수 있음)
         if (processedItem.time_cleared) {
           processedItem.time_cleared = new Date(processedItem.time_cleared).getTime();
         }
-        
+
         // dine_dateTime 변환 (null일 수 있음)
         if (processedItem.dine_dateTime) {
           processedItem.dine_dateTime = new Date(processedItem.dine_dateTime).getTime();
         }
-        
+
         return processedItem;
       });
-      
+
       return processedData;
     } else {
       console.error('데이터 조회 실패:', result.error);
@@ -82,28 +82,28 @@ async function fetchChatHistory() {
     // Get today's date in YYYY-MM-DD format for filtering
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
-    
+
     // history_chat 테이블에서 오늘 날짜의 데이터 가져오기
     const result = await connector.selectWhere('waitlist', 'history_chat', {
       template: 'DATE(dateTime) = ?',
       values: [todayStr],
       types: 's' // string
     });
-    
+
     if (result.success && result.data) {
-      
+
       // dateTime 필드를 timestamp (밀리초)로 변환
       const processedData = result.data.map(item => {
         const processedItem = { ...item };
-        
+
         // dateTime 변환
         if (processedItem.dateTime) {
           processedItem.dateTime = new Date(processedItem.dateTime).getTime();
         }
-        
+
         return processedItem;
       });
-      
+
       return processedData;
     } else {
       console.error('데이터 조회 실패:', result.error);
@@ -124,7 +124,7 @@ async function fetchAskQList() {
       values: [store_id],
       types: 's' // string
     });
-    
+
     if (result.success && result.data) {
       return result.data;
     } else {
@@ -142,17 +142,17 @@ async function fetchAskQList() {
 async function getServerSideUpdate() {
   try {
     console.log('SERVER_UPDATE: Starting server-side data update...');
-    
+
     // 모든 데이터를 병렬로 가져오기
     const [waitlistData, chatData, questionsData] = await Promise.all([
       fetchBookingList(),
       fetchChatHistory(),
       fetchAskQList()
     ]);
-    
+
     console.log('SERVER_UPDATE: All data loaded successfully');
     console.log('- Waitlist items:', waitlistData?.length || 0);
-    console.log('- Chat records:', chatData?.length || 0); 
+    console.log('- Chat records:', chatData?.length || 0);
     console.log('- Questions:', questionsData?.length || 0);
 
     // 전역 변수 오버라이드
@@ -163,12 +163,12 @@ async function getServerSideUpdate() {
     console.log(waitlist);
 
     console.log('SERVER_UPDATE: Global variables updated, re-rendering waitlist...');
-    
+
     // 새 데이터로 렌더링
     renderWaitlist();
-    
+
     console.log('SERVER_UPDATE: Update completed successfully');
-    
+
   } catch (error) {
     console.error('SERVER_UPDATE: Error during server-side update:', error);
   }
@@ -207,7 +207,7 @@ function getFilteredQuestions(customerPax, booking_number) {
   return questionnaire.filter(q => {
     // Only include questions that are triggered by Ask button
     if (q.invokedWithBtn !== 'Ask') return false;
-    
+
     // Check basic conditions
     if (q.minPax > customerPax) return false;
     if (q.maxPax && q.maxPax < customerPax) return false;
@@ -412,7 +412,7 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
   // Special handling for Ask and Ready buttons
   let isDisabled = false;
   const item = waitlist.find(i => i.booking_number === booking_number);
-  
+
   if (buttonDef.functionName === 'handleAsk') {
     if (item) {
       // Disable Ask button for WEB bookings (based on isEnableReadyAskBtn_for_reservation setting) or when no questions available
@@ -448,10 +448,10 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
     const onTouchStart = `ontouchstart="${readyHandlerCall}"`;
     const onMouseDown = `onmousedown="${readyHandlerCall}"`;
     // Add blur for desktop after long press completes
-    const preventClick = isMobile 
+    const preventClick = isMobile
       ? `onclick="event.preventDefault(); return false;"`
       : `onclick="event.preventDefault(); setTimeout(() => this.blur(), 100); return false;"`;
-    
+
     return `<button ${onTouchStart} ${onMouseDown} ${preventClick} class="${classes}">${buttonDef.label}</button>`;
   }
 
@@ -510,7 +510,7 @@ function toggleMobileActions(booking_number, event) {
         toggleRowSelection(selectedRowId, false);
         toggleChatHistoryDisplay(selectedRowId, false);
       }
-      
+
       // Select new row
       selectedRowId = booking_number;
       toggleRowSelection(booking_number, true);
@@ -540,13 +540,13 @@ function toggleMobileActions(booking_number, event) {
   if (expandedRowId === booking_number) {
     // Remove mobile action row
     removeMobileActionRow(booking_number);
-    
+
     // Remove row selection visual state
     toggleRowSelection(booking_number, false);
-    
+
     // Collapse chat history
     toggleChatHistoryDisplay(booking_number, false);
-    
+
     expandedRowId = null;
     console.log(`MOBILE: Collapsed row for item #${booking_number}`);
     return;
@@ -557,7 +557,7 @@ function toggleMobileActions(booking_number, event) {
     removeMobileActionRow(expandedRowId);
     toggleRowSelection(expandedRowId, false);
     toggleChatHistoryDisplay(expandedRowId, false);
-    
+
     // Exit Ask mode for the previous row
     if (askModeItems.has(expandedRowId)) {
       askModeItems.delete(expandedRowId);
@@ -567,16 +567,16 @@ function toggleMobileActions(booking_number, event) {
 
   // Expand the clicked row
   expandedRowId = booking_number;
-  
+
   // Add visual selection
   toggleRowSelection(booking_number, true);
-  
+
   // Expand chat history
   toggleChatHistoryDisplay(booking_number, true);
-  
+
   // Add mobile action row
   addMobileActionRow(booking_number);
-  
+
   console.log(`MOBILE: Expanded row for item #${booking_number}`);
 }
 
@@ -660,7 +660,7 @@ function toggleChatHistoryDisplay(booking_number, showAll) {
   if (!nameCell) return;
 
   // Find all chat history divs (look for elements with arrow ↳)
-  const chatDivs = Array.from(nameCell.querySelectorAll('div')).filter(div => 
+  const chatDivs = Array.from(nameCell.querySelectorAll('div')).filter(div =>
     div.textContent.includes('↳')
   );
 
@@ -701,7 +701,7 @@ function addMobileActionRow(booking_number) {
 
   // Get buttons for this item's status
   let buttonHTMLs;
-  
+
   if (askModeItems.has(item.booking_number)) {
     const filteredQuestions = getFilteredQuestions(item.pax, item.booking_number);
     const questionButtonsHTML = generateQuestionButtonsHTML(filteredQuestions, item.booking_number, item.customer_name, true);
@@ -918,7 +918,7 @@ function isLongPress(event, duration = 500) {
     // Handle movement (cancel long press if moved too much)
     const handleMove = (moveEvent) => {
       if (!isPressed) return;
-      
+
       let currentX, currentY;
       if (moveEvent.type === 'touchmove' && moveEvent.touches && moveEvent.touches[0]) {
         currentX = moveEvent.touches[0].clientX;
@@ -932,7 +932,7 @@ function isLongPress(event, duration = 500) {
 
       const deltaX = Math.abs(currentX - startX);
       const deltaY = Math.abs(currentY - startY);
-      
+
       if (deltaX > moveThreshold || deltaY > moveThreshold) {
         // Moved too much - cancel long press
         handleEnd();
@@ -942,11 +942,11 @@ function isLongPress(event, duration = 500) {
     // Handle press end events
     const handleEnd = () => {
       if (!isPressed) return; // Already handled
-      
+
       isPressed = false;
       button.style.opacity = originalOpacity;
       clearTimeout(longPressTimer);
-      
+
       // Short press - not long enough
       cleanupListeners();
       resolve(false);
@@ -959,7 +959,7 @@ function isLongPress(event, duration = 500) {
       document.removeEventListener('mouseup', handleEnd);
       document.removeEventListener('mousemove', handleMove);
       button.removeEventListener('mouseleave', handleEnd);
-      
+
       // Touch events (remove with same options as added)
       document.removeEventListener('touchend', handleEnd, { passive: false });
       document.removeEventListener('touchcancel', handleEnd, { passive: false });
@@ -1012,7 +1012,7 @@ async function handleReady(booking_number, customer_name, event) {
 async function handleReadyInternal(booking_number, customer_name, event) {
   console.log(`ACTION: Marking customer ${customer_name} (#${booking_number}) as ready.`);
   console.log(`INFO: [${customer_name}, #${booking_number}] 고객님께 테이블이 준비되었음을 알립니다.`);
-  
+
   // Check if mobile - on desktop, highlight the row and flash button
   const isMobile = window.innerWidth <= 768;
 
@@ -1023,7 +1023,7 @@ async function handleReadyInternal(booking_number, customer_name, event) {
   }
 
   const item = waitlist.find(item => item.booking_number === booking_number);
-  
+
   // Find the Ready button question from questionnaire
   const readyQuestion = questionnaire.find(q => q.invokedWithBtn === 'Ready');
   if (readyQuestion) {
@@ -1050,21 +1050,21 @@ async function handleReadyInternal(booking_number, customer_name, event) {
         ['booking_list_id'], // whereSet - will match against booking_list_id
         'booking_list_id' // primaryKey - use booking_list_id as primary key
       );
-      
+
       if (!updateResult.success) {
         console.error('Database update failed:', updateResult.error);
         return; // Exit if database update failed
       }
-      
+
       console.log('Database updated successfully for booking #' + booking_number);
-      
+
       // 2. Update local data after successful database update
       item.status = 'Ready';
       item.q_level = 300; // Update q_level to match database
-      
+
       // 3. Re-render to immediately update button state
       renderWaitlist();
-      
+
     } catch (error) {
       console.error('Error updating database:', error);
       return; // Exit if there's an error
@@ -1115,13 +1115,13 @@ function handleAsk(booking_number, customer_name, event) {
         if (!item) return;
 
         const mobileActionRowId = `mobile-actions-${booking_number}`;
-        
+
         // Remove existing action row to prevent duplication
         const existingActionRow = document.getElementById(mobileActionRowId);
         if (existingActionRow) {
           existingActionRow.remove();
         }
-        
+
         let buttonHTMLs;
 
         // Check if this item is in Ask mode
@@ -1167,8 +1167,8 @@ async function handleQuestion(booking_list_id, question, q_level = null) {
   try {
     // Format current time for database insertion
     const currentTime = new Date();
-    const formattedTime = currentTime.getFullYear() + '-' + 
-      String(currentTime.getMonth() + 1).padStart(2, '0') + '-' + 
+    const formattedTime = currentTime.getFullYear() + '-' +
+      String(currentTime.getMonth() + 1).padStart(2, '0') + '-' +
       String(currentTime.getDate()).padStart(2, '0') + ' ' +
       String(currentTime.getHours()).padStart(2, '0') + ':' +
       String(currentTime.getMinutes()).padStart(2, '0') + ':' +
@@ -1209,7 +1209,7 @@ async function handleQuestion(booking_list_id, question, q_level = null) {
         console.error('Q-level database update failed:', qLevelUpdateResult.error);
       } else {
         console.log('Q-level updated successfully for booking_list_id:', booking_list_id, 'to:', q_level);
-        
+
         // Update local waitlist data
         const item = waitlist.find(item => item.booking_list_id === booking_list_id);
         if (item) {
@@ -1308,17 +1308,17 @@ async function handleArrive(booking_number, customer_name) {
   if (item) {
     // Check if item was active before status change (Waiting or Ready)
     const wasActive = item.status === 'Waiting' || item.status === 'Ready';
-    
+
     try {
       // 1. Update database first
       const currentTime = new Date();
-      const formattedTime = currentTime.getFullYear() + '-' + 
-        String(currentTime.getMonth() + 1).padStart(2, '0') + '-' + 
+      const formattedTime = currentTime.getFullYear() + '-' +
+        String(currentTime.getMonth() + 1).padStart(2, '0') + '-' +
         String(currentTime.getDate()).padStart(2, '0') + ' ' +
         String(currentTime.getHours()).padStart(2, '0') + ':' +
         String(currentTime.getMinutes()).padStart(2, '0') + ':' +
         String(currentTime.getSeconds()).padStart(2, '0');
-      
+
       const updateResult = await connector.updateDataArr(
         'waitlist', // dbKey
         'booking_list', // tableName
@@ -1330,14 +1330,14 @@ async function handleArrive(booking_number, customer_name) {
         ['booking_list_id'], // whereSet - will match against booking_list_id
         'booking_list_id' // primaryKey - use booking_list_id as primary key
       );
-      
+
       if (!updateResult.success) {
         console.error('Database update failed:', updateResult.error);
         return; // Exit if database update failed
       }
-      
+
       console.log('Database updated successfully for booking #' + booking_number);
-      
+
       // 2. Update local data after successful database update
       item.status = 'Arrived';
       item.time_cleared = Date.now(); // Set time_cleared when arrived
@@ -1354,7 +1354,7 @@ async function handleArrive(booking_number, customer_name) {
       return; // Exit if there's an error
     }
   }
-  
+
   // 4. Rerender after successful database update and local data update
   renderWaitlist();
 
@@ -1424,17 +1424,17 @@ async function handleCancel(booking_number, customer_name) {
   if (item) {
     // Check if item was active before status change (Waiting or Ready)
     const wasActive = item.status === 'Waiting' || item.status === 'Ready';
-    
+
     try {
       // 1. Update database first
       const currentTime = new Date();
-      const formattedTime = currentTime.getFullYear() + '-' + 
-        String(currentTime.getMonth() + 1).padStart(2, '0') + '-' + 
+      const formattedTime = currentTime.getFullYear() + '-' +
+        String(currentTime.getMonth() + 1).padStart(2, '0') + '-' +
         String(currentTime.getDate()).padStart(2, '0') + ' ' +
         String(currentTime.getHours()).padStart(2, '0') + ':' +
         String(currentTime.getMinutes()).padStart(2, '0') + ':' +
         String(currentTime.getSeconds()).padStart(2, '0');
-      
+
       const updateResult = await connector.updateDataArr(
         'waitlist', // dbKey
         'booking_list', // tableName
@@ -1446,14 +1446,14 @@ async function handleCancel(booking_number, customer_name) {
         ['booking_list_id'], // whereSet - will match against booking_list_id
         'booking_list_id' // primaryKey - use booking_list_id as primary key
       );
-      
+
       if (!updateResult.success) {
         console.error('Database update failed:', updateResult.error);
         return; // Exit if database update failed
       }
-      
+
       console.log('Database updated successfully for booking #' + booking_number);
-      
+
       // 2. Update local data after successful database update
       item.status = 'Cancelled';
       item.time_cleared = Date.now(); // Set time_cleared when cancelling
@@ -1470,7 +1470,7 @@ async function handleCancel(booking_number, customer_name) {
       return; // Exit if there's an error
     }
   }
-  
+
   // 4. Rerender after successful database update and local data update
   renderWaitlist();
 
@@ -1539,12 +1539,12 @@ async function handleUndo(booking_number, customer_name) {
 
   if (item && (item.status === 'Arrived' || item.status === 'Cancelled')) {
     const wasCompleted = true;
-    
+
     try {
       // 1. Update database first
       // Determine status based on q_level: Ready if q_level >= 300, otherwise Waiting
       const newStatus = (item.q_level >= 300) ? 'Ready' : 'Waiting';
-      
+
       const updateResult = await connector.updateDataArr(
         'waitlist', // dbKey
         'booking_list', // tableName
@@ -1556,14 +1556,14 @@ async function handleUndo(booking_number, customer_name) {
         ['booking_list_id'], // whereSet - will match against booking_list_id
         'booking_list_id' // primaryKey - use booking_list_id as primary key
       );
-      
+
       if (!updateResult.success) {
         console.error('Database update failed:', updateResult.error);
         return; // Exit if database update failed
       }
-      
+
       console.log('Database updated successfully for booking #' + booking_number);
-      
+
       // 2. Update local data after successful database update
       item.status = newStatus;
       item.time_cleared = null; // Clear the completion time
@@ -1670,7 +1670,7 @@ function updateScrollAndButtonState() {
   waitlistContainer.classList.remove(MAX_HEIGHT_CLASS);
   waitlistContainer.style.height = '';
   waitlistContainer.style.maxHeight = '';
-  
+
   // Let CSS flex-1 handle the height - no JavaScript interference needed
 
   // Recalculate scroll state after potential height adjustments
@@ -1817,14 +1817,14 @@ function renderWaitlist() {
 
     // Build chat history HTML with elapsed time
     let chatHistoryHTML = '';
-    
+
     // Always render all chat history, then hide/show via DOM manipulation
     const isRowSelected = true;
-    
+
     // Check if this is a WEB booking - show simple reservation info instead of chat history
     if (item.booking_from === 'WEB') {
       const chatClass = statusPriority === 0 ? 'text-slate-400' : 'text-slate-400';
-      
+
       // Format dine_dateTime for display
       const dineTime = new Date(item.dine_dateTime);
       const timeString = dineTime.toLocaleTimeString('en-GB', {
@@ -1832,11 +1832,11 @@ function renderWaitlist() {
         hour: '2-digit',
         minute: '2-digit'
       });
-      
+
       // Show "Reservation @ dine_dateTime" line with background highlight (similar to PAX >= 5 style but maintaining gray color)
       const reservationHighlight = statusPriority === 0 ? 'bg-slate-600 text-slate-200 px-1 py-0.5 rounded font-bold' : 'bg-slate-700 text-slate-300 px-1 py-0.5 rounded font-bold';
       chatHistoryHTML = `<div class="text-xs ${chatClass} leading-relaxed">↳ <span class="${reservationHighlight}">Reservation @ ${timeString}</span></div>`;
-      
+
       // Add status message if item is Arrived or Cancelled with completion time (always show for WEB bookings)
       if (item.status === 'Arrived' || item.status === 'Cancelled') {
         // Apply color based on status: purple for Arrived (#8b5cf6), red for Cancelled (#f87171)
@@ -1906,8 +1906,15 @@ function renderWaitlist() {
         // Add a data attribute to identify ongoing messages for live updates (only if truly last and no status)
         const dataAttr = (isLastMessage && !hasStatusMessage) ? `data-chat-id="${chat.Id}" data-chat-time="${chat.dateTime}"` : '';
 
-        // Apply green color (#34d399) for "Q: Table is Ready. Coming?" message (same as Ready button)
-        const messageChatClass = chat.qna.includes('Table is Ready') ? 'text-emerald-400' : chatClass;
+        // Apply color based on q_level for the last message only
+        let messageChatClass = chatClass; // Default color
+        if (isLastMessage) {
+          if (item.q_level >= 300) {
+            messageChatClass = 'text-emerald-400'; // Green for q_level >= 300 (same as Ready button)
+          } else if (item.q_level >= 200) {
+            messageChatClass = 'text-blue-400'; // Blue for q_level >= 200 (same as Ask button)
+          }
+        }
 
         return `<div class="text-xs ${messageChatClass} leading-relaxed" ${dataAttr}>↳ [${elapsedTime}] ${chat.qna}</div>`; //arrow
       }).join('');
@@ -1977,11 +1984,26 @@ function renderWaitlist() {
     const nameMarginClass = hasHighlight ? 'mb-1.5' : '';
 
     // PAX display with highlight styling (moved to No. column)
-    const paxHighlightClass = item.pax >= minPax_for_bigTable ? 
-      (statusPriority === 0 ? 'bg-white text-slate-800 px-1 py-0.5 rounded font-bold text-xs' : 'bg-yellow-400 text-slate-800 px-1 py-0.5 rounded font-bold text-xs') : 
-      (item.pax <= maxPax_for_smallTable ? 
-        (statusPriority === 0 ? 'border border-slate-100 px-1 py-0.5 rounded font-bold text-xs' : 'border border-amber-400 px-1 py-0.5 rounded font-bold text-xs') : 
+    const paxHighlightClass = item.pax >= minPax_for_bigTable ?
+      (statusPriority === 0 ? 'bg-white text-slate-800 px-1 py-0.5 rounded font-bold text-xs' : 'bg-yellow-400 text-slate-800 px-1 py-0.5 rounded font-bold text-xs') :
+      (item.pax <= maxPax_for_smallTable ?
+        (statusPriority === 0 ? 'border border-slate-100 px-1 py-0.5 rounded font-bold text-xs' : 'border border-amber-400 px-1 py-0.5 rounded font-bold text-xs') :
         'text-xs opacity-75');
+
+    // Generate highlight tags for highlight1, highlight2, highlight3 (same style as Pax)
+    const highlights = [];
+    const highlightTagClass = (statusPriority === 0 ? 'border border-slate-100 text-slate-100 px-1 py-0.5 rounded font-bold' : 'border border-amber-400 text-amber-400 px-1 py-0.5 rounded font-bold');
+
+    if (item.highlight1 && item.highlight1.trim()) {
+      highlights.push(`<span class="${highlightTagClass} mr-1" style="font-size: 10px;">${item.highlight1}</span>`);
+    }
+    if (item.highlight2 && item.highlight2.trim()) {
+      highlights.push(`<span class="${highlightTagClass} mr-1" style="font-size: 10px;">${item.highlight2}</span>`);
+    }
+    if (item.highlight3 && item.highlight3.trim()) {
+      highlights.push(`<span class="${highlightTagClass} mr-1" style="font-size: 10px;">${item.highlight3}</span>`);
+    }
+    const highlightHTML = highlights.length > 0 ? `<span class="ml-2">${highlights.join('')}</span>` : '';
 
     // Don't add selected class during initial render - will be added by DOM manipulation
     const selectedClass = '';
@@ -1995,7 +2017,10 @@ function renderWaitlist() {
                             </div>
                         </td>
                         <td class="px-2 py-2 text-sm">
-                            <div class="font-semibold ${nameClass} ${nameMarginClass}">${item.customer_name}</div>
+                            <div class="flex items-baseline">
+                                <span class="font-semibold ${nameClass} ${nameMarginClass}">${item.customer_name}</span>
+                                ${highlightHTML}
+                            </div>
                             ${chatHistoryHTML}
                         </td>
                         <td id="time-${item.booking_number}" class="px-2 py-2 whitespace-nowrap text-sm text-center ${timeClass}">
@@ -2032,7 +2057,7 @@ function renderWaitlist() {
 
   // NOTE: 데이터가 변경되어 렌더링이 발생하면, 버튼 상태와 스크롤 타겟을 즉시 업데이트합니다.
   updateScrollAndButtonState();
-  
+
   // Initialize chat history display states after render
   requestAnimationFrame(() => {
     // Hide chat history for all rows initially (since we rendered all)
@@ -2040,12 +2065,12 @@ function renderWaitlist() {
       const shouldShowAll = (selectedRowId === item.booking_number) || (expandedRowId === item.booking_number);
       toggleChatHistoryDisplay(item.booking_number, shouldShowAll);
     });
-    
+
     // Restore desktop selection visual state
     if (selectedRowId !== null) {
       toggleRowSelection(selectedRowId, true);
     }
-    
+
     // Restore mobile expansion visual state and action row
     if (expandedRowId !== null) {
       toggleRowSelection(expandedRowId, true);
@@ -2128,93 +2153,93 @@ async function startInitialization() {
   try {
     // Load all data first
     await getServerSideUpdate();
-    
+
     // Initial scroll setup: Set position and initial button state after data is loaded and rendered
     // requestAnimationFrame을 사용하여 DOM이 렌더링된 후 정확한 위치로 이동합니다.
     requestAnimationFrame(() => {
-  console.log("INIT: DOM rendered. Starting initial scroll/state calculation.");
+      console.log("INIT: DOM rendered. Starting initial scroll/state calculation.");
 
-  // 1. 초기 스크롤 목표 위치를 계산하고 동적 높이 설정을 업데이트합니다.
-  const scrollTarget = updateScrollAndButtonState();
-  const completedItemsCount = waitlist.filter(item => getSortPriority(item.status) === 0).length;
+      // 1. 초기 스크롤 목표 위치를 계산하고 동적 높이 설정을 업데이트합니다.
+      const scrollTarget = updateScrollAndButtonState();
+      const completedItemsCount = waitlist.filter(item => getSortPriority(item.status) === 0).length;
 
-  const rows = waitlistBody.getElementsByTagName('tr');
-  // NEW: Calculate row height based on a rendered row (must be done after render)
-  if (rows.length > 0) {
-    rowHeight = rows[0].offsetHeight;
-    console.log(`INIT: Measured single rowHeight for update: ${rowHeight.toFixed(2)}px`);
-  }
+      const rows = waitlistBody.getElementsByTagName('tr');
+      // NEW: Calculate row height based on a rendered row (must be done after render)
+      if (rows.length > 0) {
+        rowHeight = rows[0].offsetHeight;
+        console.log(`INIT: Measured single rowHeight for update: ${rowHeight.toFixed(2)}px`);
+      }
 
-  console.log(`INIT: Calculated scrollTarget = ${scrollTarget.toFixed(2)}px. Completed items = ${completedItemsCount}`);
+      console.log(`INIT: Calculated scrollTarget = ${scrollTarget.toFixed(2)}px. Completed items = ${completedItemsCount}`);
 
-  // 2. 총 행 수가 displayedRows를 초과하고, Active Queue를 건너뛸 기록이 있고, 스크롤이 가능하며, 현재 Active Queue 위치에 있지 않은 경우 활성화
-  const totalRows = waitlist.length;
-  const shouldScrollToActive = totalRows > displayedRows && completedItemsCount > 0;
-  console.log(`INIT: Total rows: ${totalRows}, displayedRows: ${displayedRows}, shouldScrollToActive: ${shouldScrollToActive}`);
+      // 2. 총 행 수가 displayedRows를 초과하고, Active Queue를 건너뛸 기록이 있고, 스크롤이 가능하며, 현재 Active Queue 위치에 있지 않은 경우 활성화
+      const totalRows = waitlist.length;
+      const shouldScrollToActive = totalRows > displayedRows && completedItemsCount > 0;
+      console.log(`INIT: Total rows: ${totalRows}, displayedRows: ${displayedRows}, shouldScrollToActive: ${shouldScrollToActive}`);
 
-  if (shouldScrollToActive) {
-    // Disable hover temporarily during scroll
-    waitlistContainer.classList.add('disable-hover');
+      if (shouldScrollToActive) {
+        // Disable hover temporarily during scroll
+        waitlistContainer.classList.add('disable-hover');
 
-    // 스크롤 위치를 즉시 설정합니다. (비헤이비어 'auto')
-    waitlistContainer.scrollTop = scrollTarget;
-    console.log(`INIT: Forced scroll to position: ${scrollTarget.toFixed(2)}px`);
-
-    // Re-enable hover only when the user actually interacts (mousemove or window focus)
-    const reenableHover = () => {
-      waitlistContainer.classList.remove('disable-hover');
-      console.log('INIT: Hover re-enabled after user interaction');
-      document.removeEventListener('mousemove', reenableHover);
-      window.removeEventListener('focus', reenableHover);
-      clearTimeout(reenableFallback);
-    };
-
-    // If the user moves the mouse (or window gains focus), re-enable hover immediately
-    document.addEventListener('mousemove', reenableHover, { once: true });
-    window.addEventListener('focus', reenableHover, { once: true });
-
-    // Fallback: if no interaction occurs within 8s, re-enable to avoid permanently disabling hover
-    const reenableFallback = setTimeout(() => {
-      waitlistContainer.classList.remove('disable-hover');
-      console.log('INIT: Hover re-enabled by fallback after 8s');
-      document.removeEventListener('mousemove', reenableHover);
-      window.removeEventListener('focus', reenableHover);
-    }, 8000);
-
-    // 실제 스크롤된 위치를 다음 프레임에서 읽어서 정확한 값을 저장
-    requestAnimationFrame(() => {
-      // 더 정확한 스크롤을 위해 한 번 더 시도
-      const actualScrollTop = waitlistContainer.scrollTop;
-      if (Math.abs(actualScrollTop - scrollTarget) > 2) {
-        console.log(`INIT: Adjusting scroll position. First attempt: ${actualScrollTop.toFixed(2)}px`);
+        // 스크롤 위치를 즉시 설정합니다. (비헤이비어 'auto')
         waitlistContainer.scrollTop = scrollTarget;
+        console.log(`INIT: Forced scroll to position: ${scrollTarget.toFixed(2)}px`);
 
-        // 조정 후 다시 한번 확인
+        // Re-enable hover only when the user actually interacts (mousemove or window focus)
+        const reenableHover = () => {
+          waitlistContainer.classList.remove('disable-hover');
+          console.log('INIT: Hover re-enabled after user interaction');
+          document.removeEventListener('mousemove', reenableHover);
+          window.removeEventListener('focus', reenableHover);
+          clearTimeout(reenableFallback);
+        };
+
+        // If the user moves the mouse (or window gains focus), re-enable hover immediately
+        document.addEventListener('mousemove', reenableHover, { once: true });
+        window.addEventListener('focus', reenableHover, { once: true });
+
+        // Fallback: if no interaction occurs within 8s, re-enable to avoid permanently disabling hover
+        const reenableFallback = setTimeout(() => {
+          waitlistContainer.classList.remove('disable-hover');
+          console.log('INIT: Hover re-enabled by fallback after 8s');
+          document.removeEventListener('mousemove', reenableHover);
+          window.removeEventListener('focus', reenableHover);
+        }, 8000);
+
+        // 실제 스크롤된 위치를 다음 프레임에서 읽어서 정확한 값을 저장
         requestAnimationFrame(() => {
-          initialScrollTop = waitlistContainer.scrollTop;
-          console.log(`INIT: InitialScrollTop value recorded (final): ${initialScrollTop.toFixed(2)}px`);
-          console.log(`INIT: Final difference: ${(scrollTarget - initialScrollTop).toFixed(2)}px`);
+          // 더 정확한 스크롤을 위해 한 번 더 시도
+          const actualScrollTop = waitlistContainer.scrollTop;
+          if (Math.abs(actualScrollTop - scrollTarget) > 2) {
+            console.log(`INIT: Adjusting scroll position. First attempt: ${actualScrollTop.toFixed(2)}px`);
+            waitlistContainer.scrollTop = scrollTarget;
+
+            // 조정 후 다시 한번 확인
+            requestAnimationFrame(() => {
+              initialScrollTop = waitlistContainer.scrollTop;
+              console.log(`INIT: InitialScrollTop value recorded (final): ${initialScrollTop.toFixed(2)}px`);
+              console.log(`INIT: Final difference: ${(scrollTarget - initialScrollTop).toFixed(2)}px`);
+            });
+          } else {
+            initialScrollTop = actualScrollTop;
+            console.log(`INIT: InitialScrollTop value recorded (actual): ${initialScrollTop.toFixed(2)}px`);
+            console.log(`INIT: Difference between target and actual: ${(scrollTarget - initialScrollTop).toFixed(2)}px`);
+          }
         });
       } else {
-        initialScrollTop = actualScrollTop;
-        console.log(`INIT: InitialScrollTop value recorded (actual): ${initialScrollTop.toFixed(2)}px`);
-        console.log(`INIT: Difference between target and actual: ${(scrollTarget - initialScrollTop).toFixed(2)}px`);
+        initialScrollTop = 0; // Ensure it's 0 if no initial scroll occurred
+        console.log("INIT: No completed items, skipping initial forced scroll.");
       }
-    });
-  } else {
-    initialScrollTop = 0; // Ensure it's 0 if no initial scroll occurred
-    console.log("INIT: No completed items, skipping initial forced scroll.");
-  }
 
-  // 3. 스크롤 위치 설정 직후 버튼 상태를 업데이트하여 즉시 비활성화하고 텍스트를 변경합니다.
-  updateScrollAndButtonState();
-  console.log("INIT: Final button state check completed.");
+      // 3. 스크롤 위치 설정 직후 버튼 상태를 업데이트하여 즉시 비활성화하고 텍스트를 변경합니다.
+      updateScrollAndButtonState();
+      console.log("INIT: Final button state check completed.");
 
-    // 4. 초기 설정이 완료되었음을 플래그로 표시합니다. 
-    isInitialScrollDone = true;
-    console.log("INIT: isInitialScrollDone set to TRUE. Enabling dynamic button logic.");
+      // 4. 초기 설정이 완료되었음을 플래그로 표시합니다. 
+      isInitialScrollDone = true;
+      console.log("INIT: isInitialScrollDone set to TRUE. Enabling dynamic button logic.");
     });
-    
+
   } catch (error) {
     console.error('INIT: Error during initialization:', error);
     // Fallback: render with mock data if database loading fails
@@ -2246,10 +2271,10 @@ window.addEventListener('resize', () => {
     selectedRowId = null;
     console.log('RESIZE: Switched to mobile, reset desktop selection');
   }
-  
+
   // Reset scroll position on device change
   savedScrollPosition = null;
-  
+
   // Re-render to update chat display
   renderWaitlist();
 });
