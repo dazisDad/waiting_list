@@ -194,6 +194,11 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
     background-color: inherit !important;
   }
 
+  /* Force completed rows to maintain their background color when selected */
+  .row-selected.row-completed {
+    background-color: #1e293b !important;
+  }
+
   /* Force top border on selected rows with higher specificity */
   .row-selected.row-clickable,
   .row-selected.row-hover,
@@ -281,6 +286,24 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
     border-right: 1px solid transparent !important;
     border-bottom: 1px solid transparent !important;
     box-sizing: border-box !important;
+  }
+
+  /* Force completed rows to always maintain their background color on mobile */
+  .row-completed,
+  tr.row-completed,
+  .row-completed:not(.row-selected),
+  tr.row-completed:not(.row-selected) {
+    background-color: #1e293b !important;
+  }
+
+  /* Ensure completed rows maintain background color after deselection */
+  .row-completed:hover,
+  tr.row-completed:hover,
+  .row-completed:focus,
+  tr.row-completed:focus,
+  .row-completed:active,
+  tr.row-completed:active {
+    background-color: #1e293b !important;
   }
 
   /* Apply transparent borders to table cells as well 
@@ -393,6 +416,11 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
     background-color: inherit !important;
   }
 
+  /* Force completed rows to maintain their background color when selected on mobile */
+  .row-selected.row-completed {
+    background-color: #1e293b !important;
+  }
+
   /* Apply selection border to table cells as well */
   .row-selected td {
     border-top: 1px solid #fbbf24 !important;
@@ -403,6 +431,19 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
     border-left: 1px solid #fbbf24 !important;
     border-right: 1px solid #fbbf24 !important;
     background-color: inherit !important;
+  }
+
+  /* Additional mobile-specific rules to prevent background color change on completed rows */
+  .row-selected.row-completed:hover {
+    background-color: #1e293b !important;
+  }
+
+  tr.row-selected.row-completed {
+    background-color: #1e293b !important;
+  }
+
+  tr.row-selected.row-completed:hover {
+    background-color: #1e293b !important;
   }
 
   /* Pre-allocate transparent borders for action rows */

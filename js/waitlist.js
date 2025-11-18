@@ -2115,17 +2115,15 @@ function renderWaitlist() {
   waitlistBody.innerHTML = tableHTML;
   console.log("RENDER: Table HTML injected into DOM.");
 
-  // Debug: Check for any row-selected classes on desktop
-  if (window.innerWidth > 768) {
-    // Force remove any inline styles or problematic classes
-    const allRows = waitlistBody.querySelectorAll('tr');
-
-    // Clean up mobile-related classes
-    allRows.forEach((row) => {
-      row.removeAttribute('style'); // Remove any inline styles
-      row.classList.remove('row-selected'); // Remove row-selected if exists
-    });
-  }
+  // Clean up any problematic styles and classes
+  const allRows = waitlistBody.querySelectorAll('tr');
+  allRows.forEach((row) => {
+    row.removeAttribute('style'); // Remove any inline styles
+    if (window.innerWidth > 768) {
+      // Desktop: Remove row-selected classes
+      row.classList.remove('row-selected');
+    }
+  });
 
   // Close any expanded mobile row when re-rendering (only if on desktop)
   if (window.innerWidth > 768) {
