@@ -160,35 +160,50 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
   outline-offset: -2px !important;
 }
 
-/* Row hover effect - yellow border */
-.row-hover:hover {
-  outline: 2px solid #fbbf24 !important;
-  outline-offset: -2px !important;
-}
+/* Row hover effect - disabled for desktop, only mobile selection highlight */
+/* .row-hover:hover - removed for desktop consistency */
 
 /* Completed row style */
 .row-completed {
   background-color: #1e293b;
 }
 
-.row-completed:hover {
-  outline: 2px solid #fbbf24 !important;
-  outline-offset: -2px !important;
-}
+/* .row-completed:hover - removed for desktop consistency */
 
-/* Disable hover during scroll to prevent unwanted highlights */
-.disable-hover .row-hover:hover,
-.disable-hover .row-completed:hover {
-  outline: none !important;
-}
+/* Hover effects disabled globally for desktop - no longer needed */
+/* .disable-hover rules removed since hover effects are disabled */
 
-/* Desktop: Ensure row-selected has no effect */
+/* Desktop: Pre-allocate transparent borders to prevent layout shift */
 @media (min-width: 769px) {
+  .row-clickable,
+  .row-hover,
+  .row-completed {
+    border-top: 1px solid transparent !important;
+    border-left: 1px solid transparent !important;
+    border-right: 1px solid transparent !important;
+    border-bottom: 1px solid transparent !important;
+    box-sizing: border-box !important;
+  }
+
   .row-selected {
+    border-top: 1px solid #fbbf24 !important;
+    border-left: 1px solid #fbbf24 !important;
+    border-right: 1px solid #fbbf24 !important;
+    border-bottom: 1px solid #fbbf24 !important;
+    box-sizing: border-box !important;
     background-color: inherit !important;
-    border-left: none !important;
-    box-shadow: none !important;
-    outline: none !important;
+  }
+
+  /* Force top border on selected rows with higher specificity */
+  .row-selected.row-clickable,
+  .row-selected.row-hover,
+  .row-selected.row-completed {
+    border-top: 1px solid #fbbf24 !important;
+  }
+
+  /* Force top border on table cells within selected rows */
+  .row-selected td {
+    border-top: 1px solid #fbbf24 !important;
   }
 
   /* Remove focus styles from rows on desktop (except intentional highlights) */
@@ -253,6 +268,27 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
     visibility: hidden !important;
     opacity: 0 !important;
   }
+
+  /* Pre-allocate transparent borders to prevent layout shift */
+  .row-clickable,
+  .row-hover,
+  .row-completed,
+  tr.row-clickable,
+  tr.row-hover,
+  tr.row-completed {
+    border-top: 1px solid transparent !important;
+    border-left: 1px solid transparent !important;
+    border-right: 1px solid transparent !important;
+    border-bottom: 1px solid transparent !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Apply transparent borders to table cells as well 
+  .row-clickable td,
+  .row-hover td,
+  .row-completed td {
+    border-top: 1px solid transparent !important;
+  }*/
 
   /* Mobile row cursor */
   .row-clickable {
@@ -334,30 +370,65 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
     transition: none !important;
   }
 
-  /* Selected row highlight on mobile - Yellow border on outer edges only */
-  .row-selected {
-    border-top: 2px solid #fbbf24 !important;
-    border-left: 2px solid #fbbf24 !important;
-    border-right: 2px solid #fbbf24 !important;
-    border-bottom: none !important;
-    /* No bottom border - will be on action row */
+  /* Selected row highlight on mobile - Yellow border on top and sides only */
+  .row-selected,
+  tr.row-selected {
+    border-top: 1px solid #fbbf24 !important;
+    border-left: 1px solid #fbbf24 !important;
+    border-right: 1px solid #fbbf24 !important;
+    border-bottom: 1px solid transparent !important;
+    /* Bottom border will be on action row */
     transition: none !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Force selection borders with higher specificity */
+  .row-selected.row-clickable,
+  .row-selected.row-hover,
+  .row-selected.row-completed {
+    border-top: 1px solid #fbbf24 !important;
+    border-left: 1px solid #fbbf24 !important;
+    border-right: 1px solid #fbbf24 !important;
+  }
+
+  /* Apply selection border to table cells as well */
+  .row-selected td {
+    border-top: 1px solid #fbbf24 !important;
   }
 
   .row-selected:hover {
-    border-top: 2px solid #fbbf24 !important;
-    border-left: 2px solid #fbbf24 !important;
-    border-right: 2px solid #fbbf24 !important;
+    border-top: 1px solid #fbbf24 !important;
+    border-left: 1px solid #fbbf24 !important;
+    border-right: 1px solid #fbbf24 !important;
   }
 
-  /* Mobile action row - complete the border box */
+  /* Pre-allocate transparent borders for action rows */
   .mobile-action-row {
     background-color: #1e293b;
-    border-left: 2px solid #fbbf24 !important;
-    border-right: 2px solid #fbbf24 !important;
-    border-bottom: 2px solid #fbbf24 !important;
+    /*
+    border-top: 1px solid transparent !important;
+    border-left: 1px solid transparent !important;
+    border-right: 1px solid transparent !important;
+    border-bottom: 1px solid transparent !important;
+    */
+    box-sizing: border-box !important;
+  }
+
+  /* Mobile action row when parent is selected - Multiple selectors for higher priority */
+  .row-selected + .mobile-action-row,
+  tr.row-selected + tr.mobile-action-row,
+  .mobile-action-row.selected-action-row {
+    border-left: 1px solid #fbbf24 !important;
+    border-right: 1px solid #fbbf24 !important;
+    border-bottom: 1px solid #fbbf24 !important;
     border-top: 1px solid #475569 !important;
-    /* Keep original border between rows */
+    background-color: #1e293b !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Force bottom border specifically */
+  .mobile-action-row.selected-action-row td {
+    border-bottom: 1px solid #fbbf24 !important;
   }
 
   .mobile-action-row td {

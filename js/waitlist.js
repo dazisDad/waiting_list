@@ -5,7 +5,7 @@ let chatlist = [];
 let questionnaire = [];
 
 const minPax_for_bigTable = 5;
-const maxPax_for_smallTable = 1;
+const maxPax_for_smallTable = 0;
 
 const isEnableReadyAskBtn_for_reservation = false; // 추후에 과금 가능한 상황에서 메세지 보낼 시 활성화
 
@@ -330,6 +330,8 @@ let isInitialScrollDone = false;
 let initialScrollTop = 0; // 초기 스크롤 탑 값 저장 변수 (Active Queue의 시작 위치를 추적)
 let rowHeight = 0; // 단일 행의 높이 (Check-In/Cancel 시 initialScrollTop 업데이트에 사용)
 let expandedRowId = null; // 현재 확장된 행의 ID (모바일용)
+let selectedRowId = null; // 현재 선택된 행의 ID (데스크탑용)
+let savedScrollPosition = null; // 행 선택 시 저장된 스크롤 위치
 let askModeItems = new Set(); // Track which items are in "Ask mode" showing question buttons
 let questionPageIndex = {}; // Track current question page for each booking_number (default 0)
 
@@ -493,13 +495,28 @@ function toggleMobileActions(booking_number, event) {
     if (askModeItemsArray.length > 0 && !askModeItems.has(booking_number)) {
       askModeItems.clear();
       console.log(`ASK_MODE: Auto-exited for items ${askModeItemsArray.join(', ')} when clicking row #${booking_number} (desktop)`);
-      // Re-render to update the UI
-      renderWaitlist();
     }
 
-    // Toggle persistent highlight on the row
-    highlightRow(booking_number, false);
-    console.log(`DESKTOP: Toggled highlight for row #${booking_number}`);
+    // Toggle row selection for desktop without re-rendering
+    if (selectedRowId === booking_number) {
+      // Deselect current row
+      selectedRowId = null;
+      toggleRowSelection(booking_number, false);
+      toggleChatHistoryDisplay(booking_number, false); // Show only last message
+      console.log(`DESKTOP: Deselected row #${booking_number}`);
+    } else {
+      // Deselect previous row if any
+      if (selectedRowId !== null) {
+        toggleRowSelection(selectedRowId, false);
+        toggleChatHistoryDisplay(selectedRowId, false);
+      }
+      
+      // Select new row
+      selectedRowId = booking_number;
+      toggleRowSelection(booking_number, true);
+      toggleChatHistoryDisplay(booking_number, true); // Show all messages
+      console.log(`DESKTOP: Selected row #${booking_number}`);
+    }
     return;
   }
 
@@ -521,15 +538,15 @@ function toggleMobileActions(booking_number, event) {
 
   // If clicking the same row, close it
   if (expandedRowId === booking_number) {
-    if (existingMobileRow) {
-      existingMobileRow.remove();
-    }
-    if (currentRow) {
-      // Force immediate class removal
-      currentRow.classList.remove('row-selected');
-      // Force reflow to ensure immediate visual update
-      void currentRow.offsetHeight;
-    }
+    // Remove mobile action row
+    removeMobileActionRow(booking_number);
+    
+    // Remove row selection visual state
+    toggleRowSelection(booking_number, false);
+    
+    // Collapse chat history
+    toggleChatHistoryDisplay(booking_number, false);
+    
     expandedRowId = null;
     console.log(`MOBILE: Collapsed row for item #${booking_number}`);
     return;
@@ -537,16 +554,10 @@ function toggleMobileActions(booking_number, event) {
 
   // If another row is expanded, close it first
   if (expandedRowId !== null) {
-    const prevMobileRow = document.getElementById(`mobile-actions-${expandedRowId}`);
-    if (prevMobileRow) {
-      prevMobileRow.remove();
-    }
-    const prevRow = document.querySelector(`tr[data-item-id="${expandedRowId}"]`);
-    if (prevRow) {
-      prevRow.classList.remove('row-selected');
-      // Force reflow
-      void prevRow.offsetHeight;
-    }
+    removeMobileActionRow(expandedRowId);
+    toggleRowSelection(expandedRowId, false);
+    toggleChatHistoryDisplay(expandedRowId, false);
+    
     // Exit Ask mode for the previous row
     if (askModeItems.has(expandedRowId)) {
       askModeItems.delete(expandedRowId);
@@ -554,55 +565,19 @@ function toggleMobileActions(booking_number, event) {
     }
   }
 
-  // Add highlight to the newly selected row immediately
-  if (currentRow) {
-    // Force reflow before adding class to ensure clean state
-    void currentRow.offsetHeight;
-    currentRow.classList.add('row-selected');
-    // Force another reflow to ensure immediate application
-    void currentRow.offsetHeight;
-  }
-
   // Expand the clicked row
   expandedRowId = booking_number;
-  const item = waitlist.find(i => i.booking_number === booking_number);
-  if (!item) return;
-
-  // Get buttons for this item's status
-  let buttonHTMLs;
-
-  // Check if this item is in Ask mode
-  if (askModeItems.has(item.booking_number)) {
-    // Show question buttons + Exit button (mobile) - filtered by pax and q_level
-    const filteredQuestions = getFilteredQuestions(item.pax, item.booking_number);
-    const questionButtonsHTML = generateQuestionButtonsHTML(filteredQuestions, item.booking_number, item.customer_name, true);
-    buttonHTMLs = [questionButtonsHTML];
-  } else {
-    // Show normal buttons
-    const buttons = getButtonsForStatus(item.status);
-    buttonHTMLs = buttons.map(btnDef => generateButtonHTML(btnDef, item.booking_number, item.customer_name, true));
-  }
-
-  const actionButtons = buttonHTMLs.join('\n');
-
-  // Find the main row and insert mobile action row after it
-  const mainRow = document.querySelector(`tr[data-item-id="${booking_number}"]`);
-  if (mainRow) {
-    const mobileRow = document.createElement('tr');
-    mobileRow.id = mobileActionRowId;
-    mobileRow.className = 'mobile-action-row';
-    mobileRow.innerHTML = `
-          <td colspan="4" class="px-2 py-3">
-            <div class="flex gap-1.5">
-              ${actionButtons}
-            </div>
-          </td>
-        `;
-
-    // Insert after the main row
-    mainRow.insertAdjacentElement('afterend', mobileRow);
-    console.log(`MOBILE: Expanded row for item #${booking_number}`);
-  }
+  
+  // Add visual selection
+  toggleRowSelection(booking_number, true);
+  
+  // Expand chat history
+  toggleChatHistoryDisplay(booking_number, true);
+  
+  // Add mobile action row
+  addMobileActionRow(booking_number);
+  
+  console.log(`MOBILE: Expanded row for item #${booking_number}`);
 }
 
 /**
@@ -671,6 +646,108 @@ function formatElapsedTime(item) {
     }
 
     return { time: displayString, duration: '', isTwoLine: false };
+  }
+}
+
+/**
+ * Toggle chat history display for a specific booking without re-rendering
+ */
+function toggleChatHistoryDisplay(booking_number, showAll) {
+  const row = document.querySelector(`tr[data-item-id="${booking_number}"]`);
+  if (!row) return;
+
+  const nameCell = row.querySelector('td:nth-child(2)');
+  if (!nameCell) return;
+
+  // Find all chat history divs (look for elements with arrow ↳)
+  const chatDivs = Array.from(nameCell.querySelectorAll('div')).filter(div => 
+    div.textContent.includes('↳')
+  );
+
+  if (chatDivs.length === 0) return;
+
+  if (showAll) {
+    // Show all chat history
+    chatDivs.forEach(div => {
+      div.style.display = '';
+    });
+  } else {
+    // Show only the last chat message
+    chatDivs.forEach((div, index) => {
+      if (index === chatDivs.length - 1) {
+        div.style.display = ''; // Show last message
+      } else {
+        div.style.display = 'none'; // Hide other messages
+      }
+    });
+  }
+}
+
+/**
+ * Add mobile action row without re-rendering
+ */
+function addMobileActionRow(booking_number) {
+  const item = waitlist.find(i => i.booking_number === booking_number);
+  if (!item) return;
+
+  const mainRow = document.querySelector(`tr[data-item-id="${booking_number}"]`);
+  if (!mainRow) return;
+
+  // Remove existing mobile row if present
+  const existingRow = document.getElementById(`mobile-actions-${booking_number}`);
+  if (existingRow) {
+    existingRow.remove();
+  }
+
+  // Get buttons for this item's status
+  let buttonHTMLs;
+  
+  if (askModeItems.has(item.booking_number)) {
+    const filteredQuestions = getFilteredQuestions(item.pax, item.booking_number);
+    const questionButtonsHTML = generateQuestionButtonsHTML(filteredQuestions, item.booking_number, item.customer_name, true);
+    buttonHTMLs = [questionButtonsHTML];
+  } else {
+    const buttons = getButtonsForStatus(item.status);
+    buttonHTMLs = buttons.map(btnDef => generateButtonHTML(btnDef, item.booking_number, item.customer_name, true));
+  }
+
+  const actionButtons = buttonHTMLs.join('\n');
+
+  const mobileRow = document.createElement('tr');
+  mobileRow.id = `mobile-actions-${booking_number}`;
+  mobileRow.className = 'mobile-action-row selected-action-row';
+  mobileRow.innerHTML = `
+    <td colspan="4" class="px-2 py-3">
+      <div class="flex gap-1.5">
+        ${actionButtons}
+      </div>
+    </td>
+  `;
+
+  mainRow.insertAdjacentElement('afterend', mobileRow);
+}
+
+/**
+ * Remove mobile action row
+ */
+function removeMobileActionRow(booking_number) {
+  const mobileRow = document.getElementById(`mobile-actions-${booking_number}`);
+  if (mobileRow) {
+    mobileRow.remove();
+  }
+}
+
+/**
+ * Toggle row selection visual state
+ */
+function toggleRowSelection(booking_number, selected) {
+  const row = document.querySelector(`tr[data-item-id="${booking_number}"]`);
+  if (!row) return;
+
+  if (selected) {
+    row.classList.add('row-selected');
+  } else {
+    row.classList.remove('row-selected');
   }
 }
 
@@ -1038,6 +1115,13 @@ function handleAsk(booking_number, customer_name, event) {
         if (!item) return;
 
         const mobileActionRowId = `mobile-actions-${booking_number}`;
+        
+        // Remove existing action row to prevent duplication
+        const existingActionRow = document.getElementById(mobileActionRowId);
+        if (existingActionRow) {
+          existingActionRow.remove();
+        }
+        
         let buttonHTMLs;
 
         // Check if this item is in Ask mode
@@ -1056,7 +1140,7 @@ function handleAsk(booking_number, customer_name, event) {
 
         const mobileRow = document.createElement('tr');
         mobileRow.id = mobileActionRowId;
-        mobileRow.className = 'mobile-action-row';
+        mobileRow.className = 'mobile-action-row selected-action-row';
         mobileRow.innerHTML = `
               <td colspan="4" class="px-2 py-3">
                 <div class="flex gap-1.5">
@@ -1185,7 +1269,7 @@ function handleNextQuestion(booking_number) {
         const mobileActionRowId = `mobile-actions-${booking_number}`;
         const mobileRow = document.createElement('tr');
         mobileRow.id = mobileActionRowId;
-        mobileRow.className = 'mobile-action-row';
+        mobileRow.className = 'mobile-action-row selected-action-row';
         mobileRow.innerHTML = `
               <td colspan="4" class="px-2 py-3">
                 <div class="flex gap-1.5">
@@ -1734,6 +1818,9 @@ function renderWaitlist() {
     // Build chat history HTML with elapsed time
     let chatHistoryHTML = '';
     
+    // Always render all chat history, then hide/show via DOM manipulation
+    const isRowSelected = true;
+    
     // Check if this is a WEB booking - show simple reservation info instead of chat history
     if (item.booking_from === 'WEB') {
       const chatClass = statusPriority === 0 ? 'text-slate-400' : 'text-slate-400';
@@ -1750,7 +1837,7 @@ function renderWaitlist() {
       const reservationHighlight = statusPriority === 0 ? 'bg-slate-600 text-slate-200 px-1 py-0.5 rounded font-bold' : 'bg-slate-700 text-slate-300 px-1 py-0.5 rounded font-bold';
       chatHistoryHTML = `<div class="text-xs ${chatClass} leading-relaxed">↳ <span class="${reservationHighlight}">Reservation @ ${timeString}</span></div>`;
       
-      // Add status message if item is Arrived or Cancelled with completion time
+      // Add status message if item is Arrived or Cancelled with completion time (always show for WEB bookings)
       if (item.status === 'Arrived' || item.status === 'Cancelled') {
         // Apply color based on status: purple for Arrived (#8b5cf6), red for Cancelled (#f87171)
         const statusColor = item.status === 'Arrived' ? 'text-purple-500' : 'text-red-400';
@@ -1768,9 +1855,13 @@ function renderWaitlist() {
       const chatClass = statusPriority === 0 ? 'text-slate-400' : 'text-slate-400';
       const hasStatusMessage = item.status === 'Arrived' || item.status === 'Cancelled';
 
-      chatHistoryHTML = chatHistory.map((chat, index) => {
+      // Determine which messages to show based on row selection
+      const messagesToShow = isRowSelected ? chatHistory : chatHistory.slice(-1); // Show all if selected, last one if not
+
+      chatHistoryHTML = messagesToShow.map((chat, index) => {
+        const originalIndex = isRowSelected ? index : (chatHistory.length - 1); // Get original index for last message calculations
         let elapsedTime;
-        const isLastMessage = index === chatHistory.length - 1;
+        const isLastMessage = originalIndex === chatHistory.length - 1;
 
         if (isLastMessage && !hasStatusMessage) {
           // Last message and no status message to follow: calculate ongoing elapsed time from message dateTime to now
@@ -1794,7 +1885,7 @@ function renderWaitlist() {
             nextEventTime = item.time_cleared;
           } else {
             // Calculate time to next chat message
-            const nextChat = chatHistory[index + 1];
+            const nextChat = chatHistory[originalIndex + 1];
             nextEventTime = nextChat.dateTime;
           }
 
@@ -1881,15 +1972,30 @@ function renderWaitlist() {
     const onclickAttr = `onclick="toggleMobileActions(${item.booking_number}, event)"`;
     const rowClickableClass = 'row-clickable';
 
-    // Add margin bottom for highlighted names
+    // Add margin bottom for highlighted names  
     const hasHighlight = item.pax >= minPax_for_bigTable || item.pax <= maxPax_for_smallTable;
     const nameMarginClass = hasHighlight ? 'mb-1.5' : '';
 
+    // PAX display with highlight styling (moved to No. column)
+    const paxHighlightClass = item.pax >= minPax_for_bigTable ? 
+      (statusPriority === 0 ? 'bg-white text-slate-800 px-1 py-0.5 rounded font-bold text-xs' : 'bg-yellow-400 text-slate-800 px-1 py-0.5 rounded font-bold text-xs') : 
+      (item.pax <= maxPax_for_smallTable ? 
+        (statusPriority === 0 ? 'border border-slate-100 px-1 py-0.5 rounded font-bold text-xs' : 'border border-amber-400 px-1 py-0.5 rounded font-bold text-xs') : 
+        'text-xs opacity-75');
+
+    // Don't add selected class during initial render - will be added by DOM manipulation
+    const selectedClass = '';
+
     tableHTML += `
-                    <tr class="${rowClass} ${rowClickableClass}" data-item-id="${item.booking_number}" ${onclickAttr}>
-                        <td class="px-2 py-2 whitespace-nowrap text-sm font-medium ${idClass} text-center">${item.booking_number}</td>
+                    <tr class="${rowClass} ${rowClickableClass} ${selectedClass}" data-item-id="${item.booking_number}" ${onclickAttr}>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm font-medium ${idClass} text-center">
+                            <div>${item.booking_number}</div>
+                            <div class="mt-0.5">
+                                <span class="${paxHighlightClass}">Pax: ${item.pax}</span>
+                            </div>
+                        </td>
                         <td class="px-2 py-2 text-sm">
-                            <div class="font-semibold ${nameClass} ${nameMarginClass}"><span class="${item.pax >= minPax_for_bigTable ? (statusPriority === 0 ? 'bg-white text-slate-800 px-1 py-0.5 rounded font-bold' : 'bg-yellow-400 text-slate-800 px-1 py-0.5 rounded font-bold') : (item.pax <= maxPax_for_smallTable ? (statusPriority === 0 ? 'border border-slate-100 px-1 py-0.5 rounded font-bold' : 'border border-amber-400 px-1 py-0.5 rounded font-bold') : '')}">${item.customer_name} <span class="${item.pax >= minPax_for_bigTable ? 'font-bold' : (item.pax <= maxPax_for_smallTable ? 'font-bold' : 'text-xs font-normal opacity-75')}">(Pax: <span class="${item.pax >= minPax_for_bigTable ? 'font-bold' : (item.pax <= maxPax_for_smallTable ? 'font-bold' : 'text-sm')}">${item.pax}</span>)</span></span></div>
+                            <div class="font-semibold ${nameClass} ${nameMarginClass}">${item.customer_name}</div>
                             ${chatHistoryHTML}
                         </td>
                         <td id="time-${item.booking_number}" class="px-2 py-2 whitespace-nowrap text-sm text-center ${timeClass}">
@@ -1919,11 +2025,33 @@ function renderWaitlist() {
     });
   }
 
-  // Close any expanded mobile row when re-rendering
-  expandedRowId = null;
+  // Close any expanded mobile row when re-rendering (only if on desktop)
+  if (window.innerWidth > 768) {
+    expandedRowId = null;
+  }
 
   // NOTE: 데이터가 변경되어 렌더링이 발생하면, 버튼 상태와 스크롤 타겟을 즉시 업데이트합니다.
   updateScrollAndButtonState();
+  
+  // Initialize chat history display states after render
+  requestAnimationFrame(() => {
+    // Hide chat history for all rows initially (since we rendered all)
+    waitlist.forEach(item => {
+      const shouldShowAll = (selectedRowId === item.booking_number) || (expandedRowId === item.booking_number);
+      toggleChatHistoryDisplay(item.booking_number, shouldShowAll);
+    });
+    
+    // Restore desktop selection visual state
+    if (selectedRowId !== null) {
+      toggleRowSelection(selectedRowId, true);
+    }
+    
+    // Restore mobile expansion visual state and action row
+    if (expandedRowId !== null) {
+      toggleRowSelection(expandedRowId, true);
+      addMobileActionRow(expandedRowId);
+    }
+  });
 }
 
 /**
@@ -2110,12 +2238,18 @@ window.addEventListener('resize', () => {
   if (window.innerWidth > 768) {
     // Remove all mobile action rows
     document.querySelectorAll('.mobile-action-row').forEach(row => row.remove());
-    // Remove all row-selected classes
-    document.querySelectorAll('.row-selected').forEach(row => {
-      row.classList.remove('row-selected');
-    });
-    // Reset expanded row tracking
+    // Reset mobile row tracking
     expandedRowId = null;
     console.log('RESIZE: Switched to desktop, cleaned up mobile state');
+  } else {
+    // Reset desktop selection when switching to mobile
+    selectedRowId = null;
+    console.log('RESIZE: Switched to mobile, reset desktop selection');
   }
+  
+  // Reset scroll position on device change
+  savedScrollPosition = null;
+  
+  // Re-render to update chat display
+  renderWaitlist();
 });
