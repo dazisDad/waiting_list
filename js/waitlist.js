@@ -2181,6 +2181,31 @@ function renderWaitlist() {
         waitlistBody.appendChild(dummyRow);
 
         console.log(`DUMMY_ROW: Added dummy spacer row with height ${dummyRowHeight.toFixed(2)}px`);
+        
+        // DEBUG: Measure actual scroll capabilities after dummy row is added
+        requestAnimationFrame(() => {
+          const scrollHeight = waitlistContainer.scrollHeight;
+          const clientHeight = waitlistContainer.clientHeight;
+          const maxScrollTop = scrollHeight - clientHeight;
+          
+          console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+          console.log(`SCROLL_MEASURE: Container Analysis`);
+          console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+          console.log(`Container clientHeight (visible area): ${clientHeight.toFixed(2)}px`);
+          console.log(`Container scrollHeight (total content): ${scrollHeight.toFixed(2)}px`);
+          console.log(`\nCalculated Heights:`);
+          console.log(`  Completed items: ${completedItemsHeight.toFixed(2)}px`);
+          console.log(`  Active items: ${activeItemsHeight.toFixed(2)}px`);
+          console.log(`  Dummy row: ${dummyRowHeight.toFixed(2)}px`);
+          console.log(`  Sum: ${(completedItemsHeight + activeItemsHeight + dummyRowHeight).toFixed(2)}px`);
+          console.log(`\nScroll Capability:`);
+          console.log(`  Max scrollTop possible: ${maxScrollTop.toFixed(2)}px`);
+          console.log(`  Target scrollTop (completed height): ${completedItemsHeight.toFixed(2)}px`);
+          console.log(`  Difference: ${(maxScrollTop - completedItemsHeight).toFixed(2)}px`);
+          console.log(`\nGoal: Difference should be 0`);
+          console.log(`  (Max scrollTop should equal Completed items height)`);
+          console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
+        });
       }
     } else {
       // No completed items - remove dummy row if it exists
