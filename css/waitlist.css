@@ -380,6 +380,7 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
     /* Bottom border will be on action row */
     transition: none !important;
     box-sizing: border-box !important;
+    background-color: inherit !important;
   }
 
   /* Force selection borders with higher specificity */
@@ -389,6 +390,7 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
     border-top: 1px solid #fbbf24 !important;
     border-left: 1px solid #fbbf24 !important;
     border-right: 1px solid #fbbf24 !important;
+    background-color: inherit !important;
   }
 
   /* Apply selection border to table cells as well */
@@ -400,6 +402,7 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
     border-top: 1px solid #fbbf24 !important;
     border-left: 1px solid #fbbf24 !important;
     border-right: 1px solid #fbbf24 !important;
+    background-color: inherit !important;
   }
 
   /* Pre-allocate transparent borders for action rows */

@@ -7,6 +7,81 @@ let questionnaire = [];
 const minPax_for_bigTable = 5;
 const maxPax_for_smallTable = 0;
 
+const theme = 'dark';
+
+const color_codes = {
+  theme: {
+    dark: {
+      // Background colors
+      body_background: '#0f172a',        // body background (slate-950)
+      container_background: '#1e293b',   // main container (slate-800) 
+      row_active_background: '#0f172a',  // active row background (slate-950)
+      row_completed_background: '#1e293b', // completed row background (slate-800)
+      
+      // Text colors
+      text_primary: '#e2e8f0',          // primary text (slate-200)
+      text_secondary: '#cbd5e1',        // secondary text (slate-300)
+      text_muted: '#64748b',           // muted text (slate-500)
+      text_active_name: '#fbbf24',     // active customer name (amber-400)
+      text_completed_name: '#f1f5f9',  // completed customer name (slate-100)
+      text_active_id: '#fbbf24',       // active booking ID (amber-400)  
+      text_completed_id: '#e2e8f0',    // completed booking ID (slate-200)
+      text_chat_default: '#94a3b8',    // default chat text (slate-400)
+      text_chat_q200: '#60a5fa',       // q_level >= 200 chat (blue-400)
+      text_chat_q300: '#34d399',       // q_level >= 300 chat (emerald-400)
+      
+      // Status colors
+      status_waiting: '#fbbf24',        // Waiting status (amber-400)
+      status_ready: '#34d399',          // Ready status (emerald-400) 
+      status_arrived: '#8b5cf6',        // Arrived status (purple-500)
+      status_cancelled: '#f87171',      // Cancelled status (red-400)
+      
+      // Button colors
+      btn_ready: '#34d399',             // Ready button (emerald-400)
+      btn_ask: '#60a5fa',               // Ask button (blue-400)
+      btn_arrive: '#8b5cf6',            // Arrive button (purple-500)
+      btn_cancel: '#f87171',            // Cancel button (red-400)
+      btn_undo: '#fbbf24',              // Undo button (amber-400)
+      btn_next: '#fbbf24',              // Next button (amber-400)
+      btn_disabled: '#64748b',          // Disabled button (slate-500)
+      
+      // Highlight colors
+      highlight_border: '#fbbf24',      // Row highlight border (amber-400)
+      highlight_pax_big_bg: '#fef3c7',  // Large pax background (yellow-100)
+      highlight_pax_big_text: '#1f2937', // Large pax text (slate-800)
+      highlight_pax_small_border: '#fbbf24', // Small pax border (amber-400)
+      highlight_tags_active_border: '#fbbf24', // Active highlight tags border (amber-400)
+      highlight_tags_active_text: '#fbbf24',  // Active highlight tags text (amber-400)
+      highlight_tags_completed_border: '#f1f5f9', // Completed highlight tags border (slate-100)
+      highlight_tags_completed_text: '#f1f5f9',   // Completed highlight tags text (slate-100)
+      
+      // Scroll button colors
+      scroll_btn_active_bg: '#fbbf24',   // Active scroll button background (amber-400)
+      scroll_btn_active_text: '#1f2937', // Active scroll button text (slate-900)
+      scroll_btn_disabled_bg: '#374151', // Disabled scroll button background (slate-700)
+      scroll_btn_disabled_text: '#64748b', // Disabled scroll button text (slate-500)
+      
+      // Chat status colors
+      chat_arrived: '#a855f7',          // Chat arrived status (purple-500)
+      chat_cancelled: '#f87171',        // Chat cancelled status (red-400)
+      
+      // Background highlights
+      reservation_active_bg: '#374151',  // Active reservation background (slate-700)
+      reservation_active_text: '#cbd5e1', // Active reservation text (slate-300)
+      reservation_completed_bg: '#475569', // Completed reservation background (slate-600)
+      reservation_completed_text: '#e2e8f0', // Completed reservation text (slate-200)
+      
+      // Toast message
+      toast_background: '#343A40',        // Toast message background
+
+      highlight: ['#fbbf24', '#fbbf24', '#fbbf24']
+    },
+    light: {
+      // Light theme colors would go here
+    }
+  }
+};
+
 const isEnableReadyAskBtn_for_reservation = false; // 추후에 과금 가능한 상황에서 메세지 보낼 시 활성화
 
 // --- Database Connection ---
@@ -1990,18 +2065,20 @@ function renderWaitlist() {
         (statusPriority === 0 ? 'border border-slate-100 px-1 py-0.5 rounded font-bold text-xs' : 'border border-amber-400 px-1 py-0.5 rounded font-bold text-xs') :
         'text-xs opacity-75');
 
-    // Generate highlight tags for highlight1, highlight2, highlight3 (same style as Pax)
+    // Generate highlight tags for highlight1, highlight2, highlight3 (same as Pax styling - all same color, only completed/active difference)
     const highlights = [];
-    const highlightTagClass = (statusPriority === 0 ? 'border border-slate-100 text-slate-100 px-1 py-0.5 rounded font-bold' : 'border border-amber-400 text-amber-400 px-1 py-0.5 rounded font-bold');
+    const highlightClass = statusPriority === 0 ? 
+      'bg-white text-slate-800 px-1 py-0.5 rounded font-bold mr-1' : 
+      'bg-yellow-400 text-slate-800 px-1 py-0.5 rounded font-bold mr-1';
 
     if (item.highlight1 && item.highlight1.trim()) {
-      highlights.push(`<span class="${highlightTagClass} mr-1" style="font-size: 10px;">${item.highlight1}</span>`);
+      highlights.push(`<span class="${highlightClass}" style="font-size: 10px;">${item.highlight1}</span>`);
     }
     if (item.highlight2 && item.highlight2.trim()) {
-      highlights.push(`<span class="${highlightTagClass} mr-1" style="font-size: 10px;">${item.highlight2}</span>`);
+      highlights.push(`<span class="${highlightClass}" style="font-size: 10px;">${item.highlight2}</span>`);
     }
     if (item.highlight3 && item.highlight3.trim()) {
-      highlights.push(`<span class="${highlightTagClass} mr-1" style="font-size: 10px;">${item.highlight3}</span>`);
+      highlights.push(`<span class="${highlightClass}" style="font-size: 10px;">${item.highlight3}</span>`);
     }
     const highlightHTML = highlights.length > 0 ? `<span class="ml-2">${highlights.join('')}</span>` : '';
 
