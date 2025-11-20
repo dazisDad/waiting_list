@@ -409,6 +409,8 @@ let selectedRowId = null; // 현재 선택된 행의 ID (데스크탑용)
 let savedScrollPosition = null; // 행 선택 시 저장된 스크롤 위치
 let askModeItems = new Set(); // Track which items are in "Ask mode" showing question buttons
 let questionPageIndex = {}; // Track current question page for each booking_number (default 0)
+let undoAutoHideTimers = {}; // Track auto-hide countdown timers for completed items
+let undoCountdownIntervals = {}; // Track countdown interval IDs for updating button text
 
 // --- Action Button Definitions ---
 const actionButtonDefinitions = [
@@ -1433,53 +1435,33 @@ async function handleArrive(booking_number, customer_name) {
   // 4. Rerender after successful database update and local data update
   renderWaitlist();
 
+  // Start auto-hide countdown for this completed item
+  startUndoAutoHideCountdown(booking_number);
+
   // IMPORTANT FIX: Scroll must happen AFTER the DOM is updated by renderWaitlist.
-  console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-  console.log(`ARRIVE_DEBUG: shouldScroll = ${shouldScroll}`);
-  console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-  
   if (shouldScroll) {
     requestAnimationFrame(() => {
-      // Count total completed items
-      const completedItemsCount = waitlist.filter(item => getSortPriority(item.status) === 0).length;
-      console.log(`ARRIVE_DEBUG: Total completed items after action: ${completedItemsCount}`);
-      
       // Find the position of the just completed item in the DOM
       const rows = waitlistBody.getElementsByTagName('tr');
-      console.log(`ARRIVE_DEBUG: Total rows in DOM: ${rows.length}`);
-      
       let targetScrollTop = 0;
       let itemFound = false;
-      let rowIndex = 0;
 
       // Look for the row that contains the just completed item
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         const idCell = row.querySelector('td:first-child div:first-child');
-        const rowId = idCell ? idCell.textContent.trim() : 'N/A';
         
         if (idCell && idCell.textContent.trim() === booking_number.toString()) {
           // Found the just completed item - scroll to show it at the top
           itemFound = true;
-          rowIndex = i;
-          console.log(`ARRIVE_DEBUG: Found item #${booking_number} at row index ${i}`);
-          console.log(`ARRIVE_DEBUG: Target scroll position: ${targetScrollTop.toFixed(2)}px`);
           break;
         }
-        console.log(`ARRIVE_DEBUG: Row ${i}: ID=${rowId}, height=${row.offsetHeight.toFixed(2)}px, cumulative=${targetScrollTop.toFixed(2)}px`);
         targetScrollTop += row.offsetHeight;
       }
 
       if (itemFound) {
-        // Always scroll to show the just-completed item at the top
-        console.log(`\n━━━ ARRIVE SCROLL ACTION ━━━`);
-        console.log(`Item #${booking_number} found at row ${rowIndex}`);
-        console.log(`Total completed items: ${completedItemsCount}`);
-        console.log(`Current scrollTop: ${waitlistContainer.scrollTop.toFixed(2)}px`);
-        console.log(`Target scrollTop: ${targetScrollTop.toFixed(2)}px`);
-        console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
-        
         waitlistContainer.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
+        console.log(`SCROLL_ACTION_RAF: Arrive scroll to show item #${booking_number} at ${targetScrollTop.toFixed(2)}px`);
         initialScrollTop = targetScrollTop;
 
         // Add highlight effect to the completed item
@@ -1573,53 +1555,33 @@ async function handleCancel(booking_number, customer_name) {
   // 4. Rerender after successful database update and local data update
   renderWaitlist();
 
+  // Start auto-hide countdown for this completed item
+  startUndoAutoHideCountdown(booking_number);
+
   // IMPORTANT FIX: Scroll must happen AFTER the DOM is updated by renderWaitlist.
-  console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-  console.log(`CANCEL_DEBUG: shouldScroll = ${shouldScroll}`);
-  console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-  
   if (shouldScroll) {
     requestAnimationFrame(() => {
-      // Count total completed items
-      const completedItemsCount = waitlist.filter(item => getSortPriority(item.status) === 0).length;
-      console.log(`CANCEL_DEBUG: Total completed items after action: ${completedItemsCount}`);
-      
       // Find the position of the just completed item in the DOM
       const rows = waitlistBody.getElementsByTagName('tr');
-      console.log(`CANCEL_DEBUG: Total rows in DOM: ${rows.length}`);
-      
       let targetScrollTop = 0;
       let itemFound = false;
-      let rowIndex = 0;
 
       // Look for the row that contains the just completed item
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         const idCell = row.querySelector('td:first-child div:first-child');
-        const rowId = idCell ? idCell.textContent.trim() : 'N/A';
         
         if (idCell && idCell.textContent.trim() === booking_number.toString()) {
           // Found the just completed item - scroll to show it at the top
           itemFound = true;
-          rowIndex = i;
-          console.log(`CANCEL_DEBUG: Found item #${booking_number} at row index ${i}`);
-          console.log(`CANCEL_DEBUG: Target scroll position: ${targetScrollTop.toFixed(2)}px`);
           break;
         }
-        console.log(`CANCEL_DEBUG: Row ${i}: ID=${rowId}, height=${row.offsetHeight.toFixed(2)}px, cumulative=${targetScrollTop.toFixed(2)}px`);
         targetScrollTop += row.offsetHeight;
       }
 
       if (itemFound) {
-        // Always scroll to show the just-completed item at the top
-        console.log(`\n━━━ CANCEL SCROLL ACTION ━━━`);
-        console.log(`Item #${booking_number} found at row ${rowIndex}`);
-        console.log(`Total completed items: ${completedItemsCount}`);
-        console.log(`Current scrollTop: ${waitlistContainer.scrollTop.toFixed(2)}px`);
-        console.log(`Target scrollTop: ${targetScrollTop.toFixed(2)}px`);
-        console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
-        
         waitlistContainer.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
+        console.log(`SCROLL_ACTION_RAF: Cancel scroll to show item #${booking_number} at ${targetScrollTop.toFixed(2)}px`);
         initialScrollTop = targetScrollTop;
 
         // Add highlight effect to the completed item
@@ -1653,11 +1615,77 @@ async function handleCancel(booking_number, customer_name) {
 }
 
 /**
+ * Start auto-hide countdown for a completed item.
+ * After 10 seconds, automatically trigger the scroll to active button.
+ */
+function startUndoAutoHideCountdown(booking_number) {
+  // Clear any existing timer/interval for this item
+  stopUndoAutoHideCountdown(booking_number);
+
+  let secondsRemaining = 10;
+
+  // Update Undo button text immediately
+  updateUndoButtonText(booking_number, secondsRemaining);
+
+  // Update button text every second
+  undoCountdownIntervals[booking_number] = setInterval(() => {
+    secondsRemaining--;
+    if (secondsRemaining > 0) {
+      updateUndoButtonText(booking_number, secondsRemaining);
+    }
+  }, 1000);
+
+  // Auto-click scroll button after 10 seconds
+  undoAutoHideTimers[booking_number] = setTimeout(() => {
+    console.log(`AUTO_HIDE: Auto-hiding completed item #${booking_number} after 10 seconds`);
+    stopUndoAutoHideCountdown(booking_number);
+    
+    // Click the scroll to active button
+    if (scrollButton && !scrollButton.disabled) {
+      scrollButton.click();
+    }
+  }, 10000);
+
+  console.log(`AUTO_HIDE: Started countdown for item #${booking_number}`);
+}
+
+/**
+ * Stop auto-hide countdown for a specific item
+ */
+function stopUndoAutoHideCountdown(booking_number) {
+  if (undoAutoHideTimers[booking_number]) {
+    clearTimeout(undoAutoHideTimers[booking_number]);
+    delete undoAutoHideTimers[booking_number];
+  }
+  
+  if (undoCountdownIntervals[booking_number]) {
+    clearInterval(undoCountdownIntervals[booking_number]);
+    delete undoCountdownIntervals[booking_number];
+  }
+}
+
+/**
+ * Update Undo button text to show countdown
+ */
+function updateUndoButtonText(booking_number, secondsRemaining) {
+  // Update all undo buttons for this booking_number
+  const undoButtons = document.querySelectorAll(`button.btn-undo[onclick*="${booking_number}"], button.mobile-btn-undo[onclick*="${booking_number}"]`);
+  
+  undoButtons.forEach(button => {
+    button.textContent = `Undo (Auto Hide in ${secondsRemaining}s)`;
+  });
+}
+
+/**
  * Handles Undo action for completed items (Arrived/Cancelled).
  * Restores the item to "Waiting" status with highlight effect.
  */
 async function handleUndo(booking_number, customer_name) {
   console.log(`ACTION: Undo for customer ${customer_name} (#${booking_number}).`);
+  
+  // Stop auto-hide countdown for this item
+  stopUndoAutoHideCountdown(booking_number);
+  
   const item = waitlist.find(item => item.booking_number === booking_number);
 
   if (item && (item.status === 'Arrived' || item.status === 'Cancelled')) {
@@ -1863,6 +1891,23 @@ function updateScrollAndButtonState() {
  */
 function handleScrollToActive() {
   console.log("ACTION: Scroll button clicked.");
+  
+  // Close any expanded row before scrolling
+  if (expandedRowId !== null) {
+    console.log(`SCROLL_ACTION: Closing expanded row #${expandedRowId} before scroll`);
+    removeMobileActionRow(expandedRowId);
+    toggleRowSelection(expandedRowId, false);
+    toggleChatHistoryDisplay(expandedRowId, false);
+    
+    // Exit ask mode if active
+    if (askModeItems.has(expandedRowId)) {
+      askModeItems.delete(expandedRowId);
+      console.log(`ASK_MODE: Auto-exited for #${expandedRowId} before scroll`);
+    }
+    
+    expandedRowId = null;
+  }
+  
   // 이제 scrollTarget은 initialScrollTop이 아니라, DOM을 기준으로 재계산된 정확한 값입니다.
   const totalHeightToScroll = updateScrollAndButtonState();
 
@@ -2329,6 +2374,12 @@ function renderWaitlist() {
     waitlist.forEach(item => {
       const shouldShowAll = (selectedRowId === item.booking_number) || (expandedRowId === item.booking_number);
       toggleChatHistoryDisplay(item.booking_number, shouldShowAll);
+      
+      // Restore countdown text for completed items that have active timers
+      if ((item.status === 'Arrived' || item.status === 'Cancelled') && undoAutoHideTimers[item.booking_number]) {
+        // Timer exists, button text will be updated by the interval
+        // Just ensure the interval continues to update the newly rendered button
+      }
     });
 
     // Restore desktop selection visual state
@@ -2411,11 +2462,13 @@ document.querySelectorAll('.mobile-action-row').forEach(row => {
 
 // 1. Add scroll event listener
 // 사용자가 스크롤을 시작하면 버튼 상태가 동적으로 업데이트됩니다.
+
 waitlistContainer.addEventListener('scroll', () => {
-  const currentScrollTop = waitlistContainer.scrollTop;
-  console.log(`SCROLL_EVENT: User scrolled to position: ${currentScrollTop.toFixed(2)}px`);
+  //const currentScrollTop = waitlistContainer.scrollTop;
+  //console.log(`SCROLL_EVENT: User scrolled to position: ${currentScrollTop.toFixed(2)}px`);
   updateScrollAndButtonState();
 });
+
 
 // 2. Initialize data loading and setup after completion
 async function startInitialization() {
