@@ -580,12 +580,19 @@ function toggleMobileActions(booking_number, event) {
       selectedRowId = null;
       toggleRowSelection(booking_number, false);
       toggleChatHistoryDisplay(booking_number, false); // Show only last message
+      
+      // Stop auto-hide countdown if active
+      stopUndoAutoHideCountdown(booking_number);
+      
       console.log(`DESKTOP: Deselected row #${booking_number}`);
     } else {
       // Deselect previous row if any
       if (selectedRowId !== null) {
         toggleRowSelection(selectedRowId, false);
         toggleChatHistoryDisplay(selectedRowId, false);
+        
+        // Stop auto-hide countdown for previous row if active
+        stopUndoAutoHideCountdown(selectedRowId);
       }
 
       // Select new row
@@ -624,6 +631,9 @@ function toggleMobileActions(booking_number, event) {
     // Collapse chat history
     toggleChatHistoryDisplay(booking_number, false);
 
+    // Stop auto-hide countdown if active
+    stopUndoAutoHideCountdown(booking_number);
+
     expandedRowId = null;
     console.log(`MOBILE: Collapsed row for item #${booking_number}`);
     return;
@@ -634,6 +644,9 @@ function toggleMobileActions(booking_number, event) {
     removeMobileActionRow(expandedRowId);
     toggleRowSelection(expandedRowId, false);
     toggleChatHistoryDisplay(expandedRowId, false);
+
+    // Stop auto-hide countdown for previous row if active
+    stopUndoAutoHideCountdown(expandedRowId);
 
     // Exit Ask mode for the previous row
     if (askModeItems.has(expandedRowId)) {
@@ -1640,9 +1653,9 @@ function startUndoAutoHideCountdown(booking_number) {
     console.log(`AUTO_HIDE: Auto-hiding completed item #${booking_number} after 10 seconds`);
     stopUndoAutoHideCountdown(booking_number);
     
-    // Click the scroll to active button
+    // Click the scroll to active button with auto-trigger flag
     if (scrollButton && !scrollButton.disabled) {
-      scrollButton.click();
+      handleScrollToActive(true); // Pass true to indicate auto-trigger
     }
   }, 10000);
 
@@ -1662,6 +1675,12 @@ function stopUndoAutoHideCountdown(booking_number) {
     clearInterval(undoCountdownIntervals[booking_number]);
     delete undoCountdownIntervals[booking_number];
   }
+  
+  // Reset button text to "Undo"
+  const undoButtons = document.querySelectorAll(`button.btn-undo[onclick*="${booking_number}"], button.mobile-btn-undo[onclick*="${booking_number}"]`);
+  undoButtons.forEach(button => {
+    button.textContent = 'Undo';
+  });
 }
 
 /**
@@ -1888,11 +1907,32 @@ function updateScrollAndButtonState() {
 
 /**
  * Button click handler: Scrolls DOWN to the Active Queue instantly.
+ * @param {boolean} isAutoTrigger - True if triggered automatically by countdown, false if user clicked
  */
-function handleScrollToActive() {
-  console.log("ACTION: Scroll button clicked.");
+function handleScrollToActive(isAutoTrigger = false) {
+  if (isAutoTrigger) {
+    console.log("ACTION: Scroll button auto-triggered after countdown.");
+  } else {
+    console.log("ACTION: Scroll button clicked by user.");
+    
+    // Only stop countdowns if user manually clicked (not auto-triggered)
+    waitlist.forEach(item => {
+      if (item.status === 'Arrived' || item.status === 'Cancelled') {
+        stopUndoAutoHideCountdown(item.booking_number);
+      }
+    });
+    console.log("AUTO_HIDE: Stopped all countdown timers");
+  }
   
-  // Close any expanded row before scrolling
+  // Close any selected row (desktop) before scrolling
+  if (selectedRowId !== null) {
+    console.log(`SCROLL_ACTION: Deselecting desktop row #${selectedRowId} before scroll`);
+    toggleRowSelection(selectedRowId, false);
+    toggleChatHistoryDisplay(selectedRowId, false);
+    selectedRowId = null;
+  }
+  
+  // Close any expanded row (mobile) before scrolling
   if (expandedRowId !== null) {
     console.log(`SCROLL_ACTION: Closing expanded row #${expandedRowId} before scroll`);
     removeMobileActionRow(expandedRowId);
