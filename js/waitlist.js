@@ -1810,6 +1810,15 @@ function updateScrollAndButtonState() {
   const completedItemsCount = waitlist.filter(item => getSortPriority(item.status) === 0).length;
   const hasCompletedItems = completedItemsCount > 0;
   const totalRows = waitlist.length;
+  
+  // Check if dummy row exists when there are completed items
+  // If dummy row is missing, wait for it to be added (during renderWaitlist)
+  const hasDummyRow = waitlistBody.querySelector('.dummy-spacer-row') !== null;
+  if (hasCompletedItems && !hasDummyRow && isInitialScrollDone) {
+    console.log("STATE_CHECK: Waiting for dummy row to be added. Skipping button state update.");
+    return 0;
+  }
+  
   // With dummy row, scrolling is always enabled when there are completed items
   const shouldEnableScrolling = hasCompletedItems;
 
@@ -1946,6 +1955,46 @@ function handleScrollToActive(isAutoTrigger = false) {
     }
     
     expandedRowId = null;
+    
+    // DOM height changed, recalculate dummy row synchronously
+    const rows = waitlistBody.getElementsByTagName('tr');
+    const completedItemsCount = waitlist.filter(item => getSortPriority(item.status) === 0).length;
+    
+    if (completedItemsCount > 0) {
+      const containerHeight = waitlistContainer.clientHeight;
+      
+      // Calculate completed items height
+      let completedItemsHeight = 0;
+      let completedRowsFound = 0;
+      for (let i = 0; i < rows.length && completedRowsFound < completedItemsCount; i++) {
+        const row = rows[i];
+        if (!row.classList.contains('mobile-action-row') && !row.classList.contains('dummy-spacer-row')) {
+          completedItemsHeight += row.offsetHeight;
+          completedRowsFound++;
+        } else if (completedRowsFound < completedItemsCount) {
+          completedItemsHeight += row.offsetHeight;
+        }
+      }
+      
+      // Calculate total content height
+      let totalContentHeight = 0;
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row.classList.contains('dummy-spacer-row')) {
+          totalContentHeight += row.offsetHeight;
+        }
+      }
+      
+      const activeItemsHeight = totalContentHeight - completedItemsHeight;
+      const remainingSpace = containerHeight - activeItemsHeight;
+      const dummyRowHeight = Math.max(0, remainingSpace);
+      
+      // Update dummy row height
+      const dummyElement = waitlistBody.querySelector('.dummy-spacer-row td');
+      if (dummyElement) {
+        dummyElement.style.height = `${dummyRowHeight}px`;
+      }
+    }
   }
   
   // 이제 scrollTarget은 initialScrollTop이 아니라, DOM을 기준으로 재계산된 정확한 값입니다.
@@ -1953,7 +2002,7 @@ function handleScrollToActive(isAutoTrigger = false) {
 
   // 버튼이 활성화된 상태일 때만 스크롤을 수행합니다.
   if (!scrollButton.disabled) {
-    console.log(`SCROLL_ACTION: Performing scroll to ${totalHeightToScroll.toFixed(2)}px.`);
+    
     // 'auto'를 사용하여 즉시 이동하고, 스크롤 이벤트 발생을 최소화합니다.
     waitlistContainer.scrollTo({ top: totalHeightToScroll, behavior: 'smooth' });
 
