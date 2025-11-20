@@ -1,3 +1,5 @@
+const version = '0.630';
+toastMsg (`version ${version}`);
 const store_id = 'DL_Sunway_Geo';
 
 let waitlist = [];
@@ -393,6 +395,80 @@ const messageBox = document.getElementById('message-box');
 const messageText = document.getElementById('message-text');
 const scrollButton = document.getElementById('scroll-to-active-btn');
 const waitlistContainer = document.getElementById('waitlist-container');
+
+// Mobile viewport height tracking (handles address bar)
+function updateViewportHeight() {
+  const vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty('--vh', `${vh}px`);
+}
+
+// Update on load and resize
+updateViewportHeight();
+window.addEventListener('resize', updateViewportHeight);
+window.addEventListener('orientationchange', updateViewportHeight);
+
+// =============================
+// CONSOLE LOG CAPTURE FOR MOBILE DEBUGGING
+// =============================
+const logBuffer = [];
+const originalConsoleLog = console.log;
+const originalConsoleWarn = console.warn;
+const originalConsoleError = console.error;
+
+// Log version info first
+logBuffer.push(`[VERSION] waitlist.js version ${version}`);
+logBuffer.push(`[DEVICE] User Agent: ${navigator.userAgent}`);
+logBuffer.push(`[VIEWPORT] Window size: ${window.innerWidth}x${window.innerHeight}px`);
+originalConsoleLog(`VERSION: ${version}`);
+
+console.log = function(...args) {
+  logBuffer.push(`[LOG] ${args.join(' ')}`);
+  originalConsoleLog.apply(console, args);
+};
+
+console.warn = function(...args) {
+  logBuffer.push(`[WARN] ${args.join(' ')}`);
+  originalConsoleWarn.apply(console, args);
+};
+
+console.error = function(...args) {
+  logBuffer.push(`[ERROR] ${args.join(' ')}`);
+  originalConsoleError.apply(console, args);
+};
+
+// Function to copy all logs to clipboard
+window.copyLogsToClipboard = function() {
+  const allLogs = logBuffer.join('\n');
+  navigator.clipboard.writeText(allLogs).then(() => {
+    originalConsoleLog('✓ All logs copied to clipboard! (' + logBuffer.length + ' entries)');
+    alert('로그가 클립보드에 복사되었습니다!\n총 ' + logBuffer.length + '개 항목');
+  }).catch(err => {
+    originalConsoleError('Failed to copy logs:', err);
+    alert('클립보드 복사 실패. 콘솔에서 수동으로 복사해주세요.');
+  });
+};
+
+// Add button to copy logs (invisible, triggered by triple-tap on header)
+let tapCount = 0;
+let tapTimer = null;
+document.addEventListener('DOMContentLoaded', () => {
+  const header = document.querySelector('h1');
+  if (header) {
+    header.addEventListener('click', () => {
+      tapCount++;
+      clearTimeout(tapTimer);
+      
+      if (tapCount === 3) {
+        copyLogsToClipboard();
+        tapCount = 0;
+      } else {
+        tapTimer = setTimeout(() => {
+          tapCount = 0;
+        }, 500);
+      }
+    });
+  }
+});
 
 // Define the Tailwind class for maximum height
 const MAX_HEIGHT_CLASS = 'max-h-[60vh]';
@@ -1811,11 +1887,17 @@ function updateScrollAndButtonState() {
   const hasCompletedItems = completedItemsCount > 0;
   const totalRows = waitlist.length;
   
-  // Check if dummy row exists when there are completed items
-  // If dummy row is missing, wait for it to be added (during renderWaitlist)
-  const hasDummyRow = waitlistBody.querySelector('.dummy-spacer-row') !== null;
-  if (hasCompletedItems && !hasDummyRow && isInitialScrollDone) {
-    console.log("STATE_CHECK: Waiting for dummy row to be added. Skipping button state update.");
+  // Check if table has been rendered (has data rows, not just empty state)
+  // Before renderWaitlist() runs, there will be no data rows in the table
+  const hasDataRows = Array.from(rows).some(row => 
+    !row.classList.contains('mobile-action-row') && 
+    !row.classList.contains('dummy-spacer-row') &&
+    row.querySelector('td')
+  );
+  
+  // Skip button state update if table hasn't been rendered yet
+  if (!hasDataRows) {
+    console.log("STATE_CHECK: Waiting for table render. Skipping button state update.");
     return 0;
   }
   
@@ -1961,9 +2043,7 @@ function handleScrollToActive(isAutoTrigger = false) {
     const completedItemsCount = waitlist.filter(item => getSortPriority(item.status) === 0).length;
     
     if (completedItemsCount > 0) {
-      const containerHeight = waitlistContainer.clientHeight;
-      
-      // Calculate completed items height
+      // Calculate completed items height first
       let completedItemsHeight = 0;
       let completedRowsFound = 0;
       for (let i = 0; i < rows.length && completedRowsFound < completedItemsCount; i++) {
@@ -1986,6 +2066,18 @@ function handleScrollToActive(isAutoTrigger = false) {
       }
       
       const activeItemsHeight = totalContentHeight - completedItemsHeight;
+      
+      // Determine correct container height
+      let containerHeight = waitlistContainer.offsetHeight;
+      if (activeItemsHeight > containerHeight * 0.95) {
+        const bodyPadding = 24;
+        const headerHeight = document.querySelector('header')?.offsetHeight || 70;
+        const buttonHeight = scrollButton?.offsetHeight || 36;
+        const margins = 16;
+        containerHeight = window.innerHeight - bodyPadding - headerHeight - buttonHeight - margins;
+        console.log(`MOBILE_DEBUG: handleScrollToActive - Active (${activeItemsHeight}px) doesn't fit, using viewport: ${containerHeight}px`);
+      }
+      
       const remainingSpace = containerHeight - activeItemsHeight;
       const dummyRowHeight = Math.max(0, remainingSpace);
       
@@ -2304,11 +2396,18 @@ function renderWaitlist() {
     const hasCompletedItems = completedItemsCount > 0;
 
     if (hasCompletedItems) {
-      // Calculate heights
-      const containerHeight = waitlistContainer.clientHeight;
       const rows = waitlistBody.getElementsByTagName('tr');
       
-      // Calculate total height of completed items
+      // First, calculate active items height to check if we need viewport-based calculation
+      let totalContentHeight = 0;
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row.classList.contains('dummy-spacer-row')) {
+          totalContentHeight += row.offsetHeight;
+        }
+      }
+      
+      // Calculate completed items height
       let completedItemsHeight = 0;
       let completedRowsFound = 0;
       for (let i = 0; i < rows.length && completedRowsFound < completedItemsCount; i++) {
@@ -2320,20 +2419,24 @@ function renderWaitlist() {
           completedItemsHeight += row.offsetHeight;
         }
       }
-
-      // Calculate total height of ALL content (before adding dummy row)
-      // This is more accurate than summing individual items
-      let totalContentHeight = 0;
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
-        if (!row.classList.contains('dummy-spacer-row')) {
-          totalContentHeight += row.offsetHeight;
-        }
+      
+      const activeItemsHeight = totalContentHeight - completedItemsHeight;
+      let containerHeight = waitlistContainer.offsetHeight;
+      
+      // If active items don't fit in container, use viewport-based calculation
+      // This is the key fix: we need enough space for active items + scroll capability
+      if (activeItemsHeight > containerHeight * 0.95) {
+        // Calculate available height: window height - body padding - header - button area
+        const bodyPadding = 24; // p-4 padding
+        const headerHeight = document.querySelector('header')?.offsetHeight || 70;
+        const buttonHeight = scrollButton?.offsetHeight || 36;
+        const margins = 16; // Additional margins and spacing
+        containerHeight = window.innerHeight - bodyPadding - headerHeight - buttonHeight - margins;
+        console.log(`MOBILE_DEBUG: Active items (${activeItemsHeight}px) don't fit in container, using viewport calculation: ${containerHeight}px`);
       }
       
-      // Active items = total content - completed items
-      const activeItemsHeight = totalContentHeight - completedItemsHeight;
-
+      console.log(`MOBILE_DEBUG: renderWaitlist - Container offsetHeight: ${waitlistContainer.offsetHeight}px, Used height: ${containerHeight}px, Active: ${activeItemsHeight}px, window.innerHeight: ${window.innerHeight}px`);
+      
       // Calculate remaining space in container after active items
       const remainingSpace = containerHeight - activeItemsHeight;
 
