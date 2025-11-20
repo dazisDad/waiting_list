@@ -141,19 +141,19 @@ if ($method !== 'POST' || $body === false || $body === '') {
     //echo json_encode(['ok' => false, 'error' => 'invalid_request']);
 
     $inputDataSet_1_1 = [
-        'store_id' => 'DL_01',
+        'store_id' => 'DL_Sunway_Geo',
         'booking_flow' => 1.1,
-        'booking_from' => 'qr_wa',
+        'booking_from' => 'QR',
         'subscriber_id' => 306159212
     ];
     $inputDataSet_1_2 = [
-        'store_id' => 'DL_01',
+        'store_id' => 'DL_Sunway_Geo',
         'booking_flow' => 1.2,
-        'booking_from' => 'qr_wa',
+        'booking_from' => 'QR',
         'subscriber_id' => 306159212,
         'customer_name' => 'HB',
         'customer_phone' => 60123090372,
-        'pax' => 2
+        'pax' => 12
     ];
     $inputDataSet_2_1 = [
         'store_id' => 'DL_01',
@@ -174,7 +174,7 @@ if ($method !== 'POST' || $body === false || $body === '') {
     //$return_json = get_booking_detail('subscriber_id', $inputDataSet_1_1['subscriber_id'], true);
     
     //$return_json = get_booking_detail('booking_list_id',39);
-    $return_json = flow_execution($inputDataSet_2_3);
+    $return_json = flow_execution($inputDataSet_1_2);
     echo json_encode($return_json);
 
   }

@@ -59,6 +59,13 @@ th:first-child {
   }
 }
 
+/* Outline button styles - Call */
+.btn-call {
+  background-color: transparent;
+  border-color: #34d399;
+  color: #34d399;
+}
+
 /* Outline button styles - Ready */
 .btn-ready {
   background-color: transparent;
@@ -356,6 +363,16 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
     pointer-events: none !important;
   }
 
+  .action-column-cell .btn-call,
+  .action-column-cell .btn-call:hover,
+  .action-column-cell .btn-call:active,
+  .action-column-cell .btn-call:focus,
+  .action-column-cell .btn-call:focus-visible {
+    background-color: transparent !important;
+    transition: none !important;
+    pointer-events: none !important;
+  }
+
   .action-column-cell .btn-ready,
   .action-column-cell .btn-ready:hover,
   .action-column-cell .btn-ready:active,
@@ -463,6 +480,21 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
     border-bottom: 1px solid transparent !important;
     */
     box-sizing: border-box !important;
+    
+    /* Smooth expand animation */
+    animation: expandRow 0.2s ease-out;
+    transform-origin: top;
+  }
+  
+  @keyframes expandRow {
+    from {
+      opacity: 0;
+      transform: scaleY(0);
+    }
+    to {
+      opacity: 1;
+      transform: scaleY(1);
+    }
   }
 
   /* Mobile action row when parent is selected - Multiple selectors for higher priority */
@@ -492,6 +524,19 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
   .mobile-btn-ask,
   .mobile-btn-checkin,
   .mobile-btn-cancel {
+    transition: none !important;
+  }
+
+  /* Mobile Call button */
+  .mobile-btn-call {
+    background-color: transparent;
+    border: 1px solid #34d399;
+    color: #34d399;
+  }
+
+  .mobile-btn-call:active {
+    background-color: #34d399;
+    color: #ffffff;
     transition: none !important;
   }
 

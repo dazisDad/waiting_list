@@ -75,6 +75,74 @@ function get_booking_list($store_id, $isToday = true, $dateSearch = null) {
 
 
 /**
+ * validatePax
+ * Validate if the pax value is within the allowed limit for a specific store.
+ * Queries the configuration table for the store's pax_limit and compares it with the input pax.
+ * 
+ * @param string $store_id - The store identifier
+ * @param int $pax - The number of people to validate
+ * @return bool - Returns true if pax is within limit, false otherwise
+ * @throws Exception on database errors
+ */
+function validatePax($store_id, $pax) {
+    $cfg = get_db_config();
+    if ($cfg['user'] === '' || $cfg['name'] === '') {
+        throw new Exception('Database configuration incomplete: DB_USERNAME and DB_NAME are required');
+    }
+
+    $mysqli = new mysqli($cfg['host'], $cfg['user'], $cfg['pass'], $cfg['name']);
+    if ($mysqli->connect_errno) {
+        throw new Exception('DB connect error: ' . $mysqli->connect_error);
+    }
+
+    $sql = "SELECT pax_limit FROM configuration WHERE store_id = ?";
+    $stmt = $mysqli->prepare($sql);
+    if ($stmt === false) {
+        $err = $mysqli->error;
+        $mysqli->close();
+        throw new Exception('Prepare failed: ' . $err);
+    }
+
+    $store_id_str = strval($store_id);
+    if (!$stmt->bind_param('s', $store_id_str)) {
+        $err = $stmt->error;
+        $stmt->close();
+        $mysqli->close();
+        throw new Exception('Bind failed: ' . $err);
+    }
+
+    if (!$stmt->execute()) {
+        $err = $stmt->error;
+        $stmt->close();
+        $mysqli->close();
+        throw new Exception('Execute failed: ' . $err);
+    }
+
+    $result = $stmt->get_result();
+    if ($result === false) {
+        $err = $stmt->error;
+        $stmt->close();
+        $mysqli->close();
+        throw new Exception('Getting result failed: ' . $err);
+    }
+
+    $row = $result->fetch_assoc();
+    $stmt->close();
+    $mysqli->close();
+
+    // If no configuration found for store_id, return false
+    if ($row === null) {
+        return false;
+    }
+
+    $pax_limit = intval($row['pax_limit']);
+    $pax_int = intval($pax);
+
+    // Return true if pax is within limit, false if it exceeds
+    return $pax_int <= $pax_limit;
+}
+
+/**
  * generate_booking_number
  * Build a booking number by prefixing the pax value to the last two digits
  * of the nextId. If nextId is null, it will be treated as 1.
@@ -126,7 +194,7 @@ function insert_to_booking_list(array $inputDataSet) {
         throw new Exception('DB connect error: ' . $mysqli->connect_error);
     }
 
-    $sql = 'INSERT INTO booking_list (store_id, booking_from, subscriber_id, customer_name, customer_phone, pax, time_created) VALUES (?,?,?,?,?,?,?)';
+    $sql = 'INSERT INTO booking_list (store_id, booking_from, subscriber_id, customer_name, customer_phone, pax, time_created, dine_dateTime, status, q_level) VALUES (?,?,?,?,?,?,?,?,?,?)';
     $stmt = $mysqli->prepare($sql);
     if ($stmt === false) {
         $err = $mysqli->error;
@@ -142,9 +210,12 @@ function insert_to_booking_list(array $inputDataSet) {
     $customer_phone = strval($inputDataSet['customer_phone']);
     $pax = intval($inputDataSet['pax']);
     $time_created = date('Y-m-d H:i:s');
+    $dine_dateTime = date('Y-m-d H:i:s');
+    $status = 'Waiting';
+    $q_level = 100;
 
-    // types: s (store_id), s (booking_from), i (subscriber_id), s (customer_name), s (customer_phone), i (pax), s (time_created)
-    if (!$stmt->bind_param('ssissis', $store_id, $booking_from, $subscriber_id, $customer_name, $customer_phone, $pax, $time_created)) {
+    // types: s (store_id), s (booking_from), i (subscriber_id), s (customer_name), s (customer_phone), i (pax), s (time_created), s (dine_dateTime), s (status), i (q_level)
+    if (!$stmt->bind_param('ssississsi', $store_id, $booking_from, $subscriber_id, $customer_name, $customer_phone, $pax, $time_created, $dine_dateTime, $status, $q_level)) {
         $err = $stmt->error;
         $stmt->close();
         $mysqli->close();
@@ -160,6 +231,33 @@ function insert_to_booking_list(array $inputDataSet) {
 
     $insertId = $mysqli->insert_id;
     $stmt->close();
+
+    // Insert into history_chat table
+    $sql_history = 'INSERT INTO history_chat (booking_list_id, dateTime, qna) VALUES (?,?,?)';
+    $stmt_history = $mysqli->prepare($sql_history);
+    if ($stmt_history === false) {
+        $err = $mysqli->error;
+        $mysqli->close();
+        throw new Exception('Prepare failed for history_chat: ' . $err);
+    }
+
+    $qna = 'Waiting';
+    // types: i (booking_list_id), s (dateTime), s (qna)
+    if (!$stmt_history->bind_param('iss', $insertId, $dine_dateTime, $qna)) {
+        $err = $stmt_history->error;
+        $stmt_history->close();
+        $mysqli->close();
+        throw new Exception('Bind failed for history_chat: ' . $err);
+    }
+
+    if (!$stmt_history->execute()) {
+        $err = $stmt_history->error;
+        $stmt_history->close();
+        $mysqli->close();
+        throw new Exception('Execute failed for history_chat: ' . $err);
+    }
+
+    $stmt_history->close();
     $mysqli->close();
     return intval($insertId);
 }
@@ -535,12 +633,20 @@ function flow_execution ($inputDataSet) {
               update_booking_list($booking_list_id, 'booking_number', $booking_number);
               $booking_ahead = count($booking_list) - 1; // 자료 입력단계에서만 이 방식으로 계산
 
+              $success = true;
+              $isBookingLoop = is_booking_loop($booking_ahead);
+              if(validatePax($store_id, $inputDataSet['pax']) === false){
+                  // If pax exceeds limit, staff confirmation is needed
+                  $success = false;   //success 가 false여도 레코드는 생성됨, 단 staff 확인 필요
+                  $isBookingLoop = 0;
+              }
+
               $return_json = [
-                  'success' => true,
+                  'success' => $success,
                   'booking_list_id' => $booking_list_id,
                   'booking_ahead' => $booking_ahead,
                   'estimate_waiting_time' => estimate_waiting_time($booking_ahead),
-                  'is_booking_loop' => is_booking_loop($booking_ahead),
+                  'is_booking_loop' => $isBookingLoop,
                   'booking_number' => $booking_number
               ];
               return $return_json;

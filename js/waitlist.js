@@ -1,4 +1,4 @@
-const version = '0.631';
+const version = '0.638';
 
 // Display version in header
 document.addEventListener('DOMContentLoaded', () => {
@@ -499,6 +499,18 @@ let undoCountdownIntervals = {}; // Track countdown interval IDs for updating bu
 // --- Action Button Definitions ---
 const actionButtonDefinitions = [
   {
+    id: 'call',
+    label: 'Call',
+    color: '#34d399', // green
+    textColor: '#34d399',
+    isBackgroundFill: false,
+    functionName: 'handleCall',
+    showForStatus: ['Waiting', 'Ready'], // Show for these statuses
+    mobileBtnClass: 'mobile-btn-call',
+    desktopBtnClass: 'btn-call',
+    isMobileOnly: true // Only show on mobile
+  },
+  {
     id: 'ready',
     label: 'Ready',
     color: '#34d399', // green
@@ -557,9 +569,18 @@ const actionButtonDefinitions = [
 
 /**
  * Helper function to get buttons for a specific item status
+ * Filters by isMobileOnly flag based on current platform
  */
-function getButtonsForStatus(status) {
-  return actionButtonDefinitions.filter(btn => btn.showForStatus.includes(status));
+function getButtonsForStatus(status, isMobile) {
+  return actionButtonDefinitions.filter(btn => {
+    // Check if button should be shown for this status
+    if (!btn.showForStatus.includes(status)) return false;
+    
+    // If isMobileOnly is true, only show on mobile
+    if (btn.isMobileOnly === true && !isMobile) return false;
+    
+    return true;
+  });
 }
 
 /**
@@ -568,7 +589,10 @@ function getButtonsForStatus(status) {
 function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) {
   const baseClasses = 'action-button px-3 py-1.5 rounded-md border font-medium text-sm';
   const btnClass = isMobile ? buttonDef.mobileBtnClass : buttonDef.desktopBtnClass;
-  let classes = `${baseClasses} ${btnClass} flex-1`;
+  
+  // Call button gets fixed small width with centered content, other buttons get equal flex distribution
+  const flexClass = buttonDef.functionName === 'handleCall' ? 'flex-none w-12 flex items-center justify-center' : 'flex-1';
+  let classes = `${baseClasses} ${btnClass} ${flexClass}`;
 
   // Special handling for Ask and Ready buttons
   let isDisabled = false;
@@ -580,14 +604,14 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
       if (item.booking_from === 'WEB' && !isEnableReadyAskBtn_for_reservation) {
         isDisabled = true;
         const disabledBtnClass = isMobile ? 'mobile-btn-disabled' : 'btn-disabled';
-        classes = `${baseClasses} ${disabledBtnClass} flex-1`;
+        classes = `${baseClasses} ${disabledBtnClass} ${flexClass}`;
       } else {
         const filteredQuestions = getFilteredQuestions(item.pax, booking_number);
         if (filteredQuestions.length === 0) {
           // No questions available - make button grey and disabled
           isDisabled = true;
           const disabledBtnClass = isMobile ? 'mobile-btn-disabled' : 'btn-disabled';
-          classes = `${baseClasses} ${disabledBtnClass} flex-1`;
+          classes = `${baseClasses} ${disabledBtnClass} ${flexClass}`;
         }
       }
     }
@@ -597,7 +621,7 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
       if ((item.booking_from === 'WEB' && !isEnableReadyAskBtn_for_reservation) || item.q_level >= 300) {
         isDisabled = true;
         const disabledBtnClass = isMobile ? 'mobile-btn-disabled' : 'btn-disabled';
-        classes = `${baseClasses} ${disabledBtnClass} flex-1`;
+        classes = `${baseClasses} ${disabledBtnClass} ${flexClass}`;
       }
     }
   }
@@ -631,7 +655,13 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
   const finalOnclickHandler = isDisabled ? '' : `onclick="${onclickHandler}"`;
   const disabledAttr = isDisabled ? 'disabled' : '';
 
-  return `<button ${finalOnclickHandler} ${disabledAttr} class="${classes}">${buttonDef.label}</button>`;
+  // Special handling for Call button - show phone icon instead of text
+  let buttonContent = buttonDef.label;
+  if (buttonDef.functionName === 'handleCall') {
+    buttonContent = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>`;
+  }
+
+  return `<button ${finalOnclickHandler} ${disabledAttr} class="${classes}">${buttonContent}</button>`;
 }
 
 /**
@@ -881,7 +911,7 @@ function addMobileActionRow(booking_number) {
     const questionButtonsHTML = generateQuestionButtonsHTML(filteredQuestions, item.booking_number, item.customer_name, true);
     buttonHTMLs = [questionButtonsHTML];
   } else {
-    const buttons = getButtonsForStatus(item.status);
+    const buttons = getButtonsForStatus(item.status, true);
     buttonHTMLs = buttons.map(btnDef => generateButtonHTML(btnDef, item.booking_number, item.customer_name, true));
   }
 
@@ -1306,7 +1336,7 @@ function handleAsk(booking_number, customer_name, event) {
           buttonHTMLs = [questionButtonsHTML];
         } else {
           // Show normal buttons
-          const buttons = getButtonsForStatus(item.status);
+          const buttons = getButtonsForStatus(item.status, true);
           buttonHTMLs = buttons.map(btnDef => generateButtonHTML(btnDef, item.booking_number, item.customer_name, true));
         }
 
@@ -1469,6 +1499,34 @@ function handleExitAsk(booking_number) {
   // Reset question page when exiting Ask mode
   delete questionPageIndex[booking_number];
   renderWaitlist();
+}
+
+/**
+ * Handles Call button - initiates phone call to customer
+ */
+function handleCall(booking_number, customer_name) {
+  console.log(`ACTION: Calling customer ${customer_name} (#${booking_number})`);
+  
+  const item = waitlist.find(item => item.booking_number === booking_number);
+  
+  if (!item) {
+    console.error(`Customer #${booking_number} not found in waitlist`);
+    toastMsg('Customer not found', 2000);
+    return;
+  }
+  
+  if (!item.customer_phone) {
+    console.warn(`No phone number available for customer ${customer_name} (#${booking_number})`);
+    toastMsg('No phone number available', 2000);
+    return;
+  }
+  
+  // Create tel: URI and initiate call
+  const telUri = `tel:+${item.customer_phone}`;
+  console.log(`Initiating call to +${item.customer_phone}`);
+  
+  // Open phone dialer
+  window.location.href = telUri;
 }
 
 /**
@@ -2293,7 +2351,7 @@ function renderWaitlist() {
     }
 
     // Action Buttons - Generate using button definitions
-    const buttons = getButtonsForStatus(item.status);
+    const buttons = getButtonsForStatus(item.status, false);
     let buttonHTMLs;
 
     // Check if this item is in Ask mode
