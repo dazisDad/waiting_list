@@ -1434,28 +1434,52 @@ async function handleArrive(booking_number, customer_name) {
   renderWaitlist();
 
   // IMPORTANT FIX: Scroll must happen AFTER the DOM is updated by renderWaitlist.
+  console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+  console.log(`ARRIVE_DEBUG: shouldScroll = ${shouldScroll}`);
+  console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+  
   if (shouldScroll) {
     requestAnimationFrame(() => {
+      // Count total completed items
+      const completedItemsCount = waitlist.filter(item => getSortPriority(item.status) === 0).length;
+      console.log(`ARRIVE_DEBUG: Total completed items after action: ${completedItemsCount}`);
+      
       // Find the position of the just completed item in the DOM
       const rows = waitlistBody.getElementsByTagName('tr');
+      console.log(`ARRIVE_DEBUG: Total rows in DOM: ${rows.length}`);
+      
       let targetScrollTop = 0;
       let itemFound = false;
+      let rowIndex = 0;
 
       // Look for the row that contains the just completed item
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
-        const idCell = row.querySelector('td:first-child');
+        const idCell = row.querySelector('td:first-child div:first-child');
+        const rowId = idCell ? idCell.textContent.trim() : 'N/A';
+        
         if (idCell && idCell.textContent.trim() === booking_number.toString()) {
           // Found the just completed item - scroll to show it at the top
           itemFound = true;
+          rowIndex = i;
+          console.log(`ARRIVE_DEBUG: Found item #${booking_number} at row index ${i}`);
+          console.log(`ARRIVE_DEBUG: Target scroll position: ${targetScrollTop.toFixed(2)}px`);
           break;
         }
+        console.log(`ARRIVE_DEBUG: Row ${i}: ID=${rowId}, height=${row.offsetHeight.toFixed(2)}px, cumulative=${targetScrollTop.toFixed(2)}px`);
         targetScrollTop += row.offsetHeight;
       }
 
       if (itemFound) {
+        // Always scroll to show the just-completed item at the top
+        console.log(`\n━━━ ARRIVE SCROLL ACTION ━━━`);
+        console.log(`Item #${booking_number} found at row ${rowIndex}`);
+        console.log(`Total completed items: ${completedItemsCount}`);
+        console.log(`Current scrollTop: ${waitlistContainer.scrollTop.toFixed(2)}px`);
+        console.log(`Target scrollTop: ${targetScrollTop.toFixed(2)}px`);
+        console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
+        
         waitlistContainer.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
-        console.log(`SCROLL_ACTION_RAF: Arrive scroll to show item #${booking_number} at ${targetScrollTop.toFixed(2)}px`);
         initialScrollTop = targetScrollTop;
 
         // Add highlight effect to the completed item
@@ -1550,28 +1574,52 @@ async function handleCancel(booking_number, customer_name) {
   renderWaitlist();
 
   // IMPORTANT FIX: Scroll must happen AFTER the DOM is updated by renderWaitlist.
+  console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+  console.log(`CANCEL_DEBUG: shouldScroll = ${shouldScroll}`);
+  console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+  
   if (shouldScroll) {
     requestAnimationFrame(() => {
+      // Count total completed items
+      const completedItemsCount = waitlist.filter(item => getSortPriority(item.status) === 0).length;
+      console.log(`CANCEL_DEBUG: Total completed items after action: ${completedItemsCount}`);
+      
       // Find the position of the just completed item in the DOM
       const rows = waitlistBody.getElementsByTagName('tr');
+      console.log(`CANCEL_DEBUG: Total rows in DOM: ${rows.length}`);
+      
       let targetScrollTop = 0;
       let itemFound = false;
+      let rowIndex = 0;
 
       // Look for the row that contains the just completed item
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
-        const idCell = row.querySelector('td:first-child');
+        const idCell = row.querySelector('td:first-child div:first-child');
+        const rowId = idCell ? idCell.textContent.trim() : 'N/A';
+        
         if (idCell && idCell.textContent.trim() === booking_number.toString()) {
           // Found the just completed item - scroll to show it at the top
           itemFound = true;
+          rowIndex = i;
+          console.log(`CANCEL_DEBUG: Found item #${booking_number} at row index ${i}`);
+          console.log(`CANCEL_DEBUG: Target scroll position: ${targetScrollTop.toFixed(2)}px`);
           break;
         }
+        console.log(`CANCEL_DEBUG: Row ${i}: ID=${rowId}, height=${row.offsetHeight.toFixed(2)}px, cumulative=${targetScrollTop.toFixed(2)}px`);
         targetScrollTop += row.offsetHeight;
       }
 
       if (itemFound) {
+        // Always scroll to show the just-completed item at the top
+        console.log(`\n━━━ CANCEL SCROLL ACTION ━━━`);
+        console.log(`Item #${booking_number} found at row ${rowIndex}`);
+        console.log(`Total completed items: ${completedItemsCount}`);
+        console.log(`Current scrollTop: ${waitlistContainer.scrollTop.toFixed(2)}px`);
+        console.log(`Target scrollTop: ${targetScrollTop.toFixed(2)}px`);
+        console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
+        
         waitlistContainer.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
-        console.log(`SCROLL_ACTION_RAF: Cancel scroll to show item #${booking_number} at ${targetScrollTop.toFixed(2)}px`);
         initialScrollTop = targetScrollTop;
 
         // Add highlight effect to the completed item
