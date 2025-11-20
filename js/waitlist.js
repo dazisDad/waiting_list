@@ -1,5 +1,13 @@
-const version = '0.630';
-toastMsg (`version ${version}`);
+const version = '0.631';
+
+// Display version in header
+document.addEventListener('DOMContentLoaded', () => {
+  const versionDisplay = document.getElementById('version-display');
+  if (versionDisplay) {
+    versionDisplay.textContent = `(Ver. ${version})`;
+  }
+});
+
 const store_id = 'DL_Sunway_Geo';
 
 let waitlist = [];
