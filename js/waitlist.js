@@ -2183,48 +2183,65 @@ function renderWaitlist() {
 
         console.log(`DUMMY_ROW: Added dummy spacer row with height ${dummyRowHeight.toFixed(2)}px`);
         
-        // DEBUG: Measure actual scroll capabilities after dummy row is added
+        // Store the actual scroll target for later adjustment verification
+        // We need to recalculate this after DOM is stable to get the real target
         requestAnimationFrame(() => {
+          // Calculate the actual scroll target (with offset applied)
+          const rows = waitlistBody.getElementsByTagName('tr');
+          let actualScrollTarget = 0;
+          let completedRowsFound = 0;
+          const targetCount = completedItemsCount;
+          
+          for (let i = 0; i < rows.length && completedRowsFound < targetCount; i++) {
+            const row = rows[i];
+            if (!row.classList.contains('mobile-action-row') && !row.classList.contains('dummy-spacer-row')) {
+              actualScrollTarget += row.offsetHeight;
+              completedRowsFound++;
+            } else if (completedRowsFound < targetCount) {
+              actualScrollTarget += row.offsetHeight;
+            }
+          }
+          
           const scrollHeight = waitlistContainer.scrollHeight;
           const clientHeight = waitlistContainer.clientHeight;
           const maxScrollTop = scrollHeight - clientHeight;
-          const shortfall = completedItemsHeight - maxScrollTop;
           
           console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
           console.log(`SCROLL_MEASURE: Container Analysis`);
           console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
           console.log(`Container clientHeight (visible area): ${clientHeight.toFixed(2)}px`);
-          console.log(`Container scrollHeight (total content): ${scrollHeight.toFixed(2)}px`);
+          console.log(`Container scrollHeight (actual DOM): ${scrollHeight.toFixed(2)}px`);
           console.log(`\nCalculated Heights:`);
           console.log(`  Completed items: ${completedItemsHeight.toFixed(2)}px`);
           console.log(`  Active items: ${activeItemsHeight.toFixed(2)}px`);
           console.log(`  Dummy row: ${dummyRowHeight.toFixed(2)}px`);
-          console.log(`  Sum: ${(completedItemsHeight + activeItemsHeight + dummyRowHeight).toFixed(2)}px`);
+          console.log(`  Sum (calculated): ${(completedItemsHeight + activeItemsHeight + dummyRowHeight).toFixed(2)}px`);
           console.log(`\nScroll Capability:`);
           console.log(`  Max scrollTop possible: ${maxScrollTop.toFixed(2)}px`);
-          console.log(`  Target scrollTop (completed height): ${completedItemsHeight.toFixed(2)}px`);
-          console.log(`  Difference: ${(maxScrollTop - completedItemsHeight).toFixed(2)}px`);
-          console.log(`\nGoal: Difference should be 0`);
-          console.log(`  (Max scrollTop should equal Completed items height)`);
+          console.log(`  Actual scroll target: ${actualScrollTarget.toFixed(2)}px`);
           
-          // If there's a shortfall, adjust dummy row height
-          if (Math.abs(shortfall) > 1) {
-            console.log(`\n⚠️  ADJUSTING: Dummy row needs ${shortfall.toFixed(2)}px adjustment`);
+          // Check if we need to adjust dummy height to reach the ACTUAL scroll target
+          const shortfall = actualScrollTarget - maxScrollTop;
+          if (shortfall > 1) {
+            console.log(`\n⚠️  ADJUSTING: Need ${shortfall.toFixed(2)}px more scroll range`);
             const adjustedDummyHeight = dummyRowHeight + shortfall;
             const dummyElement = waitlistBody.querySelector('.dummy-spacer-row td');
             if (dummyElement) {
               dummyElement.style.height = `${adjustedDummyHeight}px`;
-              console.log(`✓ Adjusted dummy row from ${dummyRowHeight.toFixed(2)}px to ${adjustedDummyHeight.toFixed(2)}px`);
+              console.log(`✓ Adjusted dummy row: ${dummyRowHeight.toFixed(2)}px → ${adjustedDummyHeight.toFixed(2)}px`);
               
-              // Verify adjustment
+              // Verify the adjustment
               requestAnimationFrame(() => {
                 const newScrollHeight = waitlistContainer.scrollHeight;
                 const newMaxScrollTop = newScrollHeight - clientHeight;
+                const newDifference = actualScrollTarget - newMaxScrollTop;
                 console.log(`✓ New scrollHeight: ${newScrollHeight.toFixed(2)}px`);
                 console.log(`✓ New maxScrollTop: ${newMaxScrollTop.toFixed(2)}px`);
-                console.log(`✓ Final difference: ${(newMaxScrollTop - completedItemsHeight).toFixed(2)}px`);
+                console.log(`✓ Remaining difference: ${newDifference.toFixed(2)}px`);
               });
             }
+          } else {
+            console.log(`✓ No adjustment needed (difference: ${shortfall.toFixed(2)}px)`);
           }
           
           console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
@@ -2346,7 +2363,11 @@ document.querySelectorAll('.mobile-action-row').forEach(row => {
 
 // 1. Add scroll event listener
 // 사용자가 스크롤을 시작하면 버튼 상태가 동적으로 업데이트됩니다.
-waitlistContainer.addEventListener('scroll', updateScrollAndButtonState);
+waitlistContainer.addEventListener('scroll', () => {
+  const currentScrollTop = waitlistContainer.scrollTop;
+  console.log(`SCROLL_EVENT: User scrolled to position: ${currentScrollTop.toFixed(2)}px`);
+  updateScrollAndButtonState();
+});
 
 // 2. Initialize data loading and setup after completion
 async function startInitialization() {
