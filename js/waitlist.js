@@ -1,4 +1,4 @@
-const version = '0.640';
+const version = '0.643';
 
 // Display version in header
 document.addEventListener('DOMContentLoaded', () => {
@@ -28,13 +28,16 @@ function handleNewEvent(obj) {
       return;
     }
 
+    // Find booking_number from waitlist using subscriber_id
+    // 서버 업데이트 전 waitlist와 비교함
+     const bookingItem = waitlist.find(item => item.subscriber_id === lastItem.subscriber_id);
+
     // Delay notification and UI update by 300ms
     setTimeout(async () => {
+      
       // Refresh data from server first to get latest state
       await getServerSideUpdate();
-
-      // Find booking_number from waitlist using subscriber_id
-      const bookingItem = waitlist.find(item => item.subscriber_id === lastItem.subscriber_id);
+      
       let title, body;
       
       // Show notification for both new and updated items
@@ -43,9 +46,30 @@ function handleNewEvent(obj) {
         body = `Updated Booking #: ${bookingItem.booking_number}`;
         showNotification(title, body);
       } else {
-        title = '[NEW] Waitlist';
-        body = `New Customer: ${lastItem.customer_name}`;
-        showNotification(title, body);
+        // New booking detected - find it in updated waitlist and show NEW badge via DOM
+        const newBookingItem = waitlist.find(item => item.subscriber_id === lastItem.subscriber_id);
+        if (newBookingItem && newBookingItem.subscriber_id) {
+          console.log(`NEW_BOOKING: Detected new booking subscriber_id: ${newBookingItem.subscriber_id}`);
+          
+          // Use double requestAnimationFrame to ensure DOM is fully ready after renderWaitlist
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              const badgeSpan = document.getElementById(`new-badge-${newBookingItem.subscriber_id}`);
+              console.log(`NEW_BADGE: Looking for badge with ID: new-badge-${newBookingItem.subscriber_id}`, badgeSpan);
+              if (badgeSpan) {
+                badgeSpan.textContent = 'NEW';
+                badgeSpan.style.display = 'inline';
+                console.log(`NEW_BADGE: Displayed badge for subscriber_id ${newBookingItem.subscriber_id}`);
+              } else {
+                console.warn(`NEW_BADGE: Badge span not found for subscriber_id ${newBookingItem.subscriber_id}`);
+              }
+            });
+          });
+          
+          title = '[NEW] Waitlist';
+          body = `New Booking #: ${newBookingItem.booking_number}`;
+          showNotification(title, body);
+        }
       }
 
     }, 300);
@@ -2226,6 +2250,13 @@ function handleScrollToActive(isAutoTrigger = false) {
 function renderWaitlist() {
   console.log("RENDER: Starting table render.");
 
+  // Reset all NEW badges (they will be re-shown by handleNewEvent if still new)
+  document.querySelectorAll('[id^="new-badge-"]').forEach(badge => {
+    badge.textContent = '';
+    badge.style.display = 'none';
+  });
+  console.log("RENDER: Reset all NEW badges");
+
   // Clean up mobile state on desktop
   if (window.innerWidth > 768) {
     document.querySelectorAll('.row-selected').forEach(row => {
@@ -2474,6 +2505,11 @@ function renderWaitlist() {
     // Don't add selected class during initial render - will be added by DOM manipulation
     const selectedClass = '';
 
+    // Always create empty NEW badge span (will be populated by handleNewEvent if new booking)
+    const newBadgeId = `new-badge-${item.subscriber_id}`;
+    const newBadgeHTML = `<span id="${newBadgeId}" class="bg-red-500 text-white px-1 py-0.5 rounded font-bold mr-1" style="font-size: 10px; display: none;"></span>`;
+    const newBadge = `<span class="ml-2">${newBadgeHTML}</span>`;
+
     tableHTML += `
                     <tr class="${rowClass} ${rowClickableClass} ${selectedClass}" data-item-id="${item.booking_number}" ${onclickAttr}>
                         <td class="px-2 py-2 whitespace-nowrap text-sm font-medium ${idClass} text-center">
@@ -2485,6 +2521,7 @@ function renderWaitlist() {
                         <td class="px-2 py-2 text-sm">
                             <div class="flex items-baseline">
                                 <span class="font-semibold ${nameClass} ${nameMarginClass}">${item.customer_name}</span>
+                                ${newBadge}
                                 ${highlightHTML}
                             </div>
                             ${chatHistoryHTML}
