@@ -1,4 +1,4 @@
-const version = '0.638';
+const version = '0.640';
 
 // Display version in header
 document.addEventListener('DOMContentLoaded', () => {
@@ -7,6 +7,52 @@ document.addEventListener('DOMContentLoaded', () => {
     versionDisplay.textContent = `(Ver. ${version})`;
   }
 });
+
+let updateCounter = 0;
+// polling_json.js 파일의 pollOnce() 함수에서 호출함
+function handleNewEvent(obj) {
+  if (updateCounter > 0) {
+    console.log('handleNewEvent: received', obj);
+
+    // Check if obj is an array and get the last element
+    let lastItem = null;
+    if (Array.isArray(obj) && obj.length > 0) {
+      lastItem = obj[obj.length - 1];
+    } else if (obj && !Array.isArray(obj)) {
+      lastItem = obj;
+    }
+
+    if (!lastItem || !lastItem.subscriber_id) {
+      // No valid data, exit without notification
+      console.log('handleNewEvent: No valid data or subscriber_id');
+      return;
+    }
+
+    // Delay notification and UI update by 300ms
+    setTimeout(async () => {
+      // Refresh data from server first to get latest state
+      await getServerSideUpdate();
+
+      // Find booking_number from waitlist using subscriber_id
+      const bookingItem = waitlist.find(item => item.subscriber_id === lastItem.subscriber_id);
+      let title, body;
+      
+      // Show notification for both new and updated items
+      if (bookingItem && bookingItem.booking_number) {
+        title = '[UPDATED] Waitlist';
+        body = `Updated Booking #: ${bookingItem.booking_number}`;
+        showNotification(title, body);
+      } else {
+        title = '[NEW] Waitlist';
+        body = `New Customer: ${lastItem.customer_name}`;
+        showNotification(title, body);
+      }
+
+    }, 300);
+  }
+  updateCounter++;
+  console.log(`Update count: ${updateCounter}`);
+}
 
 const store_id = 'DL_Sunway_Geo';
 
@@ -27,7 +73,7 @@ const color_codes = {
       container_background: '#1e293b',   // main container (slate-800) 
       row_active_background: '#0f172a',  // active row background (slate-950)
       row_completed_background: '#1e293b', // completed row background (slate-800)
-      
+
       // Text colors
       text_primary: '#e2e8f0',          // primary text (slate-200)
       text_secondary: '#cbd5e1',        // secondary text (slate-300)
@@ -39,13 +85,13 @@ const color_codes = {
       text_chat_default: '#94a3b8',    // default chat text (slate-400)
       text_chat_q200: '#60a5fa',       // q_level >= 200 chat (blue-400)
       text_chat_q300: '#34d399',       // q_level >= 300 chat (emerald-400)
-      
+
       // Status colors
       status_waiting: '#fbbf24',        // Waiting status (amber-400)
       status_ready: '#34d399',          // Ready status (emerald-400) 
       status_arrived: '#8b5cf6',        // Arrived status (purple-500)
       status_cancelled: '#f87171',      // Cancelled status (red-400)
-      
+
       // Button colors
       btn_ready: '#34d399',             // Ready button (emerald-400)
       btn_ask: '#60a5fa',               // Ask button (blue-400)
@@ -54,7 +100,7 @@ const color_codes = {
       btn_undo: '#fbbf24',              // Undo button (amber-400)
       btn_next: '#fbbf24',              // Next button (amber-400)
       btn_disabled: '#64748b',          // Disabled button (slate-500)
-      
+
       // Highlight colors
       highlight_border: '#fbbf24',      // Row highlight border (amber-400)
       highlight_pax_big_bg: '#fef3c7',  // Large pax background (yellow-100)
@@ -64,23 +110,23 @@ const color_codes = {
       highlight_tags_active_text: '#fbbf24',  // Active highlight tags text (amber-400)
       highlight_tags_completed_border: '#f1f5f9', // Completed highlight tags border (slate-100)
       highlight_tags_completed_text: '#f1f5f9',   // Completed highlight tags text (slate-100)
-      
+
       // Scroll button colors
       scroll_btn_active_bg: '#fbbf24',   // Active scroll button background (amber-400)
       scroll_btn_active_text: '#1f2937', // Active scroll button text (slate-900)
       scroll_btn_disabled_bg: '#374151', // Disabled scroll button background (slate-700)
       scroll_btn_disabled_text: '#64748b', // Disabled scroll button text (slate-500)
-      
+
       // Chat status colors
       chat_arrived: '#a855f7',          // Chat arrived status (purple-500)
       chat_cancelled: '#f87171',        // Chat cancelled status (red-400)
-      
+
       // Background highlights
       reservation_active_bg: '#374151',  // Active reservation background (slate-700)
       reservation_active_text: '#cbd5e1', // Active reservation text (slate-300)
       reservation_completed_bg: '#475569', // Completed reservation background (slate-600)
       reservation_completed_text: '#e2e8f0', // Completed reservation text (slate-200)
-      
+
       // Toast message
       toast_background: '#343A40',        // Toast message background
 
@@ -334,18 +380,20 @@ function generateQuestionButtonsHTML(filteredQuestions, booking_number, customer
   const btnClass = isMobile ? 'mobile-btn-ask' : 'btn-ask';
 
   // Generate question buttons
-  const questionButtons = pageQuestions.map(q => {
+  const questionButtons = pageQuestions.map((q, index) => {
     // Mobile: flex-1 (auto width), Desktop: flex-1 (equal distribution)
     const flexClass = 'flex-1';
     const classes = `${baseClasses} ${btnClass} ${flexClass}`;
     // Find booking_list_id from waitlist using booking_number
     const customer = waitlist.find(item => item.booking_number === booking_number);
     const bookingListId = customer ? customer.booking_list_id : null;
-    const fnCall = `handleQuestion(${bookingListId}, '${q.question.replace(/'/g, "\\'")}', ${q.q_level})`;
+    // Generate unique button ID based on question ID from database
+    const buttonId = `question-btn-${booking_number}-${q.Id || index}`;
+    const fnCall = `handleQuestion(${bookingListId}, '${q.question.replace(/'/g, "\\'")}', ${q.q_level}, '${buttonId}')`;
     const onclickHandler = isMobile
       ? `${fnCall}`
       : `${fnCall}; setTimeout(() => this.blur(), 100);`;
-    return `<button onclick="${onclickHandler}" class="${classes}">${q.question}</button>`;
+    return `<button id="${buttonId}" onclick="${onclickHandler}" class="${classes}">${q.question}</button>`;
   });
 
   // Desktop: Add dummy button if current page has only 2 questions (regardless of total question count)
@@ -429,23 +477,23 @@ logBuffer.push(`[DEVICE] User Agent: ${navigator.userAgent}`);
 logBuffer.push(`[VIEWPORT] Window size: ${window.innerWidth}x${window.innerHeight}px`);
 originalConsoleLog(`VERSION: ${version}`);
 
-console.log = function(...args) {
+console.log = function (...args) {
   logBuffer.push(`[LOG] ${args.join(' ')}`);
   originalConsoleLog.apply(console, args);
 };
 
-console.warn = function(...args) {
+console.warn = function (...args) {
   logBuffer.push(`[WARN] ${args.join(' ')}`);
   originalConsoleWarn.apply(console, args);
 };
 
-console.error = function(...args) {
+console.error = function (...args) {
   logBuffer.push(`[ERROR] ${args.join(' ')}`);
   originalConsoleError.apply(console, args);
 };
 
 // Function to copy all logs to clipboard
-window.copyLogsToClipboard = function() {
+window.copyLogsToClipboard = function () {
   const allLogs = logBuffer.join('\n');
   navigator.clipboard.writeText(allLogs).then(() => {
     originalConsoleLog('✓ All logs copied to clipboard! (' + logBuffer.length + ' entries)');
@@ -465,7 +513,7 @@ document.addEventListener('DOMContentLoaded', () => {
     header.addEventListener('click', () => {
       tapCount++;
       clearTimeout(tapTimer);
-      
+
       if (tapCount === 3) {
         copyLogsToClipboard();
         tapCount = 0;
@@ -575,10 +623,10 @@ function getButtonsForStatus(status, isMobile) {
   return actionButtonDefinitions.filter(btn => {
     // Check if button should be shown for this status
     if (!btn.showForStatus.includes(status)) return false;
-    
+
     // If isMobileOnly is true, only show on mobile
     if (btn.isMobileOnly === true && !isMobile) return false;
-    
+
     return true;
   });
 }
@@ -589,7 +637,7 @@ function getButtonsForStatus(status, isMobile) {
 function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) {
   const baseClasses = 'action-button px-3 py-1.5 rounded-md border font-medium text-sm';
   const btnClass = isMobile ? buttonDef.mobileBtnClass : buttonDef.desktopBtnClass;
-  
+
   // Call button gets fixed small width with centered content, other buttons get equal flex distribution
   const flexClass = buttonDef.functionName === 'handleCall' ? 'flex-none w-12 flex items-center justify-center' : 'flex-1';
   let classes = `${baseClasses} ${btnClass} ${flexClass}`;
@@ -694,17 +742,17 @@ function toggleMobileActions(booking_number, event) {
       selectedRowId = null;
       toggleRowSelection(booking_number, false);
       toggleChatHistoryDisplay(booking_number, false); // Show only last message
-      
+
       // Stop auto-hide countdown if active
       stopUndoAutoHideCountdown(booking_number);
-      
+
       console.log(`DESKTOP: Deselected row #${booking_number}`);
     } else {
       // Deselect previous row if any
       if (selectedRowId !== null) {
         toggleRowSelection(selectedRowId, false);
         toggleChatHistoryDisplay(selectedRowId, false);
-        
+
         // Stop auto-hide countdown for previous row if active
         stopUndoAutoHideCountdown(selectedRowId);
       }
@@ -1365,8 +1413,8 @@ function handleAsk(booking_number, customer_name, event) {
 /**
  * Handles question button click - logs the question and inserts into database
  */
-async function handleQuestion(booking_list_id, question, q_level = null) {
-  console.log(`QUESTION: booking_list_id: ${booking_list_id}, question: ${question}, q_level: ${q_level}`);
+async function handleQuestion(booking_list_id, question, q_level = null, buttonId = null) {
+  console.log(`QUESTION: booking_list_id: ${booking_list_id}, question: ${question}, q_level: ${q_level}, buttonId: ${buttonId}`);
 
   try {
     // Format current time for database insertion
@@ -1506,25 +1554,25 @@ function handleExitAsk(booking_number) {
  */
 function handleCall(booking_number, customer_name) {
   console.log(`ACTION: Calling customer ${customer_name} (#${booking_number})`);
-  
+
   const item = waitlist.find(item => item.booking_number === booking_number);
-  
+
   if (!item) {
     console.error(`Customer #${booking_number} not found in waitlist`);
     toastMsg('Customer not found', 2000);
     return;
   }
-  
+
   if (!item.customer_phone) {
     console.warn(`No phone number available for customer ${customer_name} (#${booking_number})`);
     toastMsg('No phone number available', 2000);
     return;
   }
-  
+
   // Create tel: URI and initiate call
   const telUri = `tel:+${item.customer_phone}`;
   console.log(`Initiating call to +${item.customer_phone}`);
-  
+
   // Open phone dialer
   window.location.href = telUri;
 }
@@ -1605,7 +1653,7 @@ async function handleArrive(booking_number, customer_name) {
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         const idCell = row.querySelector('td:first-child div:first-child');
-        
+
         if (idCell && idCell.textContent.trim() === booking_number.toString()) {
           // Found the just completed item - scroll to show it at the top
           itemFound = true;
@@ -1725,7 +1773,7 @@ async function handleCancel(booking_number, customer_name) {
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         const idCell = row.querySelector('td:first-child div:first-child');
-        
+
         if (idCell && idCell.textContent.trim() === booking_number.toString()) {
           // Found the just completed item - scroll to show it at the top
           itemFound = true;
@@ -1794,7 +1842,7 @@ function startUndoAutoHideCountdown(booking_number) {
   undoAutoHideTimers[booking_number] = setTimeout(() => {
     console.log(`AUTO_HIDE: Auto-hiding completed item #${booking_number} after 10 seconds`);
     stopUndoAutoHideCountdown(booking_number);
-    
+
     // Click the scroll to active button with auto-trigger flag
     if (scrollButton && !scrollButton.disabled) {
       handleScrollToActive(true); // Pass true to indicate auto-trigger
@@ -1812,12 +1860,12 @@ function stopUndoAutoHideCountdown(booking_number) {
     clearTimeout(undoAutoHideTimers[booking_number]);
     delete undoAutoHideTimers[booking_number];
   }
-  
+
   if (undoCountdownIntervals[booking_number]) {
     clearInterval(undoCountdownIntervals[booking_number]);
     delete undoCountdownIntervals[booking_number];
   }
-  
+
   // Reset button text to "Undo"
   const undoButtons = document.querySelectorAll(`button.btn-undo[onclick*="${booking_number}"], button.mobile-btn-undo[onclick*="${booking_number}"]`);
   undoButtons.forEach(button => {
@@ -1831,7 +1879,7 @@ function stopUndoAutoHideCountdown(booking_number) {
 function updateUndoButtonText(booking_number, secondsRemaining) {
   // Update all undo buttons for this booking_number
   const undoButtons = document.querySelectorAll(`button.btn-undo[onclick*="${booking_number}"], button.mobile-btn-undo[onclick*="${booking_number}"]`);
-  
+
   undoButtons.forEach(button => {
     button.textContent = `Undo (Auto Hide in ${secondsRemaining}s)`;
   });
@@ -1843,10 +1891,10 @@ function updateUndoButtonText(booking_number, secondsRemaining) {
  */
 async function handleUndo(booking_number, customer_name) {
   console.log(`ACTION: Undo for customer ${customer_name} (#${booking_number}).`);
-  
+
   // Stop auto-hide countdown for this item
   stopUndoAutoHideCountdown(booking_number);
-  
+
   const item = waitlist.find(item => item.booking_number === booking_number);
 
   if (item && (item.status === 'Arrived' || item.status === 'Cancelled')) {
@@ -1952,21 +2000,21 @@ function updateScrollAndButtonState() {
   const completedItemsCount = waitlist.filter(item => getSortPriority(item.status) === 0).length;
   const hasCompletedItems = completedItemsCount > 0;
   const totalRows = waitlist.length;
-  
+
   // Check if table has been rendered (has data rows, not just empty state)
   // Before renderWaitlist() runs, there will be no data rows in the table
-  const hasDataRows = Array.from(rows).some(row => 
-    !row.classList.contains('mobile-action-row') && 
+  const hasDataRows = Array.from(rows).some(row =>
+    !row.classList.contains('mobile-action-row') &&
     !row.classList.contains('dummy-spacer-row') &&
     row.querySelector('td')
   );
-  
+
   // Skip button state update if table hasn't been rendered yet
   if (!hasDataRows) {
     console.log("STATE_CHECK: Waiting for table render. Skipping button state update.");
     return 0;
   }
-  
+
   // With dummy row, scrolling is always enabled when there are completed items
   const shouldEnableScrolling = hasCompletedItems;
 
@@ -2071,7 +2119,7 @@ function handleScrollToActive(isAutoTrigger = false) {
     console.log("ACTION: Scroll button auto-triggered after countdown.");
   } else {
     console.log("ACTION: Scroll button clicked by user.");
-    
+
     // Only stop countdowns if user manually clicked (not auto-triggered)
     waitlist.forEach(item => {
       if (item.status === 'Arrived' || item.status === 'Cancelled') {
@@ -2080,7 +2128,7 @@ function handleScrollToActive(isAutoTrigger = false) {
     });
     console.log("AUTO_HIDE: Stopped all countdown timers");
   }
-  
+
   // Close any selected row (desktop) before scrolling
   if (selectedRowId !== null) {
     console.log(`SCROLL_ACTION: Deselecting desktop row #${selectedRowId} before scroll`);
@@ -2088,26 +2136,26 @@ function handleScrollToActive(isAutoTrigger = false) {
     toggleChatHistoryDisplay(selectedRowId, false);
     selectedRowId = null;
   }
-  
+
   // Close any expanded row (mobile) before scrolling
   if (expandedRowId !== null) {
     console.log(`SCROLL_ACTION: Closing expanded row #${expandedRowId} before scroll`);
     removeMobileActionRow(expandedRowId);
     toggleRowSelection(expandedRowId, false);
     toggleChatHistoryDisplay(expandedRowId, false);
-    
+
     // Exit ask mode if active
     if (askModeItems.has(expandedRowId)) {
       askModeItems.delete(expandedRowId);
       console.log(`ASK_MODE: Auto-exited for #${expandedRowId} before scroll`);
     }
-    
+
     expandedRowId = null;
-    
+
     // DOM height changed, recalculate dummy row synchronously
     const rows = waitlistBody.getElementsByTagName('tr');
     const completedItemsCount = waitlist.filter(item => getSortPriority(item.status) === 0).length;
-    
+
     if (completedItemsCount > 0) {
       // Calculate completed items height first
       let completedItemsHeight = 0;
@@ -2121,7 +2169,7 @@ function handleScrollToActive(isAutoTrigger = false) {
           completedItemsHeight += row.offsetHeight;
         }
       }
-      
+
       // Calculate total content height
       let totalContentHeight = 0;
       for (let i = 0; i < rows.length; i++) {
@@ -2130,9 +2178,9 @@ function handleScrollToActive(isAutoTrigger = false) {
           totalContentHeight += row.offsetHeight;
         }
       }
-      
+
       const activeItemsHeight = totalContentHeight - completedItemsHeight;
-      
+
       // Determine correct container height
       let containerHeight = waitlistContainer.offsetHeight;
       if (activeItemsHeight > containerHeight * 0.95) {
@@ -2143,10 +2191,10 @@ function handleScrollToActive(isAutoTrigger = false) {
         containerHeight = window.innerHeight - bodyPadding - headerHeight - buttonHeight - margins;
         console.log(`MOBILE_DEBUG: handleScrollToActive - Active (${activeItemsHeight}px) doesn't fit, using viewport: ${containerHeight}px`);
       }
-      
+
       const remainingSpace = containerHeight - activeItemsHeight;
       const dummyRowHeight = Math.max(0, remainingSpace);
-      
+
       // Update dummy row height
       const dummyElement = waitlistBody.querySelector('.dummy-spacer-row td');
       if (dummyElement) {
@@ -2154,13 +2202,13 @@ function handleScrollToActive(isAutoTrigger = false) {
       }
     }
   }
-  
+
   // 이제 scrollTarget은 initialScrollTop이 아니라, DOM을 기준으로 재계산된 정확한 값입니다.
   const totalHeightToScroll = updateScrollAndButtonState();
 
   // 버튼이 활성화된 상태일 때만 스크롤을 수행합니다.
   if (!scrollButton.disabled) {
-    
+
     // 'auto'를 사용하여 즉시 이동하고, 스크롤 이벤트 발생을 최소화합니다.
     waitlistContainer.scrollTo({ top: totalHeightToScroll, behavior: 'smooth' });
 
@@ -2408,8 +2456,8 @@ function renderWaitlist() {
 
     // Generate highlight tags for highlight1, highlight2, highlight3 (same as Pax styling - all same color, only completed/active difference)
     const highlights = [];
-    const highlightClass = statusPriority === 0 ? 
-      'bg-white text-slate-800 px-1 py-0.5 rounded font-bold mr-1' : 
+    const highlightClass = statusPriority === 0 ?
+      'bg-white text-slate-800 px-1 py-0.5 rounded font-bold mr-1' :
       'bg-yellow-400 text-slate-800 px-1 py-0.5 rounded font-bold mr-1';
 
     if (item.highlight1 && item.highlight1.trim()) {
@@ -2463,7 +2511,7 @@ function renderWaitlist() {
 
     if (hasCompletedItems) {
       const rows = waitlistBody.getElementsByTagName('tr');
-      
+
       // First, calculate active items height to check if we need viewport-based calculation
       let totalContentHeight = 0;
       for (let i = 0; i < rows.length; i++) {
@@ -2472,7 +2520,7 @@ function renderWaitlist() {
           totalContentHeight += row.offsetHeight;
         }
       }
-      
+
       // Calculate completed items height
       let completedItemsHeight = 0;
       let completedRowsFound = 0;
@@ -2485,10 +2533,10 @@ function renderWaitlist() {
           completedItemsHeight += row.offsetHeight;
         }
       }
-      
+
       const activeItemsHeight = totalContentHeight - completedItemsHeight;
       let containerHeight = waitlistContainer.offsetHeight;
-      
+
       // If active items don't fit in container, use viewport-based calculation
       // This is the key fix: we need enough space for active items + scroll capability
       if (activeItemsHeight > containerHeight * 0.95) {
@@ -2500,9 +2548,9 @@ function renderWaitlist() {
         containerHeight = window.innerHeight - bodyPadding - headerHeight - buttonHeight - margins;
         console.log(`MOBILE_DEBUG: Active items (${activeItemsHeight}px) don't fit in container, using viewport calculation: ${containerHeight}px`);
       }
-      
+
       console.log(`MOBILE_DEBUG: renderWaitlist - Container offsetHeight: ${waitlistContainer.offsetHeight}px, Used height: ${containerHeight}px, Active: ${activeItemsHeight}px, window.innerHeight: ${window.innerHeight}px`);
-      
+
       // Calculate remaining space in container after active items
       const remainingSpace = containerHeight - activeItemsHeight;
 
@@ -2533,7 +2581,7 @@ function renderWaitlist() {
         waitlistBody.appendChild(dummyRow);
 
         console.log(`DUMMY_ROW: Added dummy spacer row with height ${dummyRowHeight.toFixed(2)}px`);
-        
+
         // Store the actual scroll target for later adjustment verification
         // We need to recalculate this after DOM is stable to get the real target
         requestAnimationFrame(() => {
@@ -2542,7 +2590,7 @@ function renderWaitlist() {
           let actualScrollTarget = 0;
           let completedRowsFound = 0;
           const targetCount = completedItemsCount;
-          
+
           for (let i = 0; i < rows.length && completedRowsFound < targetCount; i++) {
             const row = rows[i];
             if (!row.classList.contains('mobile-action-row') && !row.classList.contains('dummy-spacer-row')) {
@@ -2552,11 +2600,11 @@ function renderWaitlist() {
               actualScrollTarget += row.offsetHeight;
             }
           }
-          
+
           const scrollHeight = waitlistContainer.scrollHeight;
           const clientHeight = waitlistContainer.clientHeight;
           const maxScrollTop = scrollHeight - clientHeight;
-          
+
           console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
           console.log(`SCROLL_MEASURE: Container Analysis`);
           console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
@@ -2570,7 +2618,7 @@ function renderWaitlist() {
           console.log(`\nScroll Capability:`);
           console.log(`  Max scrollTop possible: ${maxScrollTop.toFixed(2)}px`);
           console.log(`  Actual scroll target: ${actualScrollTarget.toFixed(2)}px`);
-          
+
           // Check if we need to adjust dummy height to reach the ACTUAL scroll target
           const shortfall = actualScrollTarget - maxScrollTop;
           if (shortfall > 1) {
@@ -2580,7 +2628,7 @@ function renderWaitlist() {
             if (dummyElement) {
               dummyElement.style.height = `${adjustedDummyHeight}px`;
               console.log(`✓ Adjusted dummy row: ${dummyRowHeight.toFixed(2)}px → ${adjustedDummyHeight.toFixed(2)}px`);
-              
+
               // Verify the adjustment
               requestAnimationFrame(() => {
                 const newScrollHeight = waitlistContainer.scrollHeight;
@@ -2594,7 +2642,7 @@ function renderWaitlist() {
           } else {
             console.log(`✓ No adjustment needed (difference: ${shortfall.toFixed(2)}px)`);
           }
-          
+
           console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
         });
       }
@@ -2632,7 +2680,7 @@ function renderWaitlist() {
     waitlist.forEach(item => {
       const shouldShowAll = (selectedRowId === item.booking_number) || (expandedRowId === item.booking_number);
       toggleChatHistoryDisplay(item.booking_number, shouldShowAll);
-      
+
       // Restore countdown text for completed items that have active timers
       if ((item.status === 'Arrived' || item.status === 'Cancelled') && undoAutoHideTimers[item.booking_number]) {
         // Timer exists, button text will be updated by the interval

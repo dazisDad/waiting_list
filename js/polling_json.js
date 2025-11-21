@@ -35,7 +35,7 @@ const POLL_INTERVAL = 3000; // ms
 
 async function pollOnce() {
   try {
-    let file = (window.appSelect && window.appSelect.value) ? window.appSelect.value : 'webhook_last_event_events.json';
+    let file = (window.appSelect && window.appSelect.value) ? window.appSelect.value : 'last_10_events.json';
     // Add webhook/received_json/ prefix if not already present
     if (!file.startsWith('webhook/received_json/')) {
       file = 'webhook/received_json/' + file;

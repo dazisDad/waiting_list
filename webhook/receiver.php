@@ -96,8 +96,8 @@ if (isset($_GET['appendMax'])) {
 // Allow selecting application name via ?app=<name>. The provided name is
 // sanitized to [A-Za-z0-9_-] and limited in length to avoid path traversal.
 // Application name (select output file). Normalize to lowercase and sanitize.
-$app = isset($_GET['app']) ? $_GET['app'] : 'manychat';
-$sanitizedApp = 'manychat'; // default
+$app = isset($_GET['app']) ? $_GET['app'] : 'waitlist';
+$sanitizedApp = 'waitlist'; // default
 if ($app !== '') {
     // normalize to lowercase, remove disallowed chars
     $tmp = strtolower($app);

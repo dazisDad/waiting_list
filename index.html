@@ -29,18 +29,51 @@
 <body>
   <h3>DL:WaitList</h3>
   <p>이 페이지는 <code>/webhook/received_json/webhook_manychat_events.json</code> 를 주기 폴링하여 변경을 감지합니다.</p>
-  
+
   <div>
     <button id="httpsRequestBtn">httpsRequest</button>
   </div>
 
 
-  <!--
+  <script>
+    // Handle new event from polling_json.js
+    // notifiation.js 파일에서 index.html 로 이동됨. 
+    // notifiation.js 파일을 범용으로 사용하기 위해서는 handleNewEvent() 함수는 사용하는 쪽에서 정의 필요.
+    function handleNewEvent(obj) {
+      console.log('handleNewEvent: received', obj);
+      const title = obj && obj.Id ? `Row ${obj.Id} changed` : 'Webhook update';
+      const body = JSON.stringify(obj);
+      showNotification(title, body);
+    }
+
+    // Function to send ManyChat custom field updates
+    // 위와 마찬가지로 사용하는 쪽에서 정의가 필요한 부분
+    // Example usage and button handler
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('httpsRequestBtn');
+      if (!btn) return;
+
+      btn.addEventListener('click', () => {
+        updateManyChatCustomFields(samplePayloads);
+      });
+    });
+
+    // Sample payload for testing
+    const samplePayloads = {
+      subscriber_id: 306159212,
+      fields: [
+        {
+          field_id: 13765995,
+          field_value: "TextText"
+        },
+      ]
+    };
+  </script>
+
   <script src="js/notification.js"></script>
-  -->
   <script src="js/polling_json.js"></script>
   <script src="httpsRequest/sender.js"></script>
-  <script src="js/core.js"></script>
+  <script src="js/api_init.js"></script>
 </body>
 
 </html>

@@ -71,11 +71,4 @@ function showNotification(title, body) {
   }
 }
 
-function handleNewEvent(obj) {
-  console.log('handleNewEvent: received', obj);
-  const title = obj && obj.Id ? `Row ${obj.Id} changed` : 'Webhook update';
-  const body = JSON.stringify(obj);
-  showNotification(title, body);
-}
-
 console.log('notification.js loaded');
