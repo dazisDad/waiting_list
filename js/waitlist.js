@@ -1,4 +1,4 @@
-const version = '0.643';
+const version = '0.645';
 
 // Display version in header
 document.addEventListener('DOMContentLoaded', () => {
@@ -63,6 +63,20 @@ function handleNewEvent(obj) {
               } else {
                 console.warn(`NEW_BADGE: Badge span not found for subscriber_id ${newBookingItem.subscriber_id}`);
               }
+              
+              // Update button state and trigger scroll to active after badge is displayed
+              console.log('NEW_BOOKING: Updating scroll button state and triggering scroll');
+              updateScrollAndButtonState();
+              
+              // Use another requestAnimationFrame to ensure button state is updated before scrolling
+              requestAnimationFrame(() => {
+                if (scrollButton && !scrollButton.disabled) {
+                  console.log('NEW_BOOKING: Scroll button enabled, triggering scroll to active queue');
+                  handleScrollToActive(true);
+                } else {
+                  console.log('NEW_BOOKING: Scroll button is disabled, cannot scroll');
+                }
+              });
             });
           });
           
@@ -1375,8 +1389,18 @@ function handleAsk(booking_number, customer_name, event) {
     console.log(`ASK_MODE: Enabled for #${booking_number}. Current set:`, Array.from(askModeItems));
   }
 
+  // Save current scroll position before re-rendering
+  const currentScrollTop = waitlistContainer.scrollTop;
+  console.log(`ASK_MODE: Saving scroll position: ${currentScrollTop.toFixed(2)}px`);
+
   // Re-render to show question buttons
   renderWaitlist();
+  
+  // Restore scroll position after render completes
+  requestAnimationFrame(() => {
+    waitlistContainer.scrollTop = currentScrollTop;
+    console.log(`ASK_MODE: Restored scroll position: ${currentScrollTop.toFixed(2)}px`);
+  });
 
   // On mobile, re-open the action row after rendering
   if (isMobile) {
@@ -1570,7 +1594,18 @@ function handleExitAsk(booking_number) {
   askModeItems.delete(booking_number);
   // Reset question page when exiting Ask mode
   delete questionPageIndex[booking_number];
+  
+  // Save current scroll position before re-rendering
+  const currentScrollTop = waitlistContainer.scrollTop;
+  console.log(`EXIT_ASK: Saving scroll position: ${currentScrollTop.toFixed(2)}px`);
+  
   renderWaitlist();
+  
+  // Restore scroll position after render completes
+  requestAnimationFrame(() => {
+    waitlistContainer.scrollTop = currentScrollTop;
+    console.log(`EXIT_ASK: Restored scroll position: ${currentScrollTop.toFixed(2)}px`);
+  });
 }
 
 /**
