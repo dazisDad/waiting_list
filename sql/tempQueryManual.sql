@@ -15,9 +15,9 @@ INSERT INTO booking_list (
   store_id,
   booking_from,
   dine_dateTime,
-  highlight1,
-  highlight2,
-  highlight3
+  badge1,
+  badge2,
+  badge3
 ) VALUES
 -- Completed items (Cancelled/Arrived)
 (101, 'Haneul Jung', 1, FROM_UNIXTIME(UNIX_TIMESTAMP() - 840), FROM_UNIXTIME(UNIX_TIMESTAMP() - 720), 'Cancelled', '1', '010-1111-1111', 'sub_aaa', 100, 'DL_Sunway_Geo', 'QR', FROM_UNIXTIME(UNIX_TIMESTAMP() - 840), '', '', ''),
@@ -28,7 +28,7 @@ INSERT INTO booking_list (
 (504, 'Minji Kim', 5, FROM_UNIXTIME(UNIX_TIMESTAMP() - 660), NULL, 'Waiting', '4', '010-4444-4444', 'sub_ddd', 100, 'DL_Sunway_Geo', 'WEB', FROM_UNIXTIME(UNIX_TIMESTAMP() - 660), 'OUT', '', ''),
 (105, 'Juno Lee', 1, FROM_UNIXTIME(UNIX_TIMESTAMP() - 600), NULL, 'Ready', '5', '010-5555-5555', 'sub_eee', 300, 'DL_Sunway_Geo', 'QR', FROM_UNIXTIME(UNIX_TIMESTAMP() - 600), 'OUT', '', ''),
 (306, 'Seyeon Park', 3, FROM_UNIXTIME(UNIX_TIMESTAMP() - 540), NULL, 'Waiting', '6', '010-6666-6666', 'sub_fff', 100, 'DL_Sunway_Geo', 'QR', FROM_UNIXTIME(UNIX_TIMESTAMP() - 540), '', '', ''),
-(507, 'Eunwoo Choi', 5, FROM_UNIXTIME(UNIX_TIMESTAMP() - 480), NULL, 'Waiting', '7', '010-7777-7777', 'sub_ggg', 200, 'DL_Sunway_Geo', 'QR', FROM_UNIXTIME(UNIX_TIMESTAMP() - 480), '', 'SPLIT', ''),
+(507, 'Eunwoo Choi', 5, FROM_UNIXTIME(UNIX_TIMESTAMP() - 480), NULL, 'Waiting', '7', '010-7777-7777', 'sub_ggg', 200, 'DL_Sunway_Geo', 'QR', FROM_UNIXTIME(UNIX_TIMESTAMP() - 480), 'OUT', 'SPLIT', ''),
 (308, 'Jihoon Kim', 3, FROM_UNIXTIME(UNIX_TIMESTAMP() - 420), NULL, 'Waiting', '8', '010-8888-8888', 'sub_hhh', 100, 'DL_Sunway_Geo', 'QR', FROM_UNIXTIME(UNIX_TIMESTAMP() - 420), '', '', ''),
 (609, 'Somin Park', 6, FROM_UNIXTIME(UNIX_TIMESTAMP() - 300), NULL, 'Waiting', '9', '010-9999-9999', 'sub_iii', 100, 'DL_Sunway_Geo', 'QR', FROM_UNIXTIME(UNIX_TIMESTAMP() - 300), '', '', ''),
 (210, 'Taehyun Lee', 2, FROM_UNIXTIME(UNIX_TIMESTAMP() + 600), NULL, 'Waiting', '10', '010-0000-0000', 'sub_jjj', 100, 'DL_Sunway_Geo', 'WEB', FROM_UNIXTIME(UNIX_TIMESTAMP() + 3610), '', '', '');

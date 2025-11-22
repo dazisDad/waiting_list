@@ -1,5 +1,5 @@
 <?php
-
+// Version: 0.647
 // Convenience helper to build DB config from environment (or .env)
 function get_db_config() {
     // Prefer values loaded into $loaded_env (from .env) but fall back to getenv().
@@ -753,34 +753,124 @@ function processChatResponse($response) {
 
     if (empty($answer_ids_array)) {
         $mysqli->close();
-        return []; // No answers to fetch
+        return [null, null]; // No answers to fetch
     }
 
-    // Step 4: Get all answers from answer_list table
+    // Step 4: Get all answer texts and badges from answer_list table
     $placeholders = implode(',', array_fill(0, count($answer_ids_array), '?'));
-    $sql3 = "SELECT * FROM answer_list WHERE Id IN ($placeholders)";
+    $sql3 = "SELECT answer, badge FROM answer_list WHERE Id IN ($placeholders) ORDER BY FIELD(Id, $placeholders)";
     $stmt3 = $mysqli->prepare($sql3);
     if ($stmt3 === false) {
         $mysqli->close();
         throw new Exception('Prepare error (answer_list): ' . $mysqli->error);
     }
 
-    // Bind all answer IDs dynamically
-    $types = str_repeat('i', count($answer_ids_array));
-    $stmt3->bind_param($types, ...$answer_ids_array);
+    // Bind all answer IDs dynamically (twice: once for IN clause, once for ORDER BY FIELD)
+    $types = str_repeat('i', count($answer_ids_array) * 2);
+    $bind_params = array_merge($answer_ids_array, $answer_ids_array);
+    $stmt3->bind_param($types, ...$bind_params);
     $stmt3->execute();
     $result3 = $stmt3->get_result();
     
-    $answer_arr = [];
+    $answer_texts = [];
+    $badge_arr = [];
     while ($row = $result3->fetch_assoc()) {
-        $answer_arr[] = $row;
+        $answer_texts[] = $row['answer'];
+        $badge_arr[] = $row['badge'];
     }
     
     $stmt3->close();
-    $mysqli->close();
 
-    // Step 5: Return answer array
-    return $answer_arr;
+    // Step 5: Add "Cancel" option at the beginning
+    array_unshift($answer_ids_array, 0);
+    array_unshift($answer_texts, 'Cancel');
+    array_unshift($badge_arr, null);
+
+    // Step 6: Get selected values based on booking_response index
+    $selected_answer_id = $answer_ids_array[$booking_response] ?? null;
+    $selected_answer = $answer_texts[$booking_response] ?? null;
+    $selected_badge = $badge_arr[$booking_response] ?? null;
+
+    // Step 7: Insert new record into history_chat
+    $sql_insert = "INSERT INTO history_chat (booking_list_id, dateTime, qna) VALUES (?, ?, ?)";
+    $stmt_insert = $mysqli->prepare($sql_insert);
+    if ($stmt_insert === false) {
+        $mysqli->close();
+        throw new Exception('Prepare error (history_chat insert): ' . $mysqli->error);
+    }
+
+    $current_datetime = date('Y-m-d H:i:s');
+    $qna_value = $selected_answer ?? '';
+
+    if (!$stmt_insert->bind_param('iss', $booking_list_id, $current_datetime, $qna_value)) {
+        $err = $stmt_insert->error;
+        $stmt_insert->close();
+        $mysqli->close();
+        throw new Exception('Bind failed (history_chat insert): ' . $err);
+    }
+
+    if (!$stmt_insert->execute()) {
+        $err = $stmt_insert->error;
+        $stmt_insert->close();
+        $mysqli->close();
+        throw new Exception('Execute failed (history_chat insert): ' . $err);
+    }
+
+    $stmt_insert->close();
+
+    // Step 8: Update badge in booking_list table if selected_badge exists
+    if ($selected_badge !== null && $selected_badge !== '') {
+        // Get current badge values
+        $sql_get_badges = "SELECT badge1, badge2, badge3 FROM booking_list WHERE booking_list_id = ?";
+        $stmt_get = $mysqli->prepare($sql_get_badges);
+        if ($stmt_get === false) {
+            $mysqli->close();
+            throw new Exception('Prepare error (get badges): ' . $mysqli->error);
+        }
+
+        $stmt_get->bind_param('i', $booking_list_id);
+        $stmt_get->execute();
+        $result_badges = $stmt_get->get_result();
+        $badge_row = $result_badges->fetch_assoc();
+        $stmt_get->close();
+
+        if ($badge_row) {
+            // Determine which badge column to update
+            $badge_column = null;
+            if (empty($badge_row['badge1'])) {
+                $badge_column = 'badge1';
+            } elseif (empty($badge_row['badge2'])) {
+                $badge_column = 'badge2';
+            } elseif (empty($badge_row['badge3'])) {
+                $badge_column = 'badge3';
+            }
+
+            // Update the badge column if available
+            if ($badge_column !== null) {
+                $sql_update_badge = "UPDATE booking_list SET `$badge_column` = ? WHERE booking_list_id = ?";
+                $stmt_update = $mysqli->prepare($sql_update_badge);
+                if ($stmt_update === false) {
+                    $mysqli->close();
+                    throw new Exception('Prepare error (update badge): ' . $mysqli->error);
+                }
+
+                $stmt_update->bind_param('si', $selected_badge, $booking_list_id);
+                if (!$stmt_update->execute()) {
+                    $err = $stmt_update->error;
+                    $stmt_update->close();
+                    $mysqli->close();
+                    throw new Exception('Execute failed (update badge): ' . $err);
+                }
+
+                $stmt_update->close();
+            }
+        }
+    }
+
+    $mysqli->close();
+    
+    // Return [selected_answer_id, selected_answer, selected_badge]
+    return [$selected_answer_id, $selected_answer, $selected_badge];
 }
 
 

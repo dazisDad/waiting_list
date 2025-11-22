@@ -1,4 +1,4 @@
-const version = '0.645';
+const version = '0.647';
 
 // Display version in header
 document.addEventListener('DOMContentLoaded', () => {
@@ -365,11 +365,15 @@ function getFilteredQuestions(customerPax, booking_number) {
     chatlist
       .filter(chat => chat.booking_list_id === bookingListId)
       .forEach(chat => {
-        // Extract question from "Q: <question text>" format
-        const match = chat.qna.match(/^Q:\s*(.+)/);
-        if (match) {
-          askedQuestions.add(match[1]);
-        }
+        // Try to match question text from qna by checking against questionnaire items
+        // For each questionnaire item, check if qna matches "prefix question" or just "question"
+        questionnaire.forEach(q => {
+          const prefix = q.question_prefix || '';
+          const expectedText = prefix ? `${prefix} ${q.question}` : q.question;
+          if (chat.qna === expectedText || chat.qna === q.question) {
+            askedQuestions.add(q.question);
+          }
+        });
       });
   }
 
@@ -427,7 +431,7 @@ function generateQuestionButtonsHTML(filteredQuestions, booking_number, customer
     const bookingListId = customer ? customer.booking_list_id : null;
     // Generate unique button ID based on question ID from database
     const buttonId = `question-btn-${booking_number}-${q.Id || index}`;
-    const fnCall = `handleQuestion(${bookingListId}, '${q.question.replace(/'/g, "\\'")}', ${q.q_level}, '${buttonId}')`;
+    const fnCall = `handleQuestion(${bookingListId}, '${q.question.replace(/'/g, "\\'")}', ${q.q_level}, '${buttonId}', ${q.Id || 'null'})`;
     const onclickHandler = isMobile
       ? `${fnCall}`
       : `${fnCall}; setTimeout(() => this.blur(), 100);`;
@@ -1461,10 +1465,19 @@ function handleAsk(booking_number, customer_name, event) {
 /**
  * Handles question button click - logs the question and inserts into database
  */
-async function handleQuestion(booking_list_id, question, q_level = null, buttonId = null) {
-  console.log(`QUESTION: booking_list_id: ${booking_list_id}, question: ${question}, q_level: ${q_level}, buttonId: ${buttonId}`);
+async function handleQuestion(booking_list_id, question, q_level = null, buttonId = null, questionId = null) {
+  console.log(`QUESTION: booking_list_id: ${booking_list_id}, question: ${question}, q_level: ${q_level}, buttonId: ${buttonId}, questionId: ${questionId}`);
 
   try {
+    // Look up question_prefix from questionnaire if questionId is provided
+    let prefix = '';
+    if (questionId) {
+      const questionObj = questionnaire.find(q => q.Id === questionId);
+      if (questionObj && questionObj.question_prefix) {
+        prefix = questionObj.question_prefix;
+      }
+    }
+
     // Format current time for database insertion
     const currentTime = new Date();
     const formattedTime = currentTime.getFullYear() + '-' +
@@ -1474,14 +1487,15 @@ async function handleQuestion(booking_list_id, question, q_level = null, buttonI
       String(currentTime.getMinutes()).padStart(2, '0') + ':' +
       String(currentTime.getSeconds()).padStart(2, '0');
 
-    // Insert question into history_chat table
+    // Insert question into history_chat table with prefix (if any)
+    const qnaText = prefix ? `${prefix} ${question}` : question;
     const updateResult = await connector.updateDataArr(
       'waitlist', // dbKey
       'history_chat', // tableName
       [{
         booking_list_id: booking_list_id,
         dateTime: formattedTime,
-        qna: `Q: ${question}`
+        qna: qnaText
       }], // dataSetArr
     );
 
@@ -1523,7 +1537,7 @@ async function handleQuestion(booking_list_id, question, q_level = null, buttonI
     const newChatRecord = {
       booking_list_id: booking_list_id,
       dateTime: Date.now(), // Use current timestamp in milliseconds for local data
-      qna: `Q: ${question}`,
+      qna: qnaText, // Use same qnaText as database insert
       Id: Date.now() // Use timestamp as temporary ID
     };
     chatlist.push(newChatRecord);
@@ -2520,20 +2534,20 @@ function renderWaitlist() {
         (statusPriority === 0 ? 'border border-slate-100 px-1 py-0.5 rounded font-bold text-xs' : 'border border-amber-400 px-1 py-0.5 rounded font-bold text-xs') :
         'text-xs opacity-75');
 
-    // Generate highlight tags for highlight1, highlight2, highlight3 (same as Pax styling - all same color, only completed/active difference)
+    // Generate highlight tags for badge1, badge2, badge3 (same as Pax styling - all same color, only completed/active difference)
     const highlights = [];
     const highlightClass = statusPriority === 0 ?
       'bg-white text-slate-800 px-1 py-0.5 rounded font-bold mr-1' :
       'bg-yellow-400 text-slate-800 px-1 py-0.5 rounded font-bold mr-1';
 
-    if (item.highlight1 && item.highlight1.trim()) {
-      highlights.push(`<span class="${highlightClass}" style="font-size: 10px;">${item.highlight1}</span>`);
+    if (item.badge1 && item.badge1.trim()) {
+      highlights.push(`<span class="${highlightClass}" style="font-size: 10px;">${item.badge1}</span>`);
     }
-    if (item.highlight2 && item.highlight2.trim()) {
-      highlights.push(`<span class="${highlightClass}" style="font-size: 10px;">${item.highlight2}</span>`);
+    if (item.badge2 && item.badge2.trim()) {
+      highlights.push(`<span class="${highlightClass}" style="font-size: 10px;">${item.badge2}</span>`);
     }
-    if (item.highlight3 && item.highlight3.trim()) {
-      highlights.push(`<span class="${highlightClass}" style="font-size: 10px;">${item.highlight3}</span>`);
+    if (item.badge3 && item.badge3.trim()) {
+      highlights.push(`<span class="${highlightClass}" style="font-size: 10px;">${item.badge3}</span>`);
     }
     const highlightHTML = highlights.length > 0 ? `<span class="ml-2">${highlights.join('')}</span>` : '';
 
