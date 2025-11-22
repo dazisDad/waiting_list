@@ -1,4 +1,4 @@
-const version = '0.647';
+const version = '0.648';
 
 // Display version in header
 document.addEventListener('DOMContentLoaded', () => {
@@ -361,20 +361,30 @@ function getFilteredQuestions(customerPax, booking_number) {
 
   // Get all questions from chat history for this booking_list_id
   const askedQuestions = new Set();
+  let lastChatStartsWithQ = false;
+  
   if (bookingListId) {
-    chatlist
+    const customerChats = chatlist
       .filter(chat => chat.booking_list_id === bookingListId)
-      .forEach(chat => {
-        // Try to match question text from qna by checking against questionnaire items
-        // For each questionnaire item, check if qna matches "prefix question" or just "question"
-        questionnaire.forEach(q => {
-          const prefix = q.question_prefix || '';
-          const expectedText = prefix ? `${prefix} ${q.question}` : q.question;
-          if (chat.qna === expectedText || chat.qna === q.question) {
-            askedQuestions.add(q.question);
-          }
-        });
+      .sort((a, b) => a.dateTime - b.dateTime); // Sort by dateTime ascending
+    
+    // Check if the last chat message starts with 'Q:'
+    if (customerChats.length > 0) {
+      const lastChat = customerChats[customerChats.length - 1];
+      lastChatStartsWithQ = lastChat.qna.startsWith('Q:');
+    }
+    
+    customerChats.forEach(chat => {
+      // Try to match question text from qna by checking against questionnaire items
+      // For each questionnaire item, check if qna matches "prefix question" or just "question"
+      questionnaire.forEach(q => {
+        const prefix = q.question_prefix || '';
+        const expectedText = prefix ? `${prefix} ${q.question}` : q.question;
+        if (chat.qna === expectedText || chat.qna === q.question) {
+          askedQuestions.add(q.question);
+        }
       });
+    });
   }
 
   return questionnaire.filter(q => {
@@ -389,6 +399,11 @@ function getFilteredQuestions(customerPax, booking_number) {
 
     // If q_level_min exists, customer's q_level must be >= q_level_min
     if (q.q_level_min !== undefined && customerQLevel < q.q_level_min) {
+      return false;
+    }
+
+    // If last chat starts with 'Q:', exclude questions with 'Q:' prefix (waiting for answer)
+    if (lastChatStartsWithQ && q.question_prefix === 'Q:') {
       return false;
     }
 
