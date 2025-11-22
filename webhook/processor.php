@@ -683,6 +683,106 @@ function flow_execution ($inputDataSet) {
     }
 }
 
+/**
+ * processChatResponse
+ * Process a chat response by finding the related question and returning available answers.
+ * 
+ * @param array $response - Contains 'store_id', 'booking_list_id', and 'booking_response'
+ * @return array - Array of answer objects from answer_list table
+ * @throws Exception on database errors
+ */
+function processChatResponse($response) {
+    $cfg = get_db_config();
+    if ($cfg['user'] === '' || $cfg['name'] === '') {
+        throw new Exception('Database configuration incomplete: DB_USERNAME and DB_NAME are required');
+    }
+
+    $mysqli = new mysqli($cfg['host'], $cfg['user'], $cfg['pass'], $cfg['name']);
+    if ($mysqli->connect_errno) {
+        throw new Exception('DB connect error: ' . $mysqli->connect_error);
+    }
+
+    $store_id = $response['store_id'] ?? '';
+    $booking_list_id = isset($response['booking_list_id']) ? intval($response['booking_list_id']) : 0;
+    $booking_response = isset($response['booking_response']) ? intval($response['booking_response']) : 0;
+
+    // Step 1: Get the last qna_id from history_chat for this booking_list_id
+    $sql1 = "SELECT qna_id FROM history_chat WHERE booking_list_id = ? ORDER BY Id DESC LIMIT 1";
+    $stmt1 = $mysqli->prepare($sql1);
+    if ($stmt1 === false) {
+        $mysqli->close();
+        throw new Exception('Prepare error (history_chat): ' . $mysqli->error);
+    }
+    
+    $stmt1->bind_param('i', $booking_list_id);
+    $stmt1->execute();
+    $result1 = $stmt1->get_result();
+    $row1 = $result1->fetch_assoc();
+    $stmt1->close();
+
+    if (!$row1 || !isset($row1['qna_id'])) {
+        $mysqli->close();
+        throw new Exception('No chat history found for booking_list_id: ' . $booking_list_id);
+    }
+
+    $qna_id = intval($row1['qna_id']);
+
+    // Step 2: Get answer_ids from ask_question_list table
+    $sql2 = "SELECT answer_ids FROM ask_question_list WHERE Id = ?";
+    $stmt2 = $mysqli->prepare($sql2);
+    if ($stmt2 === false) {
+        $mysqli->close();
+        throw new Exception('Prepare error (ask_question_list): ' . $mysqli->error);
+    }
+    
+    $stmt2->bind_param('i', $qna_id);
+    $stmt2->execute();
+    $result2 = $stmt2->get_result();
+    $row2 = $result2->fetch_assoc();
+    $stmt2->close();
+
+    if (!$row2 || !isset($row2['answer_ids'])) {
+        $mysqli->close();
+        throw new Exception('No question found for qna_id: ' . $qna_id);
+    }
+
+    $answer_ids_str = $row2['answer_ids'];
+
+    // Step 3: Convert answer_ids string "1, 2" to array [1, 2]
+    $answer_ids_array = array_map('intval', array_map('trim', explode(',', $answer_ids_str)));
+
+    if (empty($answer_ids_array)) {
+        $mysqli->close();
+        return []; // No answers to fetch
+    }
+
+    // Step 4: Get all answers from answer_list table
+    $placeholders = implode(',', array_fill(0, count($answer_ids_array), '?'));
+    $sql3 = "SELECT * FROM answer_list WHERE Id IN ($placeholders)";
+    $stmt3 = $mysqli->prepare($sql3);
+    if ($stmt3 === false) {
+        $mysqli->close();
+        throw new Exception('Prepare error (answer_list): ' . $mysqli->error);
+    }
+
+    // Bind all answer IDs dynamically
+    $types = str_repeat('i', count($answer_ids_array));
+    $stmt3->bind_param($types, ...$answer_ids_array);
+    $stmt3->execute();
+    $result3 = $stmt3->get_result();
+    
+    $answer_arr = [];
+    while ($row = $result3->fetch_assoc()) {
+        $answer_arr[] = $row;
+    }
+    
+    $stmt3->close();
+    $mysqli->close();
+
+    // Step 5: Return answer array
+    return $answer_arr;
+}
+
 
 
 ?>
