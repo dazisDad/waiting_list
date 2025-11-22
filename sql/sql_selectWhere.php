@@ -143,6 +143,15 @@ if (!mysqli_stmt_execute($stmt)) {
 // 5. 결과 가져오기
 $result = mysqli_stmt_get_result($stmt);
 
+// 결과 가져오기 실패 확인
+if ($result === false) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Failed to get result: ' . mysqli_stmt_error($stmt)]);
+    mysqli_stmt_close($stmt);
+    mysqli_close($connection);
+    exit;
+}
+
 // 결과 처리
 $data = []; // 결과를 배열로 변환
 while ($row = mysqli_fetch_assoc($result)) {
