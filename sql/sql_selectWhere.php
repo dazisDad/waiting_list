@@ -5,10 +5,11 @@
  * 
  * Description:
  * 이 파일은 구조화된 WHERE 조건을 사용하여 데이터베이스에서 데이터를 조회하는 API 엔드포인트입니다.
- * Prepared Statement를 사용하여 SQL Injection 공격을 방지하고 안전한 데이터베이스 쿼리를 제공합니다.
+ * mysqli_real_escape_string()을 사용하여 기본적인 SQL Injection 공격을 방지합니다.
+ * WARNING: Prepared Statement 누수 문제로 인해 일시적으로 일반 statement 사용
  * 
  * Features:
- * - Prepared Statement를 통한 보안 강화
+ * - mysqli_real_escape_string()을 통한 기본 보안
  * - 동적 WHERE 조건 처리 (파라미터 바인딩)
  * - 다중 데이터베이스 환경 지원 (preProd/remote)
  * - WHERE 조건 없이 전체 데이터 조회 지원 (whereData = null)
@@ -20,9 +21,8 @@
  *     \"connect_to\": \"preProd|remote\",
  *     \"tableName\": \"table_name\",
  *     \"whereData\": {
- *       \"template\": \"column1 = ? AND column2 > ?\",
- *       \"values\": [\"value1\", \"value2\"],
- *       \"types\": \"ss\"
+ *       \"template\": \"column1 = '{value1}' AND column2 > '{value2}'\",
+ *       \"values\": [\"value1\", \"value2\"]
  *     } | null,
  *     \"db_key\": \"portal|eInvoice|pos\"
  *   }"
@@ -41,6 +41,9 @@
  */
 
 require_once 'db_config.php';
+
+// Prepared Statement 사용 여부 설정 (false = 일반 statement, true = prepared statement)
+$isPreparedStmt = false;
 
 // JSON 형식의 POST 데이터를 읽고 파싱합니다.
 $toParse = json_decode(file_get_contents("php://input"), true);
@@ -72,15 +75,40 @@ if ($whereData === null || empty($whereData)) {
     $whereValues = [];
     $whereTypes = "";
 } else {
-    if (!isset($whereData['template'], $whereData['values'], $whereData['types']) || !is_array($whereData['values'])) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'whereData must contain template (string), values (array), and types (string).']);
-        exit;
+    if ($isPreparedStmt) {
+        // Prepared Statement 모드: template, values, types 필요
+        if (!isset($whereData['template'], $whereData['values'], $whereData['types']) || !is_array($whereData['values'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'whereData must contain template (string), values (array), and types (string) for prepared statements.']);
+            exit;
+        }
+        $whereTemplate = $whereData['template']; // 예: "email = ? AND date > ?"
+        $whereValues = $whereData['values'];     // 예: ['user@example.com', '2023-01-01']
+        $whereTypes = $whereData['types'];       // 예: 'ss'
+    } else {
+        // 일반 Statement 모드: template, values만 필요
+        if (!isset($whereData['template'], $whereData['values']) || !is_array($whereData['values'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'whereData must contain template (string) and values (array) for regular statements.']);
+            exit;
+        }
+        
+        $originalTemplate = $whereData['template'];
+        $whereValues = $whereData['values'];
+        $whereTypes = "";
+        
+        // Prepared Statement용 '?' 플레이스홀더를 '{valueN}' 형식으로 자동 변환
+        $whereTemplate = $originalTemplate;
+        $questionMarkCount = substr_count($originalTemplate, '?');
+        
+        if ($questionMarkCount > 0) {
+            // '?' 플레이스홀더가 있는 경우 '{valueN}' 형식으로 변환
+            for ($i = 1; $i <= $questionMarkCount; $i++) {
+                $whereTemplate = preg_replace('/\?/', "'{value{$i}}'", $whereTemplate, 1);
+            }
+        }
+        // 그렇지 않으면 이미 '{valueN}' 형식이라고 가정하고 그대로 사용
     }
-    
-    $whereTemplate = $whereData['template']; // 예: "email = ? AND date > ?"
-    $whereValues = $whereData['values'];     // 예: ['user@example.com', '2023-01-01']
-    $whereTypes = $whereData['types'];       // 예: 'ss' (두 개의 문자열 타입)
 }
 
 // db_config.php에서 DB 연결 정보 추출
@@ -100,56 +128,86 @@ if (mysqli_connect_errno()) {
     exit;
 }
 
-// 1. Prepared Statement 쿼리 생성 (값은 ?로 대체)
-$sql = "SELECT * FROM {$tableName} WHERE {$whereTemplate}";
+// UTF-8 문자셋 설정
+mysqli_set_charset($connection, 'utf8mb4');
 
-// 2. Statement 준비
-if (!$stmt = mysqli_prepare($connection, $sql)) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'SQL prepare failed: ' . mysqli_error($connection), 'sql_attempted' => $sql]);
-    mysqli_close($connection);
-    exit;
-}
+if ($isPreparedStmt) {
+    // === PREPARED STATEMENT 모드 ===
+    // 1. Prepared Statement 쿼리 생성 (값은 ?로 대체)
+    $sql = "SELECT * FROM {$tableName} WHERE {$whereTemplate}";
 
-// 3. 파라미터 바인딩 (파라미터가 있는 경우에만)
-// whereValues가 비어있지 않을 때만 바인딩 수행
-if (!empty($whereValues) && !empty($whereTypes)) {
-    // mysqli_stmt_bind_param()은 가변 인자(variable number of arguments)를 필요로 하므로,
-    // call_user_func_array()를 사용하여 동적으로 인자를 전달합니다.
-    $bindParams = array_merge([$whereTypes], $whereValues);
-    $params = [];
-    foreach ($bindParams as $key => $value) {
-        $params[$key] = &$bindParams[$key]; // 레퍼런스로 전달해야 합니다.
+    // 2. Statement 준비
+    if (!$stmt = mysqli_prepare($connection, $sql)) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'SQL prepare failed: ' . mysqli_error($connection), 'sql_attempted' => $sql]);
+        mysqli_close($connection);
+        exit;
     }
 
-    if (!call_user_func_array('mysqli_stmt_bind_param', array_merge([$stmt], $params))) {
+    // 3. 파라미터 바인딩 (파라미터가 있는 경우에만)
+    if (!empty($whereValues) && !empty($whereTypes)) {
+        $bindParams = array_merge([$whereTypes], $whereValues);
+        $params = [];
+        foreach ($bindParams as $key => $value) {
+            $params[$key] = &$bindParams[$key];
+        }
+
+        if (!call_user_func_array('mysqli_stmt_bind_param', array_merge([$stmt], $params))) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Parameter binding failed: ' . mysqli_stmt_error($stmt)]);
+            mysqli_stmt_close($stmt);
+            mysqli_close($connection);
+            exit;
+        }
+    }
+
+    // 4. 쿼리 실행
+    if (!mysqli_stmt_execute($stmt)) {
         http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Parameter binding failed: ' . mysqli_stmt_error($stmt)]);
+        echo json_encode(['success' => false, 'error' => 'Statement execution failed: ' . mysqli_stmt_error($stmt)]);
         mysqli_stmt_close($stmt);
         mysqli_close($connection);
         exit;
     }
-}
 
-// 4. 쿼리 실행
-if (!mysqli_stmt_execute($stmt)) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Statement execution failed: ' . mysqli_stmt_error($stmt)]);
-    mysqli_stmt_close($stmt);
-    mysqli_close($connection);
-    exit;
-}
+    // 5. 결과 가져오기
+    $result = mysqli_stmt_get_result($stmt);
+    if ($result === false) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to get result: ' . mysqli_stmt_error($stmt)]);
+        mysqli_stmt_close($stmt);
+        mysqli_close($connection);
+        exit;
+    }
+} else {
+    // === 일반 STATEMENT 모드 ===
+    // 1. WHERE 조건 값들을 안전하게 이스케이프 처리
+    $finalWhereClause = $whereTemplate;
+    if (!empty($whereValues)) {
+        // 값들을 mysqli_real_escape_string으로 보호
+        $escapedValues = [];
+        foreach ($whereValues as $value) {
+            $escapedValues[] = mysqli_real_escape_string($connection, $value);
+        }
+        
+        // 템플릿의 {value1}, {value2} 등을 실제 값으로 교체
+        for ($i = 0; $i < count($escapedValues); $i++) {
+            $placeholder = '{value' . ($i + 1) . '}';
+            $finalWhereClause = str_replace($placeholder, $escapedValues[$i], $finalWhereClause);
+        }
+    }
 
-// 5. 결과 가져오기
-$result = mysqli_stmt_get_result($stmt);
+    // 2. 최종 SQL 쿼리 생성
+    $sql = "SELECT * FROM {$tableName} WHERE {$finalWhereClause}";
 
-// 결과 가져오기 실패 확인
-if ($result === false) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Failed to get result: ' . mysqli_stmt_error($stmt)]);
-    mysqli_stmt_close($stmt);
-    mysqli_close($connection);
-    exit;
+    // 3. 쿼리 실행
+    $result = mysqli_query($connection, $sql);
+    if ($result === false) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Query execution failed: ' . mysqli_error($connection), 'sql_attempted' => $sql]);
+        mysqli_close($connection);
+        exit;
+    }
 }
 
 // 결과 처리
@@ -182,8 +240,11 @@ while ($row = mysqli_fetch_assoc($result)) {
 
 }
 
-// 연결 종료
-mysqli_stmt_close($stmt);
+// 결과 리소스 해제 및 연결 종료
+if ($isPreparedStmt && isset($stmt)) {
+    mysqli_stmt_close($stmt);
+}
+mysqli_free_result($result);
 mysqli_close($connection);
 
 // 성공 응답 (결과 데이터 포함)

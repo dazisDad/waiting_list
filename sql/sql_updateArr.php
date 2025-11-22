@@ -7,6 +7,9 @@ ini_set('display_errors', 1);
 
 header('Content-Type: application/json');
 
+// Prepared Statement 사용 여부 설정 (false = 일반 statement, true = prepared statement)
+$isPreparedStmt = false;
+
 // 데이터베이스 연결 정보를 가져옵니다.
 require_once 'db_config.php';
 
@@ -53,6 +56,9 @@ if (!$connection) {
     exit;
 }
 
+// UTF-8 문자셋 설정
+mysqli_set_charset($connection, 'utf8mb4');
+
 // 안전을 위해 트랜잭션을 시작합니다.
 $connection->begin_transaction();
 
@@ -93,17 +99,43 @@ foreach ($dataArray as $dataSet) {
         
         // primaryKey 파라미터가 제공되면 사용, 없으면 기본값 'Id' 사용
         $primaryKeyColumn = isset($fullPayload['primaryKey']) && !empty($fullPayload['primaryKey']) ? $fullPayload['primaryKey'] : 'Id';
-        $selectSql = "SELECT {$primaryKeyColumn} FROM `{$tableName}` WHERE {$whereClause}";
         
-        if ($stmt = $connection->prepare($selectSql)) {
-            $stmt->bind_param($whereTypes, ...$whereValues);
-            $stmt->execute();
-            $stmt->bind_result($existingId);
-            $stmt->fetch();
-            $stmt->close();
+        if ($isPreparedStmt) {
+            // === PREPARED STATEMENT 모드 ===
+            $selectSql = "SELECT {$primaryKeyColumn} FROM `{$tableName}` WHERE {$whereClause}";
+            
+            if ($stmt = $connection->prepare($selectSql)) {
+                $stmt->bind_param($whereTypes, ...$whereValues);
+                $stmt->execute();
+                $stmt->bind_result($existingId);
+                $stmt->fetch();
+                $stmt->close();
+            } else {
+                $results[] = ['success' => false, 'message' => 'Failed to prepare SELECT statement: ' . $connection->error, 'data' => $dataSet];
+                continue;
+            }
         } else {
-            $results[] = ['success' => false, 'message' => 'Failed to prepare SELECT statement: ' . $connection->error, 'data' => $dataSet];
-            continue;
+            // === 일반 STATEMENT 모드 ===
+            $escapedWhereValues = [];
+            foreach ($whereValues as $val) {
+                $escapedWhereValues[] = "'" . mysqli_real_escape_string($connection, $val) . "'";
+            }
+            $finalWhereClauses = [];
+            for ($i = 0; $i < count($whereColumns); $i++) {
+                $finalWhereClauses[] = "`{$whereColumns[$i]}` = {$escapedWhereValues[$i]}";
+            }
+            $finalWhereClause = implode(' AND ', $finalWhereClauses);
+            $selectSql = "SELECT {$primaryKeyColumn} FROM `{$tableName}` WHERE {$finalWhereClause}";
+            
+            $result = mysqli_query($connection, $selectSql);
+            if ($result) {
+                $row = mysqli_fetch_assoc($result);
+                $existingId = $row ? $row[$primaryKeyColumn] : null;
+                mysqli_free_result($result);
+            } else {
+                $results[] = ['success' => false, 'message' => 'SELECT query failed: ' . mysqli_error($connection), 'data' => $dataSet];
+                continue;
+            }
         }
     }
 
@@ -125,22 +157,46 @@ foreach ($dataArray as $dataSet) {
                 $updateValues[] = $value;
             }
         }
-        $updateSetClause = implode(', ', $updateSet);
-        $updateSql = "UPDATE `{$tableName}` SET {$updateSetClause} WHERE `{$primaryKeyColumn}` = ?";
+        if ($isPreparedStmt) {
+            // === PREPARED STATEMENT 모드 ===
+            $updateSetClause = implode(', ', $updateSet);
+            $updateSql = "UPDATE `{$tableName}` SET {$updateSetClause} WHERE `{$primaryKeyColumn}` = ?";
 
-        if ($stmt = $connection->prepare($updateSql)) {
-            $updateValues[] = $existingId;
-            $updateTypes .= 'i'; // primary key는 정수이므로 'i'를 추가
-            $stmt->bind_param($updateTypes, ...$updateValues);
-            $stmt->execute();
-            if ($stmt->affected_rows > 0) {
-                $results[] = ['success' => true, 'message' => 'Row updated successfully.', 'data' => $dataSet];
+            if ($stmt = $connection->prepare($updateSql)) {
+                $updateValues[] = $existingId;
+                $updateTypes .= 'i'; // primary key는 정수이므로 'i'를 추가
+                $stmt->bind_param($updateTypes, ...$updateValues);
+                $stmt->execute();
+                if ($stmt->affected_rows > 0) {
+                    $results[] = ['success' => true, 'message' => 'Row updated successfully.', 'data' => $dataSet];
+                } else {
+                    $results[] = ['success' => false, 'message' => 'No rows were updated.', 'data' => $dataSet];
+                }
+                $stmt->close();
             } else {
-                $results[] = ['success' => false, 'message' => 'No rows were updated.', 'data' => $dataSet];
+                $results[] = ['success' => false, 'message' => 'Failed to prepare UPDATE statement: ' . $connection->error, 'data' => $dataSet];
             }
-            $stmt->close();
         } else {
-            $results[] = ['success' => false, 'message' => 'Failed to prepare UPDATE statement: ' . $connection->error, 'data' => $dataSet];
+            // === 일반 STATEMENT 모드 ===
+            $escapedUpdateSet = [];
+            foreach ($dataSet as $key => $value) {
+                if (!in_array($key, $whereColumns) && $key !== $primaryKeyColumn) {
+                    $escapedValue = mysqli_real_escape_string($connection, $value);
+                    $escapedUpdateSet[] = "`{$key}` = '{$escapedValue}'";
+                }
+            }
+            $updateSetClause = implode(', ', $escapedUpdateSet);
+            $updateSql = "UPDATE `{$tableName}` SET {$updateSetClause} WHERE `{$primaryKeyColumn}` = " . intval($existingId);
+            
+            if (mysqli_query($connection, $updateSql)) {
+                if (mysqli_affected_rows($connection) > 0) {
+                    $results[] = ['success' => true, 'message' => 'Row updated successfully.', 'data' => $dataSet];
+                } else {
+                    $results[] = ['success' => false, 'message' => 'No rows were updated.', 'data' => $dataSet];
+                }
+            } else {
+                $results[] = ['success' => false, 'message' => 'UPDATE query failed: ' . mysqli_error($connection), 'data' => $dataSet];
+            }
         }
     } else {
         // INSERT 쿼리를 동적으로 생성합니다.
@@ -154,21 +210,45 @@ foreach ($dataArray as $dataSet) {
             $insertTypes .= 's'; // 모든 값은 문자열로 가정
             $insertValues[] = $value;
         }
-        $columnList = implode(', ', $columns);
-        $placeholderList = implode(', ', $placeholders);
-        $insertSql = "INSERT INTO `{$tableName}` ({$columnList}) VALUES ({$placeholderList})";
+        if ($isPreparedStmt) {
+            // === PREPARED STATEMENT 모드 ===
+            $columnList = implode(', ', $columns);
+            $placeholderList = implode(', ', $placeholders);
+            $insertSql = "INSERT INTO `{$tableName}` ({$columnList}) VALUES ({$placeholderList})";
 
-        if ($stmt = $connection->prepare($insertSql)) {
-            $stmt->bind_param($insertTypes, ...$insertValues);
-            $stmt->execute();
-            if ($stmt->affected_rows > 0) {
-                $results[] = ['success' => true, 'message' => 'New row inserted successfully.', 'data' => $dataSet];
+            if ($stmt = $connection->prepare($insertSql)) {
+                $stmt->bind_param($insertTypes, ...$insertValues);
+                $stmt->execute();
+                if ($stmt->affected_rows > 0) {
+                    $results[] = ['success' => true, 'message' => 'New row inserted successfully.', 'data' => $dataSet];
+                } else {
+                    $results[] = ['success' => false, 'message' => 'Failed to insert new row.', 'data' => $dataSet];
+                }
+                $stmt->close();
             } else {
-                $results[] = ['success' => false, 'message' => 'Failed to insert new row.', 'data' => $dataSet];
+                $results[] = ['success' => false, 'message' => 'Failed to prepare INSERT statement: ' . $connection->error, 'data' => $dataSet];
             }
-            $stmt->close();
         } else {
-            $results[] = ['success' => false, 'message' => 'Failed to prepare INSERT statement: ' . $connection->error, 'data' => $dataSet];
+            // === 일반 STATEMENT 모드 ===
+            $escapedColumns = [];
+            $escapedValues = [];
+            foreach ($dataSet as $key => $value) {
+                $escapedColumns[] = "`{$key}`";
+                $escapedValues[] = "'" . mysqli_real_escape_string($connection, $value) . "'";
+            }
+            $columnList = implode(', ', $escapedColumns);
+            $valueList = implode(', ', $escapedValues);
+            $insertSql = "INSERT INTO `{$tableName}` ({$columnList}) VALUES ({$valueList})";
+            
+            if (mysqli_query($connection, $insertSql)) {
+                if (mysqli_affected_rows($connection) > 0) {
+                    $results[] = ['success' => true, 'message' => 'New row inserted successfully.', 'data' => $dataSet];
+                } else {
+                    $results[] = ['success' => false, 'message' => 'Failed to insert new row.', 'data' => $dataSet];
+                }
+            } else {
+                $results[] = ['success' => false, 'message' => 'INSERT query failed: ' . mysqli_error($connection), 'data' => $dataSet];
+            }
         }
     }
 }
