@@ -1,4 +1,4 @@
-const version = '0.648';
+const version = '0.651';
 
 // Display version in header
 document.addEventListener('DOMContentLoaded', () => {
@@ -97,6 +97,7 @@ const store_id = 'DL_Sunway_Geo';
 let waitlist = [];
 let chatlist = [];
 let questionnaire = [];
+let configuration = [];
 
 const minPax_for_bigTable = 5;
 const maxPax_for_smallTable = 0;
@@ -306,28 +307,73 @@ async function fetchAskQList() {
   }
 }
 
-// 서버 사이드 업데이트 함수 - 데이터베이스에서 최신 데이터를 가져와서 전역 변수를 업데이트하고 렌더링
+// 페이지 로딩 시 ask_question_list 테이블 데이터 가져오기
+async function fetchConfiguration() {
+  try {
+    // ask_question_list 테이블에서 store_id로 필터링하여 데이터 가져오기
+    const result = await connector.selectWhere('waitlist', 'configuration', {
+      template: 'store_id = ?',
+      values: [store_id],
+      types: 's' // string
+    });
+
+    if (result.success && result.data) {
+      return result.data;
+    } else {
+      console.error('데이터 조회 실패:', result.error);
+      return [];
+    }
+  } catch (error) {
+    console.error('fetchAskQList 오류:', error);
+    return [];
+  }
+}
+
+// 고정 데이터 로드 함수 - 페이지 로딩 시 한번만 실행 (questionnaire 등)
+async function loadStaticData() {
+  try {
+    console.log('STATIC_DATA: Loading static data...');
+
+    // 고정 데이터 병렬로 가져오기
+    const [questionsData, configurationData] = await Promise.all([
+      fetchAskQList(),
+      fetchConfiguration()
+    ]);
+
+    console.log('STATIC_DATA: Static data loaded successfully');
+    console.log('- Questions:', questionsData?.length || 0);
+    console.log('- Configuration:', configurationData?.length || 0);
+
+    // 전역 변수 설정
+    questionnaire = questionsData;
+    configuration = configurationData;
+
+    console.log('STATIC_DATA: Static data load completed');
+
+  } catch (error) {
+    console.error('STATIC_DATA: Error loading static data:', error);
+  }
+}
+
+// 서버 사이드 업데이트 함수 - 데이터베이스에서 실시간 변화하는 데이터를 가져와서 전역 변수를 업데이트하고 렌더링
 // 페이지 로딩 시 초기화와 수동 데이터 새로고침 모두에 사용됨
 async function getServerSideUpdate() {
   try {
     console.log('SERVER_UPDATE: Starting server-side data update...');
 
-    // 모든 데이터를 병렬로 가져오기
-    const [waitlistData, chatData, questionsData] = await Promise.all([
+    // 실시간 변화하는 데이터만 병렬로 가져오기
+    const [waitlistData, chatData] = await Promise.all([
       fetchBookingList(),
-      fetchChatHistory(),
-      fetchAskQList()
+      fetchChatHistory()
     ]);
 
     console.log('SERVER_UPDATE: All data loaded successfully');
     console.log('- Waitlist items:', waitlistData?.length || 0);
     console.log('- Chat records:', chatData?.length || 0);
-    console.log('- Questions:', questionsData?.length || 0);
 
-    // 전역 변수 오버라이드
+    // 전역 변수 오버라이드 (실시간 데이터만)
     waitlist = waitlistData;
     chatlist = chatData;
-    questionnaire = questionsData;
 
     console.log(waitlist);
 
@@ -2880,7 +2926,10 @@ waitlistContainer.addEventListener('scroll', () => {
 // 2. Initialize data loading and setup after completion
 async function startInitialization() {
   try {
-    // Load all data first
+    // Load static data first (once only)
+    await loadStaticData();
+    
+    // Load dynamic data
     await getServerSideUpdate();
 
     // Initial scroll setup: Set position and initial button state after data is loaded and rendered
