@@ -346,7 +346,9 @@ async function loadStaticData() {
 
     // 전역 변수 설정
     questionnaire = questionsData;
-    configuration = configurationData;
+    configuration = configurationData[0];
+
+    console.log(configuration);
 
     console.log('STATIC_DATA: Static data load completed');
 
