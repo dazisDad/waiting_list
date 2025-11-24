@@ -402,8 +402,12 @@ async function getServerSideUpdate() {
  * @returns {Array} Filtered array of question objects
  */
 function getFilteredQuestions(customerPax, booking_number) {
+  console.log(`GET_FILTERED_Q: Called with customerPax=${customerPax}, booking_number=${booking_number} (type: ${typeof booking_number})`);
+  
   // Find the customer's q_level and booking_list_id from waitlist
-  const customer = waitlist.find(item => item.booking_number === booking_number);
+  const customer = waitlist.find(item => item.booking_number == booking_number);
+  console.log(`GET_FILTERED_Q: Customer found:`, customer ? `Yes (q_level=${customer.q_level}, booking_list_id=${customer.booking_list_id})` : 'No');
+  
   const customerQLevel = customer ? customer.q_level : 0;
   const bookingListId = customer ? customer.booking_list_id : null;
 
@@ -413,7 +417,7 @@ function getFilteredQuestions(customerPax, booking_number) {
   
   if (bookingListId) {
     const customerChats = chatlist
-      .filter(chat => chat.booking_list_id === bookingListId)
+      .filter(chat => chat.booking_list_id == bookingListId)
       .sort((a, b) => a.dateTime - b.dateTime); // Sort by dateTime ascending
     
     // Check if the last chat message starts with 'Q:'
@@ -435,7 +439,11 @@ function getFilteredQuestions(customerPax, booking_number) {
     });
   }
 
-  return questionnaire.filter(q => {
+  console.log(`GET_FILTERED_Q: Total questionnaire items:`, questionnaire.length);
+  console.log(`GET_FILTERED_Q: customerQLevel=${customerQLevel}, lastChatStartsWithQ=${lastChatStartsWithQ}`);
+  console.log(`GET_FILTERED_Q: askedQuestions:`, Array.from(askedQuestions));
+  
+  const filtered = questionnaire.filter(q => {
     // Only include questions that are triggered by Ask button
     if (q.invokedWithBtn !== 'Ask') return false;
 
@@ -457,6 +465,11 @@ function getFilteredQuestions(customerPax, booking_number) {
 
     return true;
   });
+  
+  console.log(`GET_FILTERED_Q: Filtered questions count:`, filtered.length);
+  console.log(`GET_FILTERED_Q: Filtered questions:`, filtered.map(q => q.question));
+  
+  return filtered;
 }
 
 /**
@@ -469,10 +482,14 @@ function getFilteredQuestions(customerPax, booking_number) {
  * @returns {string} HTML string for question buttons
  */
 function generateQuestionButtonsHTML(filteredQuestions, booking_number, customer_name, isMobile) {
+  console.log(`GEN_Q_BUTTONS: Called for booking #${booking_number}, isMobile=${isMobile}, questions=${filteredQuestions.length}`);
+  
   const MAX_QUESTIONS_PER_PAGE = 3;
   const currentPage = questionPageIndex[booking_number] || 0;
   const totalQuestions = filteredQuestions.length;
   const totalPages = Math.ceil(totalQuestions / MAX_QUESTIONS_PER_PAGE);
+  
+  console.log(`GEN_Q_BUTTONS: currentPage=${currentPage}, totalQuestions=${totalQuestions}, totalPages=${totalPages}`);
 
   // Get questions for current page
   const startIdx = currentPage * MAX_QUESTIONS_PER_PAGE;
@@ -490,7 +507,7 @@ function generateQuestionButtonsHTML(filteredQuestions, booking_number, customer
     const flexClass = 'flex-1';
     const classes = `${baseClasses} ${btnClass} ${flexClass}`;
     // Find booking_list_id from waitlist using booking_number
-    const customer = waitlist.find(item => item.booking_number === booking_number);
+    const customer = waitlist.find(item => item.booking_number == booking_number);
     const bookingListId = customer ? customer.booking_list_id : null;
     // Generate unique button ID based on question ID from database
     const buttonId = `question-btn-${booking_number}-${q.Id || index}`;
@@ -548,7 +565,9 @@ function generateQuestionButtonsHTML(filteredQuestions, booking_number, customer
     questionButtons.push(exitButton);
   }
 
-  return questionButtons.join('\n');
+  const result = questionButtons.join('\n');
+  console.log(`GEN_Q_BUTTONS: Generated ${questionButtons.length} button elements, total HTML length: ${result.length}`);
+  return result;
 }
 
 const waitlistBody = document.getElementById('waitlist-body');
@@ -749,7 +768,7 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
 
   // Special handling for Ask and Ready buttons
   let isDisabled = false;
-  const item = waitlist.find(i => i.booking_number === booking_number);
+  const item = waitlist.find(i => i.booking_number == booking_number);
 
   if (buttonDef.functionName === 'handleAsk') {
     if (item) {
@@ -836,9 +855,10 @@ function toggleMobileActions(booking_number, event) {
 
     // Exit Ask mode for other rows when clicking a different row
     const askModeItemsArray = Array.from(askModeItems);
-    if (askModeItemsArray.length > 0 && !askModeItems.has(booking_number)) {
+    const bookingNumberStr = String(booking_number);
+    if (askModeItemsArray.length > 0 && !askModeItems.has(bookingNumberStr)) {
       askModeItems.clear();
-      console.log(`ASK_MODE: Auto-exited for items ${askModeItemsArray.join(', ')} when clicking row #${booking_number} (desktop)`);
+      console.log(`ASK_MODE: Auto-exited for items ${askModeItemsArray.join(', ')} when clicking row #${bookingNumberStr} (desktop)`);
     }
 
     // Toggle row selection for desktop without re-rendering
@@ -916,9 +936,10 @@ function toggleMobileActions(booking_number, event) {
     stopUndoAutoHideCountdown(expandedRowId);
 
     // Exit Ask mode for the previous row
-    if (askModeItems.has(expandedRowId)) {
-      askModeItems.delete(expandedRowId);
-      console.log(`ASK_MODE: Auto-exited for #${expandedRowId} when switching to #${booking_number}`);
+    const expandedRowIdStr = String(expandedRowId);
+    if (askModeItems.has(expandedRowIdStr)) {
+      askModeItems.delete(expandedRowIdStr);
+      console.log(`ASK_MODE: Auto-exited for #${expandedRowIdStr} when switching to #${booking_number}`);
     }
   }
 
@@ -1044,7 +1065,7 @@ function toggleChatHistoryDisplay(booking_number, showAll) {
  * Add mobile action row without re-rendering
  */
 function addMobileActionRow(booking_number) {
-  const item = waitlist.find(i => i.booking_number === booking_number);
+  const item = waitlist.find(i => i.booking_number == booking_number);
   if (!item) return;
 
   const mainRow = document.querySelector(`tr[data-item-id="${booking_number}"]`);
@@ -1059,11 +1080,19 @@ function addMobileActionRow(booking_number) {
   // Get buttons for this item's status
   let buttonHTMLs;
 
+  console.log(`ADD_MOBILE_ROW: Checking if item #${item.booking_number} is in Ask mode...`);
+  console.log(`ADD_MOBILE_ROW: askModeItems.has(${item.booking_number}):`, askModeItems.has(item.booking_number));
+  console.log(`ADD_MOBILE_ROW: item.booking_number type:`, typeof item.booking_number, 'value:', item.booking_number);
+  
   if (askModeItems.has(item.booking_number)) {
+    console.log(`ADD_MOBILE_ROW: Item is in Ask mode, calling getFilteredQuestions...`);
     const filteredQuestions = getFilteredQuestions(item.pax, item.booking_number);
+    console.log(`ADD_MOBILE_ROW: Got ${filteredQuestions.length} filtered questions`);
     const questionButtonsHTML = generateQuestionButtonsHTML(filteredQuestions, item.booking_number, item.customer_name, true);
+    console.log(`ADD_MOBILE_ROW: Generated question buttons HTML length:`, questionButtonsHTML.length);
     buttonHTMLs = [questionButtonsHTML];
   } else {
+    console.log(`ADD_MOBILE_ROW: Item is NOT in Ask mode, generating normal buttons`);
     const buttons = getButtonsForStatus(item.status, true);
     buttonHTMLs = buttons.map(btnDef => generateButtonHTML(btnDef, item.booking_number, item.customer_name, true));
   }
@@ -1442,18 +1471,25 @@ function handleAsk(booking_number, customer_name, event) {
   }
 
   // Toggle Ask mode for this item
-  if (askModeItems.has(booking_number)) {
-    askModeItems.delete(booking_number);
-    console.log(`ASK_MODE: Disabled for #${booking_number}. Current set:`, Array.from(askModeItems));
+  // CRITICAL: Convert to string for consistent Set comparison (waitlist.booking_number is string)
+  const bookingNumberStr = String(booking_number);
+  console.log(`ASK_MODE: Before toggle - askModeItems has booking #${bookingNumberStr}:`, askModeItems.has(bookingNumberStr));
+  console.log(`ASK_MODE: booking_number type:`, typeof booking_number, 'value:', booking_number, '→ converted to:', bookingNumberStr);
+  console.log(`ASK_MODE: askModeItems content:`, Array.from(askModeItems));
+  
+  if (askModeItems.has(bookingNumberStr)) {
+    askModeItems.delete(bookingNumberStr);
+    console.log(`ASK_MODE: Disabled for #${bookingNumberStr}. Current set:`, Array.from(askModeItems));
   } else {
     // Exit Ask mode for all other items before enabling for this one
     if (askModeItems.size > 0) {
       const previousItems = Array.from(askModeItems);
       askModeItems.clear();
-      console.log(`ASK_MODE: Auto-exited for items ${previousItems.join(', ')} when enabling for #${booking_number}`);
+      console.log(`ASK_MODE: Auto-exited for items ${previousItems.join(', ')} when enabling for #${bookingNumberStr}`);
     }
-    askModeItems.add(booking_number);
-    console.log(`ASK_MODE: Enabled for #${booking_number}. Current set:`, Array.from(askModeItems));
+    askModeItems.add(bookingNumberStr);
+    console.log(`ASK_MODE: Enabled for #${bookingNumberStr}. Current set:`, Array.from(askModeItems));
+    console.log(`ASK_MODE: Set items with types:`, Array.from(askModeItems).map(id => `${id}(${typeof id})`));
   }
 
   // Save current scroll position before re-rendering
@@ -1478,7 +1514,7 @@ function handleAsk(booking_number, customer_name, event) {
       if (mainRow) {
         // Simulate the expansion logic
         expandedRowId = booking_number;
-        const item = waitlist.find(i => i.booking_number === booking_number);
+        const item = waitlist.find(i => i.booking_number == booking_number);
         if (!item) return;
 
         const mobileActionRowId = `mobile-actions-${booking_number}`;
@@ -1618,7 +1654,7 @@ async function handleQuestion(booking_list_id, question, q_level = null, buttonI
  */
 function handleNextQuestion(booking_number) {
   console.log(`ACTION: Next question page for booking #${booking_number}`);
-  const item = waitlist.find(i => i.booking_number === booking_number);
+  const item = waitlist.find(i => i.booking_number == booking_number);
   if (!item) return;
 
   const filteredQuestions = getFilteredQuestions(item.pax, booking_number);
@@ -1668,7 +1704,8 @@ function handleNextQuestion(booking_number) {
  */
 function handleExitAsk(booking_number) {
   console.log(`ACTION: Exiting Ask mode for booking #${booking_number}`);
-  askModeItems.delete(booking_number);
+  const bookingNumberStr = String(booking_number);
+  askModeItems.delete(bookingNumberStr);
   // Reset question page when exiting Ask mode
   delete questionPageIndex[booking_number];
   
@@ -2547,12 +2584,16 @@ function renderWaitlist() {
 
     // Check if this item is in Ask mode
     const isInAskMode = askModeItems.has(item.booking_number);
-    //console.log(`RENDER: Item #${item.booking_number} - isInAskMode: ${isInAskMode}`);
+    console.log(`RENDER: Item #${item.booking_number} (type: ${typeof item.booking_number}) - isInAskMode: ${isInAskMode}`);
+    console.log(`RENDER: askModeItems content:`, Array.from(askModeItems));
 
     if (isInAskMode) {
+      console.log(`RENDER: Item #${item.booking_number} is in Ask mode, calling getFilteredQuestions...`);
       // Show question buttons + Exit button (with ask-mode-btn class for 2-per-row layout) - filtered by pax and q_level
       const filteredQuestions = getFilteredQuestions(item.pax, item.booking_number);
+      console.log(`RENDER: Got ${filteredQuestions.length} filtered questions for #${item.booking_number}`);
       const questionButtonsHTML = generateQuestionButtonsHTML(filteredQuestions, item.booking_number, item.customer_name, false);
+      console.log(`RENDER: Generated question buttons HTML for #${item.booking_number}`);
 
       // Split the HTML string into individual button elements and add ask-mode-btn class
       buttonHTMLs = questionButtonsHTML.split('\n').map(btnHTML => {
