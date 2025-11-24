@@ -1,4 +1,4 @@
-const version = '0.651';
+const version = '0.653';
 
 // Display version in header
 document.addEventListener('DOMContentLoaded', () => {
