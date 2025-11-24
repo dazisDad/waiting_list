@@ -1,4 +1,4 @@
-const version = '0.654';
+const version = '0.655';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 
 // Display version in header
@@ -898,6 +898,29 @@ function toggleMobileActions(booking_number, event) {
 
   // If clicking the same row, close it
   if (expandedRowId === booking_number) {
+    // Save scroll position before collapsing
+    const scrollBeforeCollapse = waitlistContainer.scrollTop;
+    const scrollHeightBefore = waitlistContainer.scrollHeight;
+    
+    // Calculate the target scroll position we want to maintain
+    // This is the position of completed items (should stay at Active Queue start)
+    const completedItemsCount = waitlist.filter(item => getSortPriority(item.status) === 0).length;
+    const rows = waitlistBody.getElementsByTagName('tr');
+    let targetScrollTop = 0;
+    
+    if (completedItemsCount > 0) {
+      let completedRowsFound = 0;
+      for (let i = 0; i < rows.length && completedRowsFound < completedItemsCount; i++) {
+        const row = rows[i];
+        if (!row.classList.contains('mobile-action-row') && !row.classList.contains('dummy-spacer-row')) {
+          targetScrollTop += row.offsetHeight;
+          completedRowsFound++;
+        } else if (completedRowsFound < completedItemsCount) {
+          targetScrollTop += row.offsetHeight;
+        }
+      }
+    }
+    
     // Remove mobile action row
     removeMobileActionRow(booking_number);
 
@@ -911,6 +934,55 @@ function toggleMobileActions(booking_number, event) {
     stopUndoAutoHideCountdown(booking_number);
 
     expandedRowId = null;
+    
+    // Recalculate and adjust dummy row after DOM changes to maintain scrollability
+    requestAnimationFrame(() => {
+      const scrollHeightAfter = waitlistContainer.scrollHeight;
+      const heightDifference = scrollHeightBefore - scrollHeightAfter;
+      
+      // If we were at Active Queue position and DOM shrunk, we need to adjust dummy row
+      if (scrollBeforeCollapse >= targetScrollTop - 30 && heightDifference > 0 && completedItemsCount > 0) {
+        // Recalculate heights after collapse
+        const currentRows = waitlistBody.getElementsByTagName('tr');
+        let totalContentHeight = 0;
+        for (let i = 0; i < currentRows.length; i++) {
+          const row = currentRows[i];
+          if (!row.classList.contains('dummy-spacer-row')) {
+            totalContentHeight += row.offsetHeight;
+          }
+        }
+        
+        // Calculate completed items height
+        let completedItemsHeight = 0;
+        let completedRowsFound = 0;
+        for (let i = 0; i < currentRows.length && completedRowsFound < completedItemsCount; i++) {
+          const row = currentRows[i];
+          if (!row.classList.contains('mobile-action-row') && !row.classList.contains('dummy-spacer-row')) {
+            completedItemsHeight += row.offsetHeight;
+            completedRowsFound++;
+          } else if (completedRowsFound < completedItemsCount) {
+            completedItemsHeight += row.offsetHeight;
+          }
+        }
+        
+        const activeItemsHeight = totalContentHeight - completedItemsHeight;
+        const containerHeight = waitlistContainer.offsetHeight;
+        const remainingSpace = containerHeight - activeItemsHeight;
+        const newDummyRowHeight = Math.max(0, remainingSpace);
+        
+        // Update dummy row height
+        const dummyElement = waitlistBody.querySelector('.dummy-spacer-row td');
+        if (dummyElement) {
+          dummyElement.style.height = `${newDummyRowHeight}px`;
+          
+          // Now restore scroll position
+          requestAnimationFrame(() => {
+            waitlistContainer.scrollTop = targetScrollTop;
+          });
+        }
+      }
+    });
+    
     console.log(`MOBILE: Collapsed row for item #${booking_number}`);
     return;
   }
@@ -1685,14 +1757,12 @@ function handleExitAsk(booking_number) {
   
   // Save current scroll position before re-rendering
   const currentScrollTop = waitlistContainer.scrollTop;
-  console.log(`EXIT_ASK: Saving scroll position: ${currentScrollTop.toFixed(2)}px`);
   
   renderWaitlist();
   
   // Restore scroll position after render completes
   requestAnimationFrame(() => {
     waitlistContainer.scrollTop = currentScrollTop;
-    console.log(`EXIT_ASK: Restored scroll position: ${currentScrollTop.toFixed(2)}px`);
   });
 }
 
