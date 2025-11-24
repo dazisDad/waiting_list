@@ -1,4 +1,4 @@
-const version = '0.655';
+const version = '0.656';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 
 // Display version in header
@@ -1604,9 +1604,43 @@ function handleAsk(booking_number, customer_name, event) {
 }
 
 /**
+ * Get ManyChat payload for sending message
+ * @param {number} booking_list_id - The booking list ID
+ * @param {number} questionId - The question ID from questionnaire
+ * @returns {Object} ManyChat payload with subscriber_id, actualMsg, and answer_ids
+ */
+function getManyChatPayload(booking_list_id, questionId) {
+  // Find subscriber_id from waitlist using booking_list_id
+  const booking = waitlist.find(item => item.booking_list_id == booking_list_id);
+  const subscriber_id = booking ? booking.subscriber_id : null;
+
+  // Find actualMsg and answer_ids from questionnaire using questionId
+  const questionObj = questionnaire.find(q => q.Id == questionId);
+  const actualMsg = questionObj ? questionObj.actualMsg : null;
+  const answer_ids = questionObj ? questionObj.answer_ids : null;
+
+  return {
+    subscriber_id,
+    actualMsg,
+    answer_ids
+  };
+}
+
+/**
  * Handles question button click - logs the question and inserts into database
  */
 async function handleQuestion(booking_list_id, question, q_level = null, buttonId = null, questionId = null) {
+  console.log('handleQuestion called with:', {
+    booking_list_id,
+    question,
+    q_level,
+    buttonId,
+    questionId
+  });
+
+  const manyChat_payload = getManyChatPayload(booking_list_id, questionId);
+  console.log('ManyChat payload prepared:', manyChat_payload);
+  
   try {
     // Look up question_prefix from questionnaire if questionId is provided
     let prefix = '';
