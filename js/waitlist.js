@@ -1565,18 +1565,29 @@ function handleAsk(booking_number, customer_name, event) {
  * Handles question button click - logs the question and inserts into database
  */
 async function handleQuestion(booking_list_id, question, q_level = null, buttonId = null, questionId = null) {
-  console.log(`QUESTION: booking_list_id: ${booking_list_id}, question: ${question}, q_level: ${q_level}, buttonId: ${buttonId}, questionId: ${questionId}`);
+  console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+  console.log(`QUESTION_START: Function called`);
+  console.log(`QUESTION_START: booking_list_id=${booking_list_id}, question="${question}", q_level=${q_level}, buttonId=${buttonId}, questionId=${questionId}`);
 
   try {
+    console.log(`QUESTION_STEP_1: Looking up prefix...`);
     // Look up question_prefix from questionnaire if questionId is provided
     let prefix = '';
+    
     if (questionId) {
-      const questionObj = questionnaire.find(q => q.Id === questionId);
+      const questionObj = questionnaire.find(q => q.Id == questionId);
+      
       if (questionObj && questionObj.question_prefix) {
         prefix = questionObj.question_prefix;
+        console.log(`QUESTION_STEP_1: Found prefix="${prefix}"`);
+      } else {
+        console.log(`QUESTION_STEP_1: No prefix found`);
       }
+    } else {
+      console.log(`QUESTION_STEP_1: No questionId provided, skipping prefix lookup`);
     }
 
+    console.log(`QUESTION_STEP_2: Formatting time...`);
     // Format current time for database insertion
     const currentTime = new Date();
     const formattedTime = currentTime.getFullYear() + '-' +
@@ -1585,9 +1596,14 @@ async function handleQuestion(booking_list_id, question, q_level = null, buttonI
       String(currentTime.getHours()).padStart(2, '0') + ':' +
       String(currentTime.getMinutes()).padStart(2, '0') + ':' +
       String(currentTime.getSeconds()).padStart(2, '0');
+    console.log(`QUESTION_STEP_2: formattedTime="${formattedTime}"`);
 
+    console.log(`QUESTION_STEP_3: Creating qnaText...`);
     // Insert question into history_chat table with prefix (if any)
     const qnaText = prefix ? `${prefix} ${question}` : question;
+    console.log(`QUESTION_STEP_3: qnaText="${qnaText}"`);
+    
+    console.log(`QUESTION_STEP_4: Inserting into database...`);
     const updateResult = await connector.updateDataArr(
       'waitlist', // dbKey
       'history_chat', // tableName
@@ -1598,15 +1614,20 @@ async function handleQuestion(booking_list_id, question, q_level = null, buttonI
       }], // dataSetArr
     );
 
+    console.log(`QUESTION_STEP_4: Database response:`, updateResult);
+
     if (!updateResult.success) {
-      console.error('Database insert failed:', updateResult.error);
+      console.error('QUESTION_ERROR: Database insert failed:', updateResult.error);
+      console.log(`QUESTION_ERROR: Exiting function due to database error`);
       return; // Exit if database insert failed
     }
 
-    console.log('Question inserted successfully into history_chat for booking_list_id:', booking_list_id);
+    console.log('QUESTION_STEP_4: ✓ Question inserted successfully into history_chat for booking_list_id:', booking_list_id);
 
+    console.log(`QUESTION_STEP_5: Checking q_level update...`);
     // Update q_level in booking_list table if provided
     if (q_level !== null) {
+      console.log(`QUESTION_STEP_5: q_level is NOT null (${q_level}), updating database...`);
       const qLevelUpdateResult = await connector.updateDataArr(
         'waitlist', // dbKey
         'booking_list', // tableName
@@ -1618,34 +1639,69 @@ async function handleQuestion(booking_list_id, question, q_level = null, buttonI
         'booking_list_id' // primaryKey - use booking_list_id as primary key
       );
 
-      if (!qLevelUpdateResult.success) {
-        console.error('Q-level database update failed:', qLevelUpdateResult.error);
-      } else {
-        console.log('Q-level updated successfully for booking_list_id:', booking_list_id, 'to:', q_level);
+      console.log(`QUESTION_STEP_5: Q-level database response:`, qLevelUpdateResult);
 
-        // Update local waitlist data
-        const item = waitlist.find(item => item.booking_list_id === booking_list_id);
+      if (!qLevelUpdateResult.success) {
+        console.error('QUESTION_STEP_5: ✗ Q-level database update failed:', qLevelUpdateResult.error);
+      } else {
+        console.log(`QUESTION_STEP_5: ✓ Q-level updated in database`);
+        // Update local waitlist data (use == for type flexibility)
+        const item = waitlist.find(item => item.booking_list_id == booking_list_id);
         if (item) {
           item.q_level = q_level;
-          console.log('Local q_level updated for booking_list_id:', booking_list_id);
+          console.log(`QUESTION_STEP_5: ✓ Local q_level updated for booking_list_id:`, booking_list_id);
+        } else {
+          console.log(`QUESTION_STEP_5: ✗ Could not find item in waitlist to update local q_level`);
         }
       }
+    } else {
+      console.log(`QUESTION_STEP_5: q_level is null, skipping update`);
     }
 
-    // Add the new chat record to local chatlist for immediate UI update
+    console.log(`QUESTION_STEP_6: Adding new chat to local chatlist...`);
+    console.log(`QUESTION_STEP_6: Before push - chatlist.length=${chatlist.length}`);
+    // ALWAYS execute: Add the new chat record to local chatlist for immediate UI update
     const newChatRecord = {
       booking_list_id: booking_list_id,
       dateTime: Date.now(), // Use current timestamp in milliseconds for local data
       qna: qnaText, // Use same qnaText as database insert
       Id: Date.now() // Use timestamp as temporary ID
     };
+    console.log(`QUESTION_STEP_6: New chat record:`, newChatRecord);
     chatlist.push(newChatRecord);
+    console.log(`QUESTION_STEP_6: After push - chatlist.length=${chatlist.length}`);
+    console.log(`QUESTION_STEP_6: ✓ New chat added to local chatlist`);
 
-    // Re-render to show the new question in chat history
+    console.log(`QUESTION_STEP_7: Calling renderWaitlist()...`);
+    // ALWAYS execute: Re-render to show the new question in chat history
     renderWaitlist();
+    console.log(`QUESTION_STEP_7: ✓ renderWaitlist() completed`);
+    
+    console.log(`QUESTION_STEP_8: Checking if mobile action row needs to be restored...`);
+    // On mobile, re-open the action row if it was open (expandedRowId is set)
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile && expandedRowId !== null) {
+      console.log(`QUESTION_STEP_8: Mobile detected, expandedRowId=${expandedRowId}`);
+      // Find booking_number from booking_list_id
+      const item = waitlist.find(i => i.booking_list_id == booking_list_id);
+      if (item && item.booking_number == expandedRowId) {
+        console.log(`QUESTION_STEP_8: Re-opening mobile action row for booking #${expandedRowId}`);
+        requestAnimationFrame(() => {
+          addMobileActionRow(expandedRowId);
+          console.log(`QUESTION_STEP_8: ✓ Mobile action row restored`);
+        });
+      } else {
+        console.log(`QUESTION_STEP_8: Item not found or booking_number mismatch`);
+      }
+    } else {
+      console.log(`QUESTION_STEP_8: Desktop or no expanded row, skipping`);
+    }
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 
   } catch (error) {
-    console.error('Error inserting question into database:', error);
+    console.error('QUESTION_FATAL_ERROR: Exception caught:', error);
+    console.error('QUESTION_FATAL_ERROR: Stack trace:', error.stack);
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
   }
 }
 
