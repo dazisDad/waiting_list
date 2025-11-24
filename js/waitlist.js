@@ -1,4 +1,4 @@
-const version = '0.656';
+const version = '0.657';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 
 // Display version in header
@@ -31,16 +31,16 @@ function handleNewEvent(obj) {
 
     // Find booking_number from waitlist using subscriber_id
     // 서버 업데이트 전 waitlist와 비교함
-     const bookingItem = waitlist.find(item => item.subscriber_id === lastItem.subscriber_id);
+    const bookingItem = waitlist.find(item => item.subscriber_id === lastItem.subscriber_id);
 
     // Delay notification and UI update by 300ms
     setTimeout(async () => {
-      
+
       // Refresh data from server first to get latest state
       await getServerSideUpdate();
-      
+
       let title, body;
-      
+
       // Show notification for both new and updated items
       if (bookingItem && bookingItem.booking_number) {
         title = '[UPDATED] Waitlist';
@@ -51,7 +51,7 @@ function handleNewEvent(obj) {
         const newBookingItem = waitlist.find(item => item.subscriber_id === lastItem.subscriber_id);
         if (newBookingItem && newBookingItem.subscriber_id) {
           console.log(`NEW_BOOKING: Detected new booking subscriber_id: ${newBookingItem.subscriber_id}`);
-          
+
           // Use double requestAnimationFrame to ensure DOM is fully ready after renderWaitlist
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
@@ -64,11 +64,11 @@ function handleNewEvent(obj) {
               } else {
                 console.warn(`NEW_BADGE: Badge span not found for subscriber_id ${newBookingItem.subscriber_id}`);
               }
-              
+
               // Update button state and trigger scroll to active after badge is displayed
               console.log('NEW_BOOKING: Updating scroll button state and triggering scroll');
               updateScrollAndButtonState();
-              
+
               // Use another requestAnimationFrame to ensure button state is updated before scrolling
               requestAnimationFrame(() => {
                 if (scrollButton && !scrollButton.disabled) {
@@ -80,7 +80,7 @@ function handleNewEvent(obj) {
               });
             });
           });
-          
+
           title = '[NEW] Waitlist';
           body = `New Booking #: ${newBookingItem.booking_number}`;
           showNotification(title, body);
@@ -98,6 +98,7 @@ const store_id = 'DL_Sunway_Geo';
 let waitlist = [];
 let chatlist = [];
 let questionnaire = [];
+let answers = [];
 let configuration = [];
 
 const minPax_for_bigTable = 5;
@@ -309,6 +310,28 @@ async function fetchAskQList() {
 }
 
 // 페이지 로딩 시 ask_question_list 테이블 데이터 가져오기
+async function fetchAnswerList() {
+  try {
+    // ask_question_list 테이블에서 store_id로 필터링하여 데이터 가져오기
+    const result = await connector.selectWhere('waitlist', 'answer_list', {
+      template: 'store_id = ?',
+      values: [store_id],
+      types: 's' // string
+    });
+
+    if (result.success && result.data) {
+      return result.data;
+    } else {
+      console.error('데이터 조회 실패:', result.error);
+      return [];
+    }
+  } catch (error) {
+    console.error('fetchAnswerList 오류:', error);
+    return [];
+  }
+}
+
+// 페이지 로딩 시 ask_question_list 테이블 데이터 가져오기
 async function fetchConfiguration() {
   try {
     // ask_question_list 테이블에서 store_id로 필터링하여 데이터 가져오기
@@ -336,19 +359,23 @@ async function loadStaticData() {
     console.log('STATIC_DATA: Loading static data...');
 
     // 고정 데이터 병렬로 가져오기
-    const [questionsData, configurationData] = await Promise.all([
+    const [questionsData, answerData, configurationData] = await Promise.all([
       fetchAskQList(),
+      fetchAnswerList(),
       fetchConfiguration()
     ]);
 
     console.log('STATIC_DATA: Static data loaded successfully');
     console.log('- Questions:', questionsData?.length || 0);
+    console.log('- Answers:', answerData?.length || 0);
     console.log('- Configuration:', configurationData?.length || 0);
 
     // 전역 변수 설정
     questionnaire = questionsData;
+    answers = answerData;
     configuration = configurationData[0];
 
+    console.log(answers);
     console.log(configuration);
 
     console.log('STATIC_DATA: Static data load completed');
@@ -405,25 +432,25 @@ async function getServerSideUpdate() {
 function getFilteredQuestions(customerPax, booking_number) {
   // Find the customer's q_level and booking_list_id from waitlist
   const customer = waitlist.find(item => item.booking_number == booking_number);
-  
+
   const customerQLevel = customer ? customer.q_level : 0;
   const bookingListId = customer ? customer.booking_list_id : null;
 
   // Get all questions from chat history for this booking_list_id
   const askedQuestions = new Set();
   let lastChatStartsWithQ = false;
-  
+
   if (bookingListId) {
     const customerChats = chatlist
       .filter(chat => chat.booking_list_id == bookingListId)
       .sort((a, b) => a.dateTime - b.dateTime); // Sort by dateTime ascending
-    
+
     // Check if the last chat message starts with 'Q:'
     if (customerChats.length > 0) {
       const lastChat = customerChats[customerChats.length - 1];
       lastChatStartsWithQ = lastChat.qna.startsWith('Q:');
     }
-    
+
     customerChats.forEach(chat => {
       // Try to match question text from qna by checking against questionnaire items
       // For each questionnaire item, check if qna matches "prefix question" or just "question"
@@ -436,7 +463,7 @@ function getFilteredQuestions(customerPax, booking_number) {
       });
     });
   }
-  
+
   const filtered = questionnaire.filter(q => {
     // Only include questions that are triggered by Ask button
     if (q.invokedWithBtn !== 'Ask') return false;
@@ -459,7 +486,7 @@ function getFilteredQuestions(customerPax, booking_number) {
 
     return true;
   });
-  
+
   return filtered;
 }
 
@@ -901,13 +928,13 @@ function toggleMobileActions(booking_number, event) {
     // Save scroll position before collapsing
     const scrollBeforeCollapse = waitlistContainer.scrollTop;
     const scrollHeightBefore = waitlistContainer.scrollHeight;
-    
+
     // Calculate the target scroll position we want to maintain
     // This is the position of completed items (should stay at Active Queue start)
     const completedItemsCount = waitlist.filter(item => getSortPriority(item.status) === 0).length;
     const rows = waitlistBody.getElementsByTagName('tr');
     let targetScrollTop = 0;
-    
+
     if (completedItemsCount > 0) {
       let completedRowsFound = 0;
       for (let i = 0; i < rows.length && completedRowsFound < completedItemsCount; i++) {
@@ -920,7 +947,7 @@ function toggleMobileActions(booking_number, event) {
         }
       }
     }
-    
+
     // Remove mobile action row
     removeMobileActionRow(booking_number);
 
@@ -934,12 +961,12 @@ function toggleMobileActions(booking_number, event) {
     stopUndoAutoHideCountdown(booking_number);
 
     expandedRowId = null;
-    
+
     // Recalculate and adjust dummy row after DOM changes to maintain scrollability
     requestAnimationFrame(() => {
       const scrollHeightAfter = waitlistContainer.scrollHeight;
       const heightDifference = scrollHeightBefore - scrollHeightAfter;
-      
+
       // If we were at Active Queue position and DOM shrunk, we need to adjust dummy row
       if (scrollBeforeCollapse >= targetScrollTop - 30 && heightDifference > 0 && completedItemsCount > 0) {
         // Recalculate heights after collapse
@@ -951,7 +978,7 @@ function toggleMobileActions(booking_number, event) {
             totalContentHeight += row.offsetHeight;
           }
         }
-        
+
         // Calculate completed items height
         let completedItemsHeight = 0;
         let completedRowsFound = 0;
@@ -964,17 +991,17 @@ function toggleMobileActions(booking_number, event) {
             completedItemsHeight += row.offsetHeight;
           }
         }
-        
+
         const activeItemsHeight = totalContentHeight - completedItemsHeight;
         const containerHeight = waitlistContainer.offsetHeight;
         const remainingSpace = containerHeight - activeItemsHeight;
         const newDummyRowHeight = Math.max(0, remainingSpace);
-        
+
         // Update dummy row height
         const dummyElement = waitlistBody.querySelector('.dummy-spacer-row td');
         if (dummyElement) {
           dummyElement.style.height = `${newDummyRowHeight}px`;
-          
+
           // Now restore scroll position
           requestAnimationFrame(() => {
             waitlistContainer.scrollTop = targetScrollTop;
@@ -982,7 +1009,7 @@ function toggleMobileActions(booking_number, event) {
         }
       }
     });
-    
+
     console.log(`MOBILE: Collapsed row for item #${booking_number}`);
     return;
   }
@@ -1139,7 +1166,7 @@ function addMobileActionRow(booking_number) {
 
   // Get buttons for this item's status
   let buttonHTMLs;
-  
+
   if (askModeItems.has(item.booking_number)) {
     const filteredQuestions = getFilteredQuestions(item.pax, item.booking_number);
     const questionButtonsHTML = generateQuestionButtonsHTML(filteredQuestions, item.booking_number, item.customer_name, true);
@@ -1525,7 +1552,7 @@ function handleAsk(booking_number, customer_name, event) {
   // Toggle Ask mode for this item
   // CRITICAL: Convert to string for consistent Set comparison (waitlist.booking_number is string)
   const bookingNumberStr = String(booking_number);
-  
+
   if (askModeItems.has(bookingNumberStr)) {
     askModeItems.delete(bookingNumberStr);
   } else {
@@ -1541,7 +1568,7 @@ function handleAsk(booking_number, customer_name, event) {
 
   // Re-render to show question buttons
   renderWaitlist();
-  
+
   // Restore scroll position after render completes
   requestAnimationFrame(() => {
     waitlistContainer.scrollTop = currentScrollTop;
@@ -1609,20 +1636,66 @@ function handleAsk(booking_number, customer_name, event) {
  * @param {number} questionId - The question ID from questionnaire
  * @returns {Object} ManyChat payload with subscriber_id, actualMsg, and answer_ids
  */
-function getManyChatPayload(booking_list_id, questionId) {
+function createManyChatPayload(booking_list_id, questionId) {
+  /**
+   * Helper function to map field ID from configuration
+   * @param {any|Array} value - The value(s) to be used as field_value. Can be a single value or an array.
+   * @param {string} fid_name - The field name to look up in configuration (e.g., 'BLId', 'BQ', 'BA')
+   * @returns {Object|Array} Object with field_id and field_value, or array of such objects if value is an array
+   */
+  function getFieldIdValueSet(value, fid_name) {
+    // If value is an array, return array of field objects with sequential numbering
+    if (Array.isArray(value)) {
+      return value.map((item, index) => {
+        const fieldKey = `fid_${fid_name}${index + 1}`; // BA1, BA2, BA3, etc.
+        const field_id = configuration[fieldKey] ? parseInt(configuration[fieldKey]) : null;
+        return {
+          field_id: field_id,
+          field_value: item
+        };
+      });
+    }
+    
+    // Single value - return single object
+    const fieldKey = `fid_${fid_name}`;
+    const field_id = configuration[fieldKey] ? parseInt(configuration[fieldKey]) : null;
+    return {
+      field_id: field_id,
+      field_value: value
+    };
+  }
+
   // Find subscriber_id from waitlist using booking_list_id
   const booking = waitlist.find(item => item.booking_list_id == booking_list_id);
   const subscriber_id = booking ? booking.subscriber_id : null;
 
   // Find actualMsg and answer_ids from questionnaire using questionId
   const questionObj = questionnaire.find(q => q.Id == questionId);
-  const actualMsg = questionObj ? questionObj.actualMsg : null;
+  const booking_question = questionObj ? questionObj.actualMsg : null;
+  
   const answer_ids = questionObj ? questionObj.answer_ids : null;
+  // Convert answer_ids string to array (e.g., '1,2,3' -> [1, 2, 3])
+  const answer_ids_array = answer_ids ? answer_ids.split(',').map(id => parseInt(id.trim())) : [];
+  
+  // Find actualMsg for each answer_id from answers array
+  const actualMsg_array = answer_ids_array.map(answerId => {
+    const answerObj = answers.find(a => a.Id == answerId);
+    return answerObj ? answerObj.actualMsg : null;
+  }).filter(msg => msg !== null); // Remove null values if answer not found
+
+  const booking_answer_count = answer_ids_array.length;
+
+  // Build fields array with all ManyChat custom fields
+  const fields = [
+    getFieldIdValueSet(booking_list_id, 'BLId'),
+    getFieldIdValueSet(booking_answer_count, 'BAC'),
+    getFieldIdValueSet(booking_question, 'BQ'),
+    ...getFieldIdValueSet(actualMsg_array, 'BA') // Spread array of answer fields
+  ];
 
   return {
     subscriber_id,
-    actualMsg,
-    answer_ids
+    fields
   };
 }
 
@@ -1638,16 +1711,16 @@ async function handleQuestion(booking_list_id, question, q_level = null, buttonI
     questionId
   });
 
-  const manyChat_payload = getManyChatPayload(booking_list_id, questionId);
+  const manyChat_payload = createManyChatPayload(booking_list_id, questionId);
   console.log('ManyChat payload prepared:', manyChat_payload);
-  
+
   try {
     // Look up question_prefix from questionnaire if questionId is provided
     let prefix = '';
-    
+
     if (questionId) {
       const questionObj = questionnaire.find(q => q.Id == questionId);
-      
+
       if (questionObj && questionObj.question_prefix) {
         prefix = questionObj.question_prefix;
       }
@@ -1788,12 +1861,12 @@ function handleExitAsk(booking_number) {
   askModeItems.delete(bookingNumberStr);
   // Reset question page when exiting Ask mode
   delete questionPageIndex[booking_number];
-  
+
   // Save current scroll position before re-rendering
   const currentScrollTop = waitlistContainer.scrollTop;
-  
+
   renderWaitlist();
-  
+
   // Restore scroll position after render completes
   requestAnimationFrame(() => {
     waitlistContainer.scrollTop = currentScrollTop;
@@ -3040,7 +3113,7 @@ async function startInitialization() {
   try {
     // Load static data first (once only)
     await loadStaticData();
-    
+
     // Load dynamic data
     await getServerSideUpdate();
 
