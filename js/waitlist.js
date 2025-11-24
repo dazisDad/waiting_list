@@ -1,4 +1,5 @@
-const version = '0.653';
+const version = '0.654';
+const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 
 // Display version in header
 document.addEventListener('DOMContentLoaded', () => {
@@ -402,11 +403,8 @@ async function getServerSideUpdate() {
  * @returns {Array} Filtered array of question objects
  */
 function getFilteredQuestions(customerPax, booking_number) {
-  console.log(`GET_FILTERED_Q: Called with customerPax=${customerPax}, booking_number=${booking_number} (type: ${typeof booking_number})`);
-  
   // Find the customer's q_level and booking_list_id from waitlist
   const customer = waitlist.find(item => item.booking_number == booking_number);
-  console.log(`GET_FILTERED_Q: Customer found:`, customer ? `Yes (q_level=${customer.q_level}, booking_list_id=${customer.booking_list_id})` : 'No');
   
   const customerQLevel = customer ? customer.q_level : 0;
   const bookingListId = customer ? customer.booking_list_id : null;
@@ -438,10 +436,6 @@ function getFilteredQuestions(customerPax, booking_number) {
       });
     });
   }
-
-  console.log(`GET_FILTERED_Q: Total questionnaire items:`, questionnaire.length);
-  console.log(`GET_FILTERED_Q: customerQLevel=${customerQLevel}, lastChatStartsWithQ=${lastChatStartsWithQ}`);
-  console.log(`GET_FILTERED_Q: askedQuestions:`, Array.from(askedQuestions));
   
   const filtered = questionnaire.filter(q => {
     // Only include questions that are triggered by Ask button
@@ -466,9 +460,6 @@ function getFilteredQuestions(customerPax, booking_number) {
     return true;
   });
   
-  console.log(`GET_FILTERED_Q: Filtered questions count:`, filtered.length);
-  console.log(`GET_FILTERED_Q: Filtered questions:`, filtered.map(q => q.question));
-  
   return filtered;
 }
 
@@ -482,14 +473,10 @@ function getFilteredQuestions(customerPax, booking_number) {
  * @returns {string} HTML string for question buttons
  */
 function generateQuestionButtonsHTML(filteredQuestions, booking_number, customer_name, isMobile) {
-  console.log(`GEN_Q_BUTTONS: Called for booking #${booking_number}, isMobile=${isMobile}, questions=${filteredQuestions.length}`);
-  
   const MAX_QUESTIONS_PER_PAGE = 3;
   const currentPage = questionPageIndex[booking_number] || 0;
   const totalQuestions = filteredQuestions.length;
   const totalPages = Math.ceil(totalQuestions / MAX_QUESTIONS_PER_PAGE);
-  
-  console.log(`GEN_Q_BUTTONS: currentPage=${currentPage}, totalQuestions=${totalQuestions}, totalPages=${totalPages}`);
 
   // Get questions for current page
   const startIdx = currentPage * MAX_QUESTIONS_PER_PAGE;
@@ -565,9 +552,7 @@ function generateQuestionButtonsHTML(filteredQuestions, booking_number, customer
     questionButtons.push(exitButton);
   }
 
-  const result = questionButtons.join('\n');
-  console.log(`GEN_Q_BUTTONS: Generated ${questionButtons.length} button elements, total HTML length: ${result.length}`);
-  return result;
+  return questionButtons.join('\n');
 }
 
 const waitlistBody = document.getElementById('waitlist-body');
@@ -596,25 +581,30 @@ const originalConsoleWarn = console.warn;
 const originalConsoleError = console.error;
 
 // Log version info first
-logBuffer.push(`[VERSION] waitlist.js version ${version}`);
-logBuffer.push(`[DEVICE] User Agent: ${navigator.userAgent}`);
-logBuffer.push(`[VIEWPORT] Window size: ${window.innerWidth}x${window.innerHeight}px`);
+if (isDebugging) {
+  logBuffer.push(`[VERSION] waitlist.js version ${version}`);
+  logBuffer.push(`[DEVICE] User Agent: ${navigator.userAgent}`);
+  logBuffer.push(`[VIEWPORT] Window size: ${window.innerWidth}x${window.innerHeight}px`);
+}
 originalConsoleLog(`VERSION: ${version}`);
 
-console.log = function (...args) {
-  logBuffer.push(`[LOG] ${args.join(' ')}`);
-  originalConsoleLog.apply(console, args);
-};
+// Only override console methods if debugging is enabled
+if (isDebugging) {
+  console.log = function (...args) {
+    logBuffer.push(`[LOG] ${args.join(' ')}`);
+    originalConsoleLog.apply(console, args);
+  };
 
-console.warn = function (...args) {
-  logBuffer.push(`[WARN] ${args.join(' ')}`);
-  originalConsoleWarn.apply(console, args);
-};
+  console.warn = function (...args) {
+    logBuffer.push(`[WARN] ${args.join(' ')}`);
+    originalConsoleWarn.apply(console, args);
+  };
 
-console.error = function (...args) {
-  logBuffer.push(`[ERROR] ${args.join(' ')}`);
-  originalConsoleError.apply(console, args);
-};
+  console.error = function (...args) {
+    logBuffer.push(`[ERROR] ${args.join(' ')}`);
+    originalConsoleError.apply(console, args);
+  };
+}
 
 // Function to copy all logs to clipboard
 window.copyLogsToClipboard = function () {
@@ -858,7 +848,6 @@ function toggleMobileActions(booking_number, event) {
     const bookingNumberStr = String(booking_number);
     if (askModeItemsArray.length > 0 && !askModeItems.has(bookingNumberStr)) {
       askModeItems.clear();
-      console.log(`ASK_MODE: Auto-exited for items ${askModeItemsArray.join(', ')} when clicking row #${bookingNumberStr} (desktop)`);
     }
 
     // Toggle row selection for desktop without re-rendering
@@ -939,7 +928,6 @@ function toggleMobileActions(booking_number, event) {
     const expandedRowIdStr = String(expandedRowId);
     if (askModeItems.has(expandedRowIdStr)) {
       askModeItems.delete(expandedRowIdStr);
-      console.log(`ASK_MODE: Auto-exited for #${expandedRowIdStr} when switching to #${booking_number}`);
     }
   }
 
@@ -1079,20 +1067,12 @@ function addMobileActionRow(booking_number) {
 
   // Get buttons for this item's status
   let buttonHTMLs;
-
-  console.log(`ADD_MOBILE_ROW: Checking if item #${item.booking_number} is in Ask mode...`);
-  console.log(`ADD_MOBILE_ROW: askModeItems.has(${item.booking_number}):`, askModeItems.has(item.booking_number));
-  console.log(`ADD_MOBILE_ROW: item.booking_number type:`, typeof item.booking_number, 'value:', item.booking_number);
   
   if (askModeItems.has(item.booking_number)) {
-    console.log(`ADD_MOBILE_ROW: Item is in Ask mode, calling getFilteredQuestions...`);
     const filteredQuestions = getFilteredQuestions(item.pax, item.booking_number);
-    console.log(`ADD_MOBILE_ROW: Got ${filteredQuestions.length} filtered questions`);
     const questionButtonsHTML = generateQuestionButtonsHTML(filteredQuestions, item.booking_number, item.customer_name, true);
-    console.log(`ADD_MOBILE_ROW: Generated question buttons HTML length:`, questionButtonsHTML.length);
     buttonHTMLs = [questionButtonsHTML];
   } else {
-    console.log(`ADD_MOBILE_ROW: Item is NOT in Ask mode, generating normal buttons`);
     const buttons = getButtonsForStatus(item.status, true);
     buttonHTMLs = buttons.map(btnDef => generateButtonHTML(btnDef, item.booking_number, item.customer_name, true));
   }
@@ -1473,28 +1453,19 @@ function handleAsk(booking_number, customer_name, event) {
   // Toggle Ask mode for this item
   // CRITICAL: Convert to string for consistent Set comparison (waitlist.booking_number is string)
   const bookingNumberStr = String(booking_number);
-  console.log(`ASK_MODE: Before toggle - askModeItems has booking #${bookingNumberStr}:`, askModeItems.has(bookingNumberStr));
-  console.log(`ASK_MODE: booking_number type:`, typeof booking_number, 'value:', booking_number, '→ converted to:', bookingNumberStr);
-  console.log(`ASK_MODE: askModeItems content:`, Array.from(askModeItems));
   
   if (askModeItems.has(bookingNumberStr)) {
     askModeItems.delete(bookingNumberStr);
-    console.log(`ASK_MODE: Disabled for #${bookingNumberStr}. Current set:`, Array.from(askModeItems));
   } else {
     // Exit Ask mode for all other items before enabling for this one
     if (askModeItems.size > 0) {
-      const previousItems = Array.from(askModeItems);
       askModeItems.clear();
-      console.log(`ASK_MODE: Auto-exited for items ${previousItems.join(', ')} when enabling for #${bookingNumberStr}`);
     }
     askModeItems.add(bookingNumberStr);
-    console.log(`ASK_MODE: Enabled for #${bookingNumberStr}. Current set:`, Array.from(askModeItems));
-    console.log(`ASK_MODE: Set items with types:`, Array.from(askModeItems).map(id => `${id}(${typeof id})`));
   }
 
   // Save current scroll position before re-rendering
   const currentScrollTop = waitlistContainer.scrollTop;
-  console.log(`ASK_MODE: Saving scroll position: ${currentScrollTop.toFixed(2)}px`);
 
   // Re-render to show question buttons
   renderWaitlist();
@@ -1502,7 +1473,6 @@ function handleAsk(booking_number, customer_name, event) {
   // Restore scroll position after render completes
   requestAnimationFrame(() => {
     waitlistContainer.scrollTop = currentScrollTop;
-    console.log(`ASK_MODE: Restored scroll position: ${currentScrollTop.toFixed(2)}px`);
   });
 
   // On mobile, re-open the action row after rendering
@@ -1565,12 +1535,7 @@ function handleAsk(booking_number, customer_name, event) {
  * Handles question button click - logs the question and inserts into database
  */
 async function handleQuestion(booking_list_id, question, q_level = null, buttonId = null, questionId = null) {
-  console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-  console.log(`QUESTION_START: Function called`);
-  console.log(`QUESTION_START: booking_list_id=${booking_list_id}, question="${question}", q_level=${q_level}, buttonId=${buttonId}, questionId=${questionId}`);
-
   try {
-    console.log(`QUESTION_STEP_1: Looking up prefix...`);
     // Look up question_prefix from questionnaire if questionId is provided
     let prefix = '';
     
@@ -1579,15 +1544,8 @@ async function handleQuestion(booking_list_id, question, q_level = null, buttonI
       
       if (questionObj && questionObj.question_prefix) {
         prefix = questionObj.question_prefix;
-        console.log(`QUESTION_STEP_1: Found prefix="${prefix}"`);
-      } else {
-        console.log(`QUESTION_STEP_1: No prefix found`);
       }
-    } else {
-      console.log(`QUESTION_STEP_1: No questionId provided, skipping prefix lookup`);
     }
-
-    console.log(`QUESTION_STEP_2: Formatting time...`);
     // Format current time for database insertion
     const currentTime = new Date();
     const formattedTime = currentTime.getFullYear() + '-' +
@@ -1596,14 +1554,9 @@ async function handleQuestion(booking_list_id, question, q_level = null, buttonI
       String(currentTime.getHours()).padStart(2, '0') + ':' +
       String(currentTime.getMinutes()).padStart(2, '0') + ':' +
       String(currentTime.getSeconds()).padStart(2, '0');
-    console.log(`QUESTION_STEP_2: formattedTime="${formattedTime}"`);
 
-    console.log(`QUESTION_STEP_3: Creating qnaText...`);
     // Insert question into history_chat table with prefix (if any)
     const qnaText = prefix ? `${prefix} ${question}` : question;
-    console.log(`QUESTION_STEP_3: qnaText="${qnaText}"`);
-    
-    console.log(`QUESTION_STEP_4: Inserting into database...`);
     const updateResult = await connector.updateDataArr(
       'waitlist', // dbKey
       'history_chat', // tableName
@@ -1614,20 +1567,12 @@ async function handleQuestion(booking_list_id, question, q_level = null, buttonI
       }], // dataSetArr
     );
 
-    console.log(`QUESTION_STEP_4: Database response:`, updateResult);
-
     if (!updateResult.success) {
-      console.error('QUESTION_ERROR: Database insert failed:', updateResult.error);
-      console.log(`QUESTION_ERROR: Exiting function due to database error`);
+      console.error('Database insert failed:', updateResult.error);
       return; // Exit if database insert failed
     }
-
-    console.log('QUESTION_STEP_4: ✓ Question inserted successfully into history_chat for booking_list_id:', booking_list_id);
-
-    console.log(`QUESTION_STEP_5: Checking q_level update...`);
     // Update q_level in booking_list table if provided
     if (q_level !== null) {
-      console.log(`QUESTION_STEP_5: q_level is NOT null (${q_level}), updating database...`);
       const qLevelUpdateResult = await connector.updateDataArr(
         'waitlist', // dbKey
         'booking_list', // tableName
@@ -1639,27 +1584,17 @@ async function handleQuestion(booking_list_id, question, q_level = null, buttonI
         'booking_list_id' // primaryKey - use booking_list_id as primary key
       );
 
-      console.log(`QUESTION_STEP_5: Q-level database response:`, qLevelUpdateResult);
-
-      if (!qLevelUpdateResult.success) {
-        console.error('QUESTION_STEP_5: ✗ Q-level database update failed:', qLevelUpdateResult.error);
-      } else {
-        console.log(`QUESTION_STEP_5: ✓ Q-level updated in database`);
+      if (qLevelUpdateResult.success) {
         // Update local waitlist data (use == for type flexibility)
         const item = waitlist.find(item => item.booking_list_id == booking_list_id);
         if (item) {
           item.q_level = q_level;
-          console.log(`QUESTION_STEP_5: ✓ Local q_level updated for booking_list_id:`, booking_list_id);
-        } else {
-          console.log(`QUESTION_STEP_5: ✗ Could not find item in waitlist to update local q_level`);
         }
+      } else {
+        console.error('Q-level database update failed:', qLevelUpdateResult.error);
       }
-    } else {
-      console.log(`QUESTION_STEP_5: q_level is null, skipping update`);
     }
 
-    console.log(`QUESTION_STEP_6: Adding new chat to local chatlist...`);
-    console.log(`QUESTION_STEP_6: Before push - chatlist.length=${chatlist.length}`);
     // ALWAYS execute: Add the new chat record to local chatlist for immediate UI update
     const newChatRecord = {
       booking_list_id: booking_list_id,
@@ -1667,41 +1602,24 @@ async function handleQuestion(booking_list_id, question, q_level = null, buttonI
       qna: qnaText, // Use same qnaText as database insert
       Id: Date.now() // Use timestamp as temporary ID
     };
-    console.log(`QUESTION_STEP_6: New chat record:`, newChatRecord);
     chatlist.push(newChatRecord);
-    console.log(`QUESTION_STEP_6: After push - chatlist.length=${chatlist.length}`);
-    console.log(`QUESTION_STEP_6: ✓ New chat added to local chatlist`);
 
-    console.log(`QUESTION_STEP_7: Calling renderWaitlist()...`);
     // ALWAYS execute: Re-render to show the new question in chat history
     renderWaitlist();
-    console.log(`QUESTION_STEP_7: ✓ renderWaitlist() completed`);
-    
-    console.log(`QUESTION_STEP_8: Checking if mobile action row needs to be restored...`);
     // On mobile, re-open the action row if it was open (expandedRowId is set)
     const isMobile = window.innerWidth <= 768;
     if (isMobile && expandedRowId !== null) {
-      console.log(`QUESTION_STEP_8: Mobile detected, expandedRowId=${expandedRowId}`);
       // Find booking_number from booking_list_id
       const item = waitlist.find(i => i.booking_list_id == booking_list_id);
       if (item && item.booking_number == expandedRowId) {
-        console.log(`QUESTION_STEP_8: Re-opening mobile action row for booking #${expandedRowId}`);
         requestAnimationFrame(() => {
           addMobileActionRow(expandedRowId);
-          console.log(`QUESTION_STEP_8: ✓ Mobile action row restored`);
         });
-      } else {
-        console.log(`QUESTION_STEP_8: Item not found or booking_number mismatch`);
       }
-    } else {
-      console.log(`QUESTION_STEP_8: Desktop or no expanded row, skipping`);
     }
-    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 
   } catch (error) {
-    console.error('QUESTION_FATAL_ERROR: Exception caught:', error);
-    console.error('QUESTION_FATAL_ERROR: Stack trace:', error.stack);
-    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    console.error('handleQuestion error:', error);
   }
 }
 
@@ -2376,7 +2294,6 @@ function handleScrollToActive(isAutoTrigger = false) {
     // Exit ask mode if active
     if (askModeItems.has(expandedRowId)) {
       askModeItems.delete(expandedRowId);
-      console.log(`ASK_MODE: Auto-exited for #${expandedRowId} before scroll`);
     }
 
     expandedRowId = null;
@@ -2512,7 +2429,7 @@ function renderWaitlist() {
 
     // Get chat history for this booking_list_id
     const chatHistory = chatlist
-      .filter(chat => chat.booking_list_id === item.booking_list_id)
+      .filter(chat => chat.booking_list_id == item.booking_list_id) // Use == for type-flexible comparison
       .sort((a, b) => a.dateTime - b.dateTime); // Sort by dateTime ascending
 
     // Build chat history HTML with elapsed time
@@ -2640,28 +2557,20 @@ function renderWaitlist() {
 
     // Check if this item is in Ask mode
     const isInAskMode = askModeItems.has(item.booking_number);
-    console.log(`RENDER: Item #${item.booking_number} (type: ${typeof item.booking_number}) - isInAskMode: ${isInAskMode}`);
-    console.log(`RENDER: askModeItems content:`, Array.from(askModeItems));
 
     if (isInAskMode) {
-      console.log(`RENDER: Item #${item.booking_number} is in Ask mode, calling getFilteredQuestions...`);
       // Show question buttons + Exit button (with ask-mode-btn class for 2-per-row layout) - filtered by pax and q_level
       const filteredQuestions = getFilteredQuestions(item.pax, item.booking_number);
-      console.log(`RENDER: Got ${filteredQuestions.length} filtered questions for #${item.booking_number}`);
       const questionButtonsHTML = generateQuestionButtonsHTML(filteredQuestions, item.booking_number, item.customer_name, false);
-      console.log(`RENDER: Generated question buttons HTML for #${item.booking_number}`);
 
       // Split the HTML string into individual button elements and add ask-mode-btn class
       buttonHTMLs = questionButtonsHTML.split('\n').map(btnHTML => {
         // Add ask-mode-btn class to each button for desktop 2-per-row layout
         return btnHTML.replace('flex-1', 'flex-1 ask-mode-btn');
       });
-
-      //console.log(`RENDER: Generated ${buttonHTMLs.length} question buttons for #${item.booking_number} (pax: ${item.pax}, filtered from ${questionnaire.length})`);
     } else {
       // Show normal buttons
       buttonHTMLs = buttons.map(btnDef => generateButtonHTML(btnDef, item.booking_number, item.customer_name, false));
-      //console.log(`RENDER: Generated ${buttonHTMLs.length} normal buttons for #${item.booking_number}`);
     }
 
     const actionButtons = buttonHTMLs.join('\n');
