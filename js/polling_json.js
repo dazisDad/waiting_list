@@ -53,7 +53,7 @@ async function pollOnce() {
       lastText = text;
       try {
         const obj = JSON.parse(text);
-        console.log('pollOnce: parsed JSON', obj);
+        //console.log('pollOnce: parsed JSON', obj);
         if (typeof handleNewEvent === 'function') handleNewEvent(obj); // Initiate notification if available
       } catch (e) {
         console.log('pollOnce: JSON parse error', e);

@@ -171,16 +171,17 @@ if ($method !== 'POST' || $body === false || $body === '') {
         'booking_flow' => 2.3,
         'booking_list_id' => 56,
     ];
-    $inputDataSet_chatResponse = [
+    $inputDataSet_9_2 = [
         'store_id' => 'DL_Sunway_Geo',
-        'booking_list_id' => 7,
+        'booking_flow' => 9.2,
+        'booking_list_id' => 8,
         'booking_response' => 1,
     ];
     //$return_json = get_booking_detail('subscriber_id', $inputDataSet_1_1['subscriber_id'], true);
     
     //$return_json = get_booking_detail('booking_list_id',39);
     //$return_json = flow_execution($inputDataSet_1_2);
-    $return_json = processChatResponse($inputDataSet_chatResponse);
+    $return_json = processChatResponse($inputDataSet_9_2);
     echo json_encode($return_json);
 
   }

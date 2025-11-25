@@ -1,5 +1,5 @@
 <?php
-// Version: 0.647
+// Version: 0.658
 // Convenience helper to build DB config from environment (or .env)
 function get_db_config() {
     // Prefer values loaded into $loaded_env (from .env) but fall back to getenv().
@@ -678,6 +678,10 @@ function flow_execution ($inputDataSet) {
               // Cancel Booking — delegate to cancel_booking()
               $booking_list_id = isset($inputDataSet['booking_list_id']) ? intval($inputDataSet['booking_list_id']) : 0;
               return cancel_booking($booking_list_id);
+          case 9.2:
+              // Question response processing
+              $booking_list_id = isset($inputDataSet['booking_list_id']) ? intval($inputDataSet['booking_list_id']) : 0;
+              return processChatResponse($inputDataSet);
           default:
               throw new Exception('Unknown flow: ' . $flow);
     }
@@ -775,7 +779,7 @@ function processChatResponse($response) {
     $answer_texts = [];
     $badge_arr = [];
     while ($row = $result3->fetch_assoc()) {
-        $answer_texts[] = $row['answer'];
+        $answer_texts[] = 'A: '.$row['answer'];
         $badge_arr[] = $row['badge'];
     }
     

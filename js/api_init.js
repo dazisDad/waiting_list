@@ -63,12 +63,22 @@ async function httpsRequestAction(btnId, inputDataSet) {
  * @param {Object} payload - The payload containing subscriber_id, field_id, and field_value
  * @returns {Promise} The result of the HTTPS request
  */
-async function updateManyChatCustomFields(payload) {
+async function updateManyChatCustomFields(btnId, payload) {
   const inputDataSet = {
     requestTo: 'manychat', // This will be used to lookup bearer token from .env
     url: 'https://api.manychat.com/fb/subscriber/setCustomFields', // Target API URL
     payload: payload
   };
 
-  return await httpsRequestAction('httpsRequestBtn', inputDataSet);
+  return await httpsRequestAction(btnId, inputDataSet);
+}
+
+async function executeFlow(btnId, flow_ns) {
+  const inputDataSet = {
+    requestTo: 'manychat', // This will be used to lookup bearer token from .env
+    url: 'https://api.manychat.com/fb/sending/sendFlow', // Target API URL
+    payload: flow_ns
+  };
+
+  return await httpsRequestAction(btnId, inputDataSet);
 }

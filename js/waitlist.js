@@ -1,4 +1,4 @@
-const version = '0.657';
+const version = '0.658';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 
 // Display version in header
@@ -1655,7 +1655,7 @@ function createManyChatPayload(booking_list_id, questionId) {
         };
       });
     }
-    
+
     // Single value - return single object
     const fieldKey = `fid_${fid_name}`;
     const field_id = configuration[fieldKey] ? parseInt(configuration[fieldKey]) : null;
@@ -1672,11 +1672,11 @@ function createManyChatPayload(booking_list_id, questionId) {
   // Find actualMsg and answer_ids from questionnaire using questionId
   const questionObj = questionnaire.find(q => q.Id == questionId);
   const booking_question = questionObj ? questionObj.actualMsg : null;
-  
+
   const answer_ids = questionObj ? questionObj.answer_ids : null;
   // Convert answer_ids string to array (e.g., '1,2,3' -> [1, 2, 3])
   const answer_ids_array = answer_ids ? answer_ids.split(',').map(id => parseInt(id.trim())) : [];
-  
+
   // Find actualMsg for each answer_id from answers array
   const actualMsg_array = answer_ids_array.map(answerId => {
     const answerObj = answers.find(a => a.Id == answerId);
@@ -1693,9 +1693,20 @@ function createManyChatPayload(booking_list_id, questionId) {
     ...getFieldIdValueSet(actualMsg_array, 'BA') // Spread array of answer fields
   ];
 
+  // Filter out invalid fields (null field_id or null field_value)
+  const validFields = fields.filter(field =>
+    field &&
+    field.field_id !== null &&
+    field.field_id !== undefined &&
+    field.field_value !== null &&
+    field.field_value !== undefined
+  );
+
+  console.log('createManyChatPayload: validFields count:', validFields.length, 'of', fields.length);
+
   return {
     subscriber_id,
-    fields
+    fields: validFields
   };
 }
 
@@ -1711,10 +1722,34 @@ async function handleQuestion(booking_list_id, question, q_level = null, buttonI
     questionId
   });
 
-  const manyChat_payload = createManyChatPayload(booking_list_id, questionId);
-  console.log('ManyChat payload prepared:', manyChat_payload);
-
   try {
+    const manyChat_payload = createManyChatPayload(booking_list_id, questionId);
+    console.log('ManyChat payload prepared:', manyChat_payload);
+    const manyChatResult = await updateManyChatCustomFields(buttonId, manyChat_payload);
+
+    if (manyChatResult && manyChatResult.status === 'success') {
+      console.log('✓ ManyChat API call successful - Custom fields updated for subscriber:', manyChat_payload.subscriber_id);
+      
+      // Get flow_ns from questionnaire using questionId
+      const questionObj = questionnaire.find(q => q.Id == questionId);
+      const flow_ns = questionObj && questionObj.flow_ns ? questionObj.flow_ns : null;
+      
+      if (flow_ns) {
+        executeFlow(
+          buttonId,
+          {
+            subscriber_id: manyChat_payload.subscriber_id,
+            flow_ns // flow_ns: flow_ns 와 같음
+          }
+        );
+        console.log('✓ ManyChat flow triggered:', flow_ns);
+      } else {
+        console.warn('⚠ No flow_ns found for questionId:', questionId);
+      }
+    } else {
+      console.warn('⚠ ManyChat API call failed or returned unexpected response:', manyChatResult);
+    }
+
     // Look up question_prefix from questionnaire if questionId is provided
     let prefix = '';
 
@@ -1742,7 +1777,8 @@ async function handleQuestion(booking_list_id, question, q_level = null, buttonI
       [{
         booking_list_id: booking_list_id,
         dateTime: formattedTime,
-        qna: qnaText
+        qna: qnaText,
+        qna_id: questionId || null
       }], // dataSetArr
     );
 
@@ -1783,19 +1819,32 @@ async function handleQuestion(booking_list_id, question, q_level = null, buttonI
     };
     chatlist.push(newChatRecord);
 
-    // ALWAYS execute: Re-render to show the new question in chat history
-    renderWaitlist();
-    // On mobile, re-open the action row if it was open (expandedRowId is set)
+    // Exit Ask mode and close action buttons after question button click
+    const item = waitlist.find(i => i.booking_list_id == booking_list_id);
     const isMobile = window.innerWidth <= 768;
-    if (isMobile && expandedRowId !== null) {
-      // Find booking_number from booking_list_id
-      const item = waitlist.find(i => i.booking_list_id == booking_list_id);
-      if (item && item.booking_number == expandedRowId) {
-        requestAnimationFrame(() => {
-          addMobileActionRow(expandedRowId);
-        });
+    
+    if (item) {
+      const bookingNumberStr = String(item.booking_number);
+      
+      // Clear Ask mode
+      askModeItems.delete(bookingNumberStr);
+      
+      // Clear row selection states BEFORE rendering
+      if (isMobile) {
+        // Mobile: clear expanded row state
+        if (expandedRowId == item.booking_number) {
+          expandedRowId = null;
+        }
+      } else {
+        // Desktop: clear selected row state
+        if (selectedRowId == item.booking_number) {
+          selectedRowId = null;
+        }
       }
     }
+
+    // ALWAYS execute: Re-render to show the new question in chat history
+    renderWaitlist();
 
   } catch (error) {
     console.error('handleQuestion error:', error);
