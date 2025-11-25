@@ -1,5 +1,6 @@
-const version = '0.658';
+const version = '0.681';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
+const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 
 // Display version in header
 document.addEventListener('DOMContentLoaded', () => {
@@ -55,15 +56,10 @@ function handleNewEvent(obj) {
           // Use double requestAnimationFrame to ensure DOM is fully ready after renderWaitlist
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
-              const badgeSpan = document.getElementById(`new-badge-${newBookingItem.subscriber_id}`);
-              console.log(`NEW_BADGE: Looking for badge with ID: new-badge-${newBookingItem.subscriber_id}`, badgeSpan);
-              if (badgeSpan) {
-                badgeSpan.textContent = 'NEW';
-                badgeSpan.style.display = 'inline';
-                console.log(`NEW_BADGE: Displayed badge for subscriber_id ${newBookingItem.subscriber_id}`);
-              } else {
-                console.warn(`NEW_BADGE: Badge span not found for subscriber_id ${newBookingItem.subscriber_id}`);
-              }
+              // Chat badge: Already showing by default, just ensure it's not in hidden list
+              delete chatBadgeHidden[newBookingItem.subscriber_id];
+              const today = new Date().toISOString().split('T')[0];
+              localStorage.setItem(`chatBadgeHidden_${today}`, JSON.stringify(chatBadgeHidden));
 
               // Update button state and trigger scroll to active after badge is displayed
               console.log('NEW_BOOKING: Updating scroll button state and triggering scroll');
@@ -100,6 +96,7 @@ let chatlist = [];
 let questionnaire = [];
 let answers = [];
 let configuration = [];
+let chatBadgeHidden = {}; // { subscriber_id: true/false } - tracks which chat NEW badges should be hidden
 
 const minPax_for_bigTable = 5;
 const maxPax_for_smallTable = 0;
@@ -394,7 +391,37 @@ async function getServerSideUpdate() {
     // 실시간 변화하는 데이터만 병렬로 가져오기
     const [waitlistData, chatData] = await Promise.all([
       fetchBookingList(),
-      fetchChatHistory()
+      fetchChatHistory(),
+      // Load or reset badge state from localStorage with date-based keys
+      Promise.resolve().then(() => {
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+        const storageKey = `chatBadgeHidden_${todayStr}`;
+        
+        if (isResetLocalStorage) {
+          // Reset localStorage on every load
+          chatBadgeHidden = {};
+          localStorage.removeItem(storageKey);
+        } else {
+          // Load from localStorage for today's date only
+          const savedChat = localStorage.getItem(storageKey);
+          if (savedChat) {
+            try {
+              chatBadgeHidden = JSON.parse(savedChat);
+            } catch (e) {
+              console.error('Failed to parse chatBadgeHidden from localStorage:', e);
+              chatBadgeHidden = {};
+            }
+          }
+          
+          // Clean up old date entries (keep only today's data)
+          Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('chatBadgeHidden_') && key !== storageKey) {
+              localStorage.removeItem(key);
+            }
+          });
+        }
+      })
     ]);
 
     console.log('SERVER_UPDATE: All data loaded successfully');
@@ -411,6 +438,8 @@ async function getServerSideUpdate() {
 
     // 새 데이터로 렌더링
     renderWaitlist();
+
+
 
     console.log('SERVER_UPDATE: Update completed successfully');
 
@@ -902,6 +931,22 @@ function toggleMobileActions(booking_number, event) {
       selectedRowId = booking_number;
       toggleRowSelection(booking_number, true);
       toggleChatHistoryDisplay(booking_number, true); // Show all messages
+      
+      // Hide chat NEW badge for this subscriber
+      const selectedItem = waitlist.find(item => item.booking_number == booking_number);
+      if (selectedItem && selectedItem.subscriber_id) {
+        chatBadgeHidden[selectedItem.subscriber_id] = true;
+        const today = new Date().toISOString().split('T')[0];
+        localStorage.setItem(`chatBadgeHidden_${today}`, JSON.stringify(chatBadgeHidden));
+        
+        // Hide chat badge via DOM
+        const chatBadgeSpan = document.getElementById(`chat-new-badge-${selectedItem.subscriber_id}`);
+        if (chatBadgeSpan) {
+          chatBadgeSpan.style.display = 'none';
+          chatBadgeSpan.textContent = '';
+        }
+      }
+      
       console.log(`DESKTOP: Selected row #${booking_number}`);
     }
     return;
@@ -1041,6 +1086,21 @@ function toggleMobileActions(booking_number, event) {
 
   // Add mobile action row
   addMobileActionRow(booking_number);
+
+  // Hide chat NEW badge for this subscriber
+  const expandedItem = waitlist.find(item => item.booking_number == booking_number);
+  if (expandedItem && expandedItem.subscriber_id) {
+    chatBadgeHidden[expandedItem.subscriber_id] = true;
+    const today = new Date().toISOString().split('T')[0];
+    localStorage.setItem(`chatBadgeHidden_${today}`, JSON.stringify(chatBadgeHidden));
+    
+    // Hide chat badge via DOM
+    const chatBadgeSpan = document.getElementById(`chat-new-badge-${expandedItem.subscriber_id}`);
+    if (chatBadgeSpan) {
+      chatBadgeSpan.style.display = 'none';
+      chatBadgeSpan.textContent = '';
+    }
+  }
 
   console.log(`MOBILE: Expanded row for item #${booking_number}`);
 }
@@ -2598,12 +2658,15 @@ function handleScrollToActive(isAutoTrigger = false) {
 function renderWaitlist() {
   console.log("RENDER: Starting table render.");
 
-  // Reset all NEW badges (they will be re-shown by handleNewEvent if still new)
+  // Reset name NEW badges only (not chat badges) - they will be re-shown by handleNewEvent if still new
   document.querySelectorAll('[id^="new-badge-"]').forEach(badge => {
-    badge.textContent = '';
-    badge.style.display = 'none';
+    // Only reset if it's a name badge (not chat-new-badge)
+    if (!badge.id.startsWith('chat-new-badge-')) {
+      badge.textContent = '';
+      badge.style.display = 'none';
+    }
   });
-  console.log("RENDER: Reset all NEW badges");
+  console.log("RENDER: Reset name NEW badges (preserved chat badges)");
 
   // Clean up mobile state on desktop
   if (window.innerWidth > 768) {
@@ -2661,8 +2724,8 @@ function renderWaitlist() {
     // Build chat history HTML with elapsed time
     let chatHistoryHTML = '';
 
-    // Always render all chat history, then hide/show via DOM manipulation
-    const isRowSelected = true;
+    // Check if this row is actually selected (for showing all messages vs last one)
+    const isRowSelected = (selectedRowId === item.booking_number) || (expandedRowId === item.booking_number);
 
     // Check if this is a WEB booking - show simple reservation info instead of chat history
     if (item.booking_from === 'WEB') {
@@ -2678,7 +2741,20 @@ function renderWaitlist() {
 
       // Show "Reservation @ dine_dateTime" line with background highlight (similar to PAX >= 5 style but maintaining gray color)
       const reservationHighlight = statusPriority === 0 ? 'bg-slate-600 text-slate-200 px-1 py-0.5 rounded font-bold' : 'bg-slate-700 text-slate-300 px-1 py-0.5 rounded font-bold';
-      chatHistoryHTML = `<div class="text-xs ${chatClass} leading-relaxed">↳ <span class="${reservationHighlight}">Reservation @ ${timeString}</span></div>`;
+      
+      // Add NEW badge for Reservation (only for active items)
+      let reservationBadge = '';
+      if (item.status === 'Waiting' || item.status === 'Ready') {
+        const chatBadgeId = `chat-new-badge-${item.subscriber_id}`;
+        const isChatHidden = chatBadgeHidden[item.subscriber_id];
+        if (isChatHidden) {
+          reservationBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-white px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: none;">NEW</span>`;
+        } else {
+          reservationBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-white px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: inline;">NEW</span>`;
+        }
+      }
+      
+      chatHistoryHTML = `<div class="text-xs ${chatClass} leading-relaxed">↳ <span class="${reservationHighlight}">Reservation @ ${timeString}</span>${reservationBadge}</div>`;
 
       // Add status message if item is Arrived or Cancelled with completion time (always show for WEB bookings)
       if (item.status === 'Arrived' || item.status === 'Cancelled') {
@@ -2759,7 +2835,21 @@ function renderWaitlist() {
           }
         }
 
-        return `<div class="text-xs ${messageChatClass} leading-relaxed" ${dataAttr}>↳ [${elapsedTime}] ${chat.qna}</div>`; //arrow
+        // Add NEW badge span for last message only - render with correct state immediately
+        // Only show chat badge for active items (Waiting/Ready), not for completed items (Arrived/Cancelled)
+        let chatBadge = '';
+        if (isLastMessage && (item.status === 'Waiting' || item.status === 'Ready')) {
+          const chatBadgeId = `chat-new-badge-${item.subscriber_id}`;
+          // Chat badge: shown by default, hidden if user clicked row (tracked in chatBadgeHidden)
+          const isChatHidden = chatBadgeHidden[item.subscriber_id];
+          if (isChatHidden) {
+            chatBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-white px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: none;">NEW</span>`;
+          } else {
+            chatBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-white px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: inline;">NEW</span>`;
+          }
+        }
+
+        return `<div class="text-xs ${messageChatClass} leading-relaxed" ${dataAttr}>↳ [${elapsedTime}] ${chat.qna}${chatBadge}</div>`; //arrow
       }).join('');
 
       // Add status message if item is Arrived or Cancelled with completion time
@@ -2849,11 +2939,6 @@ function renderWaitlist() {
     // Don't add selected class during initial render - will be added by DOM manipulation
     const selectedClass = '';
 
-    // Always create empty NEW badge span (will be populated by handleNewEvent if new booking)
-    const newBadgeId = `new-badge-${item.subscriber_id}`;
-    const newBadgeHTML = `<span id="${newBadgeId}" class="bg-red-500 text-white px-1 py-0.5 rounded font-bold mr-1" style="font-size: 10px; display: none;"></span>`;
-    const newBadge = `<span class="ml-2">${newBadgeHTML}</span>`;
-
     tableHTML += `
                     <tr class="${rowClass} ${rowClickableClass} ${selectedClass}" data-item-id="${item.booking_number}" ${onclickAttr}>
                         <td class="px-2 py-2 whitespace-nowrap text-sm font-medium ${idClass} text-center">
@@ -2865,7 +2950,6 @@ function renderWaitlist() {
                         <td class="px-2 py-2 text-sm">
                             <div class="flex items-baseline">
                                 <span class="font-semibold ${nameClass} ${nameMarginClass}">${item.customer_name}</span>
-                                ${newBadge}
                                 ${highlightHTML}
                             </div>
                             ${chatHistoryHTML}
@@ -3057,12 +3141,11 @@ function renderWaitlist() {
 
   // Initialize chat history display states after render
   requestAnimationFrame(() => {
-    // Hide chat history for all rows initially (since we rendered all)
+    // Chat messages are already rendered correctly based on isRowSelected
+    // No need to call toggleChatHistoryDisplay since it would hide divs with badges
+    
+    // Restore countdown text for completed items that have active timers
     waitlist.forEach(item => {
-      const shouldShowAll = (selectedRowId === item.booking_number) || (expandedRowId === item.booking_number);
-      toggleChatHistoryDisplay(item.booking_number, shouldShowAll);
-
-      // Restore countdown text for completed items that have active timers
       if ((item.status === 'Arrived' || item.status === 'Cancelled') && undoAutoHideTimers[item.booking_number]) {
         // Timer exists, button text will be updated by the interval
         // Just ensure the interval continues to update the newly rendered button
@@ -3127,12 +3210,28 @@ function updateElapsedTimes() {
       }
 
       // Extract the message text (everything after the closing bracket ']')
+      // But preserve the badge span if it exists
+      const badge = chatElement.querySelector('[id^="chat-new-badge-"]');
       const currentText = chatElement.textContent;
       const messageStart = currentText.indexOf(']') + 1;
-      const messageText = currentText.substring(messageStart);
+      let messageText = currentText.substring(messageStart);
+      
+      // Remove 'NEW' from messageText if badge exists (it will be re-added as span)
+      if (badge) {
+        messageText = messageText.replace('NEW', '').trim();
+      }
 
-      // Update the entire text with new elapsed time
-      chatElement.textContent = `↳ [${elapsedTime}]${messageText}`; //arrow
+      // Update the text content while preserving the badge
+      if (badge) {
+        // Save badge HTML
+        const badgeHTML = badge.outerHTML;
+        // Update text and re-append badge
+        chatElement.textContent = `↳ [${elapsedTime}] ${messageText}`; //arrow
+        chatElement.insertAdjacentHTML('beforeend', badgeHTML);
+      } else {
+        // No badge, just update text
+        chatElement.textContent = `↳ [${elapsedTime}]${messageText}`; //arrow
+      }
     }
   });
 }

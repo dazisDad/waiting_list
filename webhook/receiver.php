@@ -180,8 +180,8 @@ if ($method !== 'POST' || $body === false || $body === '') {
     //$return_json = get_booking_detail('subscriber_id', $inputDataSet_1_1['subscriber_id'], true);
     
     //$return_json = get_booking_detail('booking_list_id',39);
-    //$return_json = flow_execution($inputDataSet_1_2);
-    $return_json = processChatResponse($inputDataSet_9_2);
+    $return_json = flow_execution($inputDataSet_1_2);
+    //$return_json = processChatResponse($inputDataSet_9_2);
     echo json_encode($return_json);
 
   }
