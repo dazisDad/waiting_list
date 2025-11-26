@@ -1,5 +1,10 @@
 <?php
-// Version: 0.658
+// Version: 0.698
+
+// Global flag to control prepared statement usage
+// Set to false to use regular statements (avoids max_prepared_stmt_count limit)
+$isPreparedStmt = false;
+
 // Convenience helper to build DB config from environment (or .env)
 function get_db_config() {
     // Prefer values loaded into $loaded_env (from .env) but fall back to getenv().
@@ -85,6 +90,8 @@ function get_booking_list($store_id, $isToday = true, $dateSearch = null) {
  * @throws Exception on database errors
  */
 function validatePax($store_id, $pax) {
+    global $isPreparedStmt;
+    
     $cfg = get_db_config();
     if ($cfg['user'] === '' || $cfg['name'] === '') {
         throw new Exception('Database configuration incomplete: DB_USERNAME and DB_NAME are required');
@@ -95,39 +102,53 @@ function validatePax($store_id, $pax) {
         throw new Exception('DB connect error: ' . $mysqli->connect_error);
     }
 
-    $sql = "SELECT pax_limit FROM configuration WHERE store_id = ?";
-    $stmt = $mysqli->prepare($sql);
-    if ($stmt === false) {
-        $err = $mysqli->error;
-        $mysqli->close();
-        throw new Exception('Prepare failed: ' . $err);
-    }
+    if ($isPreparedStmt) {
+        $sql = "SELECT pax_limit FROM configuration WHERE store_id = ?";
+        $stmt = $mysqli->prepare($sql);
+        if ($stmt === false) {
+            $err = $mysqli->error;
+            $mysqli->close();
+            throw new Exception('Prepare failed: ' . $err);
+        }
 
-    $store_id_str = strval($store_id);
-    if (!$stmt->bind_param('s', $store_id_str)) {
-        $err = $stmt->error;
+        $store_id_str = strval($store_id);
+        if (!$stmt->bind_param('s', $store_id_str)) {
+            $err = $stmt->error;
+            $stmt->close();
+            $mysqli->close();
+            throw new Exception('Bind failed: ' . $err);
+        }
+
+        if (!$stmt->execute()) {
+            $err = $stmt->error;
+            $stmt->close();
+            $mysqli->close();
+            throw new Exception('Execute failed: ' . $err);
+        }
+
+        $result = $stmt->get_result();
+        if ($result === false) {
+            $err = $stmt->error;
+            $stmt->close();
+            $mysqli->close();
+            throw new Exception('Getting result failed: ' . $err);
+        }
+
+        $row = $result->fetch_assoc();
         $stmt->close();
-        $mysqli->close();
-        throw new Exception('Bind failed: ' . $err);
+    } else {
+        $store_id_escaped = $mysqli->real_escape_string(strval($store_id));
+        $sql = "SELECT pax_limit FROM configuration WHERE store_id = '" . $store_id_escaped . "'";
+        $result = $mysqli->query($sql);
+        if ($result === false) {
+            $err = $mysqli->error;
+            $mysqli->close();
+            throw new Exception('Query failed: ' . $err);
+        }
+        $row = $result->fetch_assoc();
+        $result->free();
     }
-
-    if (!$stmt->execute()) {
-        $err = $stmt->error;
-        $stmt->close();
-        $mysqli->close();
-        throw new Exception('Execute failed: ' . $err);
-    }
-
-    $result = $stmt->get_result();
-    if ($result === false) {
-        $err = $stmt->error;
-        $stmt->close();
-        $mysqli->close();
-        throw new Exception('Getting result failed: ' . $err);
-    }
-
-    $row = $result->fetch_assoc();
-    $stmt->close();
+    
     $mysqli->close();
 
     // If no configuration found for store_id, return false
@@ -177,6 +198,8 @@ function generate_booking_number($pax, $nextId) {
  * Throws Exception on missing data, configuration, connection, or query errors.
  */
 function insert_to_booking_list(array $inputDataSet) {
+    global $isPreparedStmt;
+    
     $required = ['store_id', 'booking_from', 'subscriber_id', 'customer_name', 'customer_phone', 'pax'];
     foreach ($required as $k) {
         if (!array_key_exists($k, $inputDataSet)) {
@@ -194,15 +217,7 @@ function insert_to_booking_list(array $inputDataSet) {
         throw new Exception('DB connect error: ' . $mysqli->connect_error);
     }
 
-    $sql = 'INSERT INTO booking_list (store_id, booking_from, subscriber_id, customer_name, customer_phone, pax, time_created, dine_dateTime, status, q_level) VALUES (?,?,?,?,?,?,?,?,?,?)';
-    $stmt = $mysqli->prepare($sql);
-    if ($stmt === false) {
-        $err = $mysqli->error;
-        $mysqli->close();
-        throw new Exception('Prepare failed: ' . $err);
-    }
-
-    // Normalize and bind params
+    // Normalize params
     $store_id = strval($inputDataSet['store_id']);
     $booking_from = strval($inputDataSet['booking_from']);
     $subscriber_id = intval($inputDataSet['subscriber_id']);
@@ -214,50 +229,90 @@ function insert_to_booking_list(array $inputDataSet) {
     $status = 'Waiting';
     $q_level = 100;
 
-    // types: s (store_id), s (booking_from), i (subscriber_id), s (customer_name), s (customer_phone), i (pax), s (time_created), s (dine_dateTime), s (status), i (q_level)
-    if (!$stmt->bind_param('ssississsi', $store_id, $booking_from, $subscriber_id, $customer_name, $customer_phone, $pax, $time_created, $dine_dateTime, $status, $q_level)) {
-        $err = $stmt->error;
-        $stmt->close();
-        $mysqli->close();
-        throw new Exception('Bind failed: ' . $err);
-    }
+    if ($isPreparedStmt) {
+        $sql = 'INSERT INTO booking_list (store_id, booking_from, subscriber_id, customer_name, customer_phone, pax, time_created, dine_dateTime, status, q_level) VALUES (?,?,?,?,?,?,?,?,?,?)';
+        $stmt = $mysqli->prepare($sql);
+        if ($stmt === false) {
+            $err = $mysqli->error;
+            $mysqli->close();
+            throw new Exception('Prepare failed: ' . $err);
+        }
 
-    if (!$stmt->execute()) {
-        $err = $stmt->error;
-        $stmt->close();
-        $mysqli->close();
-        throw new Exception('Execute failed: ' . $err);
-    }
+        if (!$stmt->bind_param('ssississsi', $store_id, $booking_from, $subscriber_id, $customer_name, $customer_phone, $pax, $time_created, $dine_dateTime, $status, $q_level)) {
+            $err = $stmt->error;
+            $stmt->close();
+            $mysqli->close();
+            throw new Exception('Bind failed: ' . $err);
+        }
 
-    $insertId = $mysqli->insert_id;
-    $stmt->close();
+        if (!$stmt->execute()) {
+            $err = $stmt->error;
+            $stmt->close();
+            $mysqli->close();
+            throw new Exception('Execute failed: ' . $err);
+        }
+
+        $insertId = $mysqli->insert_id;
+        $stmt->close();
+    } else {
+        $store_id_esc = $mysqli->real_escape_string($store_id);
+        $booking_from_esc = $mysqli->real_escape_string($booking_from);
+        $customer_name_esc = $mysqli->real_escape_string($customer_name);
+        $customer_phone_esc = $mysqli->real_escape_string($customer_phone);
+        $time_created_esc = $mysqli->real_escape_string($time_created);
+        $dine_dateTime_esc = $mysqli->real_escape_string($dine_dateTime);
+        $status_esc = $mysqli->real_escape_string($status);
+        
+        $sql = "INSERT INTO booking_list (store_id, booking_from, subscriber_id, customer_name, customer_phone, pax, time_created, dine_dateTime, status, q_level) VALUES ('{$store_id_esc}','{$booking_from_esc}',{$subscriber_id},'{$customer_name_esc}','{$customer_phone_esc}',{$pax},'{$time_created_esc}','{$dine_dateTime_esc}','{$status_esc}',{$q_level})";
+        
+        if (!$mysqli->query($sql)) {
+            $err = $mysqli->error;
+            $mysqli->close();
+            throw new Exception('Query failed: ' . $err);
+        }
+        
+        $insertId = $mysqli->insert_id;
+    }
 
     // Insert into history_chat table
-    $sql_history = 'INSERT INTO history_chat (booking_list_id, dateTime, qna) VALUES (?,?,?)';
-    $stmt_history = $mysqli->prepare($sql_history);
-    if ($stmt_history === false) {
-        $err = $mysqli->error;
-        $mysqli->close();
-        throw new Exception('Prepare failed for history_chat: ' . $err);
-    }
-
     $qna = 'Waiting';
-    // types: i (booking_list_id), s (dateTime), s (qna)
-    if (!$stmt_history->bind_param('iss', $insertId, $dine_dateTime, $qna)) {
-        $err = $stmt_history->error;
+    
+    if ($isPreparedStmt) {
+        $sql_history = 'INSERT INTO history_chat (booking_list_id, dateTime, qna) VALUES (?,?,?)';
+        $stmt_history = $mysqli->prepare($sql_history);
+        if ($stmt_history === false) {
+            $err = $mysqli->error;
+            $mysqli->close();
+            throw new Exception('Prepare failed for history_chat: ' . $err);
+        }
+
+        if (!$stmt_history->bind_param('iss', $insertId, $dine_dateTime, $qna)) {
+            $err = $stmt_history->error;
+            $stmt_history->close();
+            $mysqli->close();
+            throw new Exception('Bind failed for history_chat: ' . $err);
+        }
+
+        if (!$stmt_history->execute()) {
+            $err = $stmt_history->error;
+            $stmt_history->close();
+            $mysqli->close();
+            throw new Exception('Execute failed for history_chat: ' . $err);
+        }
+
         $stmt_history->close();
-        $mysqli->close();
-        throw new Exception('Bind failed for history_chat: ' . $err);
+    } else {
+        $dine_dateTime_esc = $mysqli->real_escape_string($dine_dateTime);
+        $qna_esc = $mysqli->real_escape_string($qna);
+        $sql_history = "INSERT INTO history_chat (booking_list_id, dateTime, qna) VALUES ({$insertId},'{$dine_dateTime_esc}','{$qna_esc}')";
+        
+        if (!$mysqli->query($sql_history)) {
+            $err = $mysqli->error;
+            $mysqli->close();
+            throw new Exception('Query failed for history_chat: ' . $err);
+        }
     }
 
-    if (!$stmt_history->execute()) {
-        $err = $stmt_history->error;
-        $stmt_history->close();
-        $mysqli->close();
-        throw new Exception('Execute failed for history_chat: ' . $err);
-    }
-
-    $stmt_history->close();
     $mysqli->close();
     return intval($insertId);
 }
@@ -273,6 +328,8 @@ function insert_to_booking_list(array $inputDataSet) {
  * Returns number of affected rows (int). Throws Exception on error.
  */
 function update_booking_list($booking_list_id, $key, $value) {
+    global $isPreparedStmt;
+    
     $id = intval($booking_list_id);
     if ($id <= 0) {
         throw new Exception('Invalid booking_list_id');
@@ -297,63 +354,89 @@ function update_booking_list($booking_list_id, $key, $value) {
         throw new Exception('DB connect error: ' . $mysqli->connect_error);
     }
 
-    // Build SQL. If value is null, set column = NULL directly.
-    if ($value === null) {
-        $sql = "UPDATE booking_list SET `" . $mysqli->real_escape_string($key) . "` = NULL WHERE booking_list_id = ?";
-        $stmt = $mysqli->prepare($sql);
-        if ($stmt === false) {
-            $err = $mysqli->error;
-            $mysqli->close();
-            throw new Exception('Prepare failed: ' . $err);
-        }
-        if (!$stmt->bind_param('i', $id)) {
-            $err = $stmt->error;
-            $stmt->close();
-            $mysqli->close();
-            throw new Exception('Bind failed: ' . $err);
-        }
-    } else {
-        // Determine bind type for the value
-        $intCols = ['subscriber_id','pax'];
-        $type = in_array($key, $intCols, true) ? 'i' : 's';
+    $intCols = ['subscriber_id','pax'];
+    $key_escaped = $mysqli->real_escape_string($key);
 
-        $sql = "UPDATE booking_list SET `" . $mysqli->real_escape_string($key) . "` = ? WHERE booking_list_id = ?";
-        $stmt = $mysqli->prepare($sql);
-        if ($stmt === false) {
-            $err = $mysqli->error;
-            $mysqli->close();
-            throw new Exception('Prepare failed: ' . $err);
-        }
-
-        // Ensure value cast for binding
-        if ($type === 'i') {
-            $val = intval($value);
-            if (!$stmt->bind_param('ii', $val, $id)) {
+    if ($isPreparedStmt) {
+        // Build SQL. If value is null, set column = NULL directly.
+        if ($value === null) {
+            $sql = "UPDATE booking_list SET `{$key_escaped}` = NULL WHERE booking_list_id = ?";
+            $stmt = $mysqli->prepare($sql);
+            if ($stmt === false) {
+                $err = $mysqli->error;
+                $mysqli->close();
+                throw new Exception('Prepare failed: ' . $err);
+            }
+            if (!$stmt->bind_param('i', $id)) {
                 $err = $stmt->error;
                 $stmt->close();
                 $mysqli->close();
                 throw new Exception('Bind failed: ' . $err);
             }
         } else {
-            $val = strval($value);
-            if (!$stmt->bind_param('si', $val, $id)) {
-                $err = $stmt->error;
-                $stmt->close();
+            // Determine bind type for the value
+            $type = in_array($key, $intCols, true) ? 'i' : 's';
+
+            $sql = "UPDATE booking_list SET `{$key_escaped}` = ? WHERE booking_list_id = ?";
+            $stmt = $mysqli->prepare($sql);
+            if ($stmt === false) {
+                $err = $mysqli->error;
                 $mysqli->close();
-                throw new Exception('Bind failed: ' . $err);
+                throw new Exception('Prepare failed: ' . $err);
+            }
+
+            // Ensure value cast for binding
+            if ($type === 'i') {
+                $val = intval($value);
+                if (!$stmt->bind_param('ii', $val, $id)) {
+                    $err = $stmt->error;
+                    $stmt->close();
+                    $mysqli->close();
+                    throw new Exception('Bind failed: ' . $err);
+                }
+            } else {
+                $val = strval($value);
+                if (!$stmt->bind_param('si', $val, $id)) {
+                    $err = $stmt->error;
+                    $stmt->close();
+                    $mysqli->close();
+                    throw new Exception('Bind failed: ' . $err);
+                }
             }
         }
-    }
 
-    if (!$stmt->execute()) {
-        $err = $stmt->error;
+        if (!$stmt->execute()) {
+            $err = $stmt->error;
+            $stmt->close();
+            $mysqli->close();
+            throw new Exception('Execute failed: ' . $err);
+        }
+
+        $affected = $stmt->affected_rows;
         $stmt->close();
-        $mysqli->close();
-        throw new Exception('Execute failed: ' . $err);
+    } else {
+        // Regular statement
+        if ($value === null) {
+            $sql = "UPDATE booking_list SET `{$key_escaped}` = NULL WHERE booking_list_id = {$id}";
+        } else {
+            if (in_array($key, $intCols, true)) {
+                $val = intval($value);
+                $sql = "UPDATE booking_list SET `{$key_escaped}` = {$val} WHERE booking_list_id = {$id}";
+            } else {
+                $val_escaped = $mysqli->real_escape_string(strval($value));
+                $sql = "UPDATE booking_list SET `{$key_escaped}` = '{$val_escaped}' WHERE booking_list_id = {$id}";
+            }
+        }
+        
+        if (!$mysqli->query($sql)) {
+            $err = $mysqli->error;
+            $mysqli->close();
+            throw new Exception('Query failed: ' . $err);
+        }
+        
+        $affected = $mysqli->affected_rows;
     }
-
-    $affected = $stmt->affected_rows;
-    $stmt->close();
+    
     $mysqli->close();
     return intval($affected);
 }
@@ -371,6 +454,8 @@ function update_booking_list($booking_list_id, $key, $value) {
  * Returns an array of associative rows (may be empty). Throws Exception on errors.
  */
 function get_booking_detail($key, $value, $isToday = null) {
+    global $isPreparedStmt;
+    
     // Whitelist allowed searchable columns to avoid injection via column name
     $allowed = [
         'booking_list_id','booking_from','subscriber_id','customer_name','customer_phone','pax','booking_number'
@@ -391,53 +476,53 @@ function get_booking_detail($key, $value, $isToday = null) {
 
     // Build base SQL depending on whether searching by id
     $col = '`' . $mysqli->real_escape_string($key) . '`';
-    $sql = "SELECT * FROM booking_list WHERE " . $col . " = ?";
-
-    // For non-id searches, only include non-cleared rows
-    if ($key !== 'booking_list_id') {
-        $sql .= ' AND time_cleared IS NULL';
-    }
-
-    // If isToday is truthy, filter to today's time_created (DATE equality)
-    if ($isToday) {
-        $sql .= ' AND DATE(time_created) = CURDATE()';
-    }
-
-    $stmt = $mysqli->prepare($sql);
-    if ($stmt === false) {
-        $err = $mysqli->error;
-        $mysqli->close();
-        throw new Exception('Prepare failed: ' . $err);
-    }
-
-    // Determine bind type for the search value
     $intCols = ['subscriber_id','pax','booking_list_id'];
     $type = in_array($key, $intCols, true) ? 'i' : 's';
 
-    if ($type === 'i') {
-        $val = intval($value);
-        if (!$stmt->bind_param('i', $val)) {
-            $err = $stmt->error;
-            $stmt->close();
-            $mysqli->close();
-            throw new Exception('Bind failed: ' . $err);
-        }
-    } else {
-        $val = strval($value);
-        if (!$stmt->bind_param('s', $val)) {
-            $err = $stmt->error;
-            $stmt->close();
-            $mysqli->close();
-            throw new Exception('Bind failed: ' . $err);
-        }
-    }
+    if ($isPreparedStmt) {
+        $sql = "SELECT * FROM booking_list WHERE " . $col . " = ?";
 
-    if (!$stmt->execute()) {
-        $err = $stmt->error;
-        $stmt->close();
-        $mysqli->close();
-        throw new Exception('Execute failed: ' . $err);
-    }
+        // For non-id searches, only include non-cleared rows
+        if ($key !== 'booking_list_id') {
+            $sql .= ' AND time_cleared IS NULL';
+        }
+
+        // If isToday is truthy, filter to today's time_created (DATE equality)
+        if ($isToday) {
+            $sql .= ' AND DATE(time_created) = CURDATE()';
+        }
+
+        $stmt = $mysqli->prepare($sql);
+        if ($stmt === false) {
+            $err = $mysqli->error;
+            $mysqli->close();
+            throw new Exception('Prepare failed: ' . $err);
+        }
+
+        if ($type === 'i') {
+            $val = intval($value);
+            if (!$stmt->bind_param('i', $val)) {
+                $err = $stmt->error;
+                $stmt->close();
+                $mysqli->close();
+                throw new Exception('Bind failed: ' . $err);
+            }
+        } else {
+            $val = strval($value);
+            if (!$stmt->bind_param('s', $val)) {
+                $err = $stmt->error;
+                $stmt->close();
+                $mysqli->close();
+                throw new Exception('Bind failed: ' . $err);
+            }
+        }
+
+        if (!$stmt->execute()) {
+            $err = $stmt->error;
+            $stmt->close();
+            $mysqli->close();
+            throw new Exception('Execute failed: ' . $err);
+        }
 
     $result = $stmt->get_result();
     if ($result === false) {
@@ -450,6 +535,37 @@ function get_booking_detail($key, $value, $isToday = null) {
     $rows = $result->fetch_all(MYSQLI_ASSOC);
     $result->free();
     $stmt->close();
+    } else {
+        // Regular statement
+        if ($type === 'i') {
+            $val = intval($value);
+            $sql = "SELECT * FROM booking_list WHERE " . $col . " = {$val}";
+        } else {
+            $val_escaped = $mysqli->real_escape_string(strval($value));
+            $sql = "SELECT * FROM booking_list WHERE " . $col . " = '{$val_escaped}'";
+        }
+
+        // For non-id searches, only include non-cleared rows
+        if ($key !== 'booking_list_id') {
+            $sql .= ' AND time_cleared IS NULL';
+        }
+
+        // If isToday is truthy, filter to today's time_created (DATE equality)
+        if ($isToday) {
+            $sql .= ' AND DATE(time_created) = CURDATE()';
+        }
+
+        $result = $mysqli->query($sql);
+        if ($result === false) {
+            $err = $mysqli->error;
+            $mysqli->close();
+            throw new Exception('Query failed: ' . $err);
+        }
+
+        $rows = $result->fetch_all(MYSQLI_ASSOC);
+        $result->free();
+    }
+    
     $mysqli->close();
     return $rows;
 }
@@ -696,6 +812,8 @@ function flow_execution ($inputDataSet) {
  * @throws Exception on database errors
  */
 function processChatResponse($response) {
+    global $isPreparedStmt;
+    
     $cfg = get_db_config();
     if ($cfg['user'] === '' || $cfg['name'] === '') {
         throw new Exception('Database configuration incomplete: DB_USERNAME and DB_NAME are required');
@@ -711,18 +829,30 @@ function processChatResponse($response) {
     $booking_response = isset($response['booking_response']) ? intval($response['booking_response']) : 0;
 
     // Step 1: Get the last qna_id from history_chat for this booking_list_id
-    $sql1 = "SELECT qna_id FROM history_chat WHERE booking_list_id = ? ORDER BY Id DESC LIMIT 1";
-    $stmt1 = $mysqli->prepare($sql1);
-    if ($stmt1 === false) {
-        $mysqli->close();
-        throw new Exception('Prepare error (history_chat): ' . $mysqli->error);
+    if ($isPreparedStmt) {
+        $sql1 = "SELECT qna_id FROM history_chat WHERE booking_list_id = ? ORDER BY Id DESC LIMIT 1";
+        $stmt1 = $mysqli->prepare($sql1);
+        if ($stmt1 === false) {
+            $mysqli->close();
+            throw new Exception('Prepare error (history_chat): ' . $mysqli->error);
+        }
+        
+        $stmt1->bind_param('i', $booking_list_id);
+        $stmt1->execute();
+        $result1 = $stmt1->get_result();
+        $row1 = $result1->fetch_assoc();
+        $stmt1->close();
+    } else {
+        $booking_list_id_safe = intval($booking_list_id);
+        $sql1 = "SELECT qna_id FROM history_chat WHERE booking_list_id = $booking_list_id_safe ORDER BY Id DESC LIMIT 1";
+        $result1 = $mysqli->query($sql1);
+        if ($result1 === false) {
+            $mysqli->close();
+            throw new Exception('Query error (history_chat): ' . $mysqli->error);
+        }
+        $row1 = $result1->fetch_assoc();
+        $result1->close();
     }
-    
-    $stmt1->bind_param('i', $booking_list_id);
-    $stmt1->execute();
-    $result1 = $stmt1->get_result();
-    $row1 = $result1->fetch_assoc();
-    $stmt1->close();
 
     if (!$row1 || !isset($row1['qna_id'])) {
         $mysqli->close();
@@ -732,18 +862,30 @@ function processChatResponse($response) {
     $qna_id = intval($row1['qna_id']);
 
     // Step 2: Get answer_ids from ask_question_list table
-    $sql2 = "SELECT answer_ids FROM ask_question_list WHERE Id = ?";
-    $stmt2 = $mysqli->prepare($sql2);
-    if ($stmt2 === false) {
-        $mysqli->close();
-        throw new Exception('Prepare error (ask_question_list): ' . $mysqli->error);
+    if ($isPreparedStmt) {
+        $sql2 = "SELECT answer_ids FROM ask_question_list WHERE Id = ?";
+        $stmt2 = $mysqli->prepare($sql2);
+        if ($stmt2 === false) {
+            $mysqli->close();
+            throw new Exception('Prepare error (ask_question_list): ' . $mysqli->error);
+        }
+        
+        $stmt2->bind_param('i', $qna_id);
+        $stmt2->execute();
+        $result2 = $stmt2->get_result();
+        $row2 = $result2->fetch_assoc();
+        $stmt2->close();
+    } else {
+        $qna_id_safe = intval($qna_id);
+        $sql2 = "SELECT answer_ids FROM ask_question_list WHERE Id = $qna_id_safe";
+        $result2 = $mysqli->query($sql2);
+        if ($result2 === false) {
+            $mysqli->close();
+            throw new Exception('Query error (ask_question_list): ' . $mysqli->error);
+        }
+        $row2 = $result2->fetch_assoc();
+        $result2->close();
     }
-    
-    $stmt2->bind_param('i', $qna_id);
-    $stmt2->execute();
-    $result2 = $stmt2->get_result();
-    $row2 = $result2->fetch_assoc();
-    $stmt2->close();
 
     if (!$row2 || !isset($row2['answer_ids'])) {
         $mysqli->close();
@@ -761,85 +903,166 @@ function processChatResponse($response) {
     }
 
     // Step 4: Get all answer texts and badges from answer_list table
-    $placeholders = implode(',', array_fill(0, count($answer_ids_array), '?'));
-    $sql3 = "SELECT answer, badge FROM answer_list WHERE Id IN ($placeholders) ORDER BY FIELD(Id, $placeholders)";
-    $stmt3 = $mysqli->prepare($sql3);
-    if ($stmt3 === false) {
-        $mysqli->close();
-        throw new Exception('Prepare error (answer_list): ' . $mysqli->error);
-    }
+    if ($isPreparedStmt) {
+        $placeholders = implode(',', array_fill(0, count($answer_ids_array), '?'));
+        $sql3 = "SELECT answer, badge, q_level FROM answer_list WHERE Id IN ($placeholders) ORDER BY FIELD(Id, $placeholders)";
+        $stmt3 = $mysqli->prepare($sql3);
+        if ($stmt3 === false) {
+            $mysqli->close();
+            throw new Exception('Prepare error (answer_list): ' . $mysqli->error);
+        }
 
-    // Bind all answer IDs dynamically (twice: once for IN clause, once for ORDER BY FIELD)
-    $types = str_repeat('i', count($answer_ids_array) * 2);
-    $bind_params = array_merge($answer_ids_array, $answer_ids_array);
-    $stmt3->bind_param($types, ...$bind_params);
-    $stmt3->execute();
-    $result3 = $stmt3->get_result();
-    
-    $answer_texts = [];
-    $badge_arr = [];
-    while ($row = $result3->fetch_assoc()) {
-        $answer_texts[] = 'A: '.$row['answer'];
-        $badge_arr[] = $row['badge'];
+        // Bind all answer IDs dynamically (twice: once for IN clause, once for ORDER BY FIELD)
+        $types = str_repeat('i', count($answer_ids_array) * 2);
+        $bind_params = array_merge($answer_ids_array, $answer_ids_array);
+        $stmt3->bind_param($types, ...$bind_params);
+        $stmt3->execute();
+        $result3 = $stmt3->get_result();
+        
+        $answer_texts = [];
+        $badge_arr = [];
+        $q_level_arr = [];
+        while ($row = $result3->fetch_assoc()) {
+            $answer_texts[] = 'A: '.$row['answer'];
+            $badge_arr[] = $row['badge'];
+            $q_level_arr[] = $row['q_level'];
+        }
+        
+        $stmt3->close();
+    } else {
+        // Build IN clause with safe integer values
+        $answer_ids_safe = array_map('intval', $answer_ids_array);
+        $in_clause = implode(',', $answer_ids_safe);
+        $field_clause = implode(',', $answer_ids_safe);
+        $sql3 = "SELECT answer, badge, q_level FROM answer_list WHERE Id IN ($in_clause) ORDER BY FIELD(Id, $field_clause)";
+        $result3 = $mysqli->query($sql3);
+        if ($result3 === false) {
+            $mysqli->close();
+            throw new Exception('Query error (answer_list): ' . $mysqli->error);
+        }
+        
+        $answer_texts = [];
+        $badge_arr = [];
+        $q_level_arr = [];
+        while ($row = $result3->fetch_assoc()) {
+            $answer_texts[] = 'A: '.$row['answer'];
+            $badge_arr[] = $row['badge'];
+            $q_level_arr[] = $row['q_level'];
+        }
+        
+        $result3->close();
     }
-    
-    $stmt3->close();
 
     // Step 5: Add "Cancel" option at the beginning
     array_unshift($answer_ids_array, 0);
     array_unshift($answer_texts, 'Cancel');
     array_unshift($badge_arr, 'Cancel Requested');
+    array_unshift($q_level_arr, 0);
 
     // Step 6: Get selected values based on booking_response index
     $selected_answer_id = $answer_ids_array[$booking_response] ?? null;
     $selected_answer = $answer_texts[$booking_response] ?? null;
     $selected_badge = $badge_arr[$booking_response] ?? null;
+    $selected_q_level = $q_level_arr[$booking_response] ?? null;
 
     // Step 7: Insert new record into history_chat
-    $sql_insert = "INSERT INTO history_chat (booking_list_id, dateTime, qna) VALUES (?, ?, ?)";
-    $stmt_insert = $mysqli->prepare($sql_insert);
-    if ($stmt_insert === false) {
-        $mysqli->close();
-        throw new Exception('Prepare error (history_chat insert): ' . $mysqli->error);
-    }
-
     $current_datetime = date('Y-m-d H:i:s');
     $qna_value = $selected_answer ?? '';
 
-    if (!$stmt_insert->bind_param('iss', $booking_list_id, $current_datetime, $qna_value)) {
-        $err = $stmt_insert->error;
+    if ($isPreparedStmt) {
+        $sql_insert = "INSERT INTO history_chat (booking_list_id, dateTime, qna) VALUES (?, ?, ?)";
+        $stmt_insert = $mysqli->prepare($sql_insert);
+        if ($stmt_insert === false) {
+            $mysqli->close();
+            throw new Exception('Prepare error (history_chat insert): ' . $mysqli->error);
+        }
+
+        if (!$stmt_insert->bind_param('iss', $booking_list_id, $current_datetime, $qna_value)) {
+            $err = $stmt_insert->error;
+            $stmt_insert->close();
+            $mysqli->close();
+            throw new Exception('Bind failed (history_chat insert): ' . $err);
+        }
+
+        if (!$stmt_insert->execute()) {
+            $err = $stmt_insert->error;
+            $stmt_insert->close();
+            $mysqli->close();
+            throw new Exception('Execute failed (history_chat insert): ' . $err);
+        }
+
         $stmt_insert->close();
-        $mysqli->close();
-        throw new Exception('Bind failed (history_chat insert): ' . $err);
+    } else {
+        $booking_list_id_safe = intval($booking_list_id);
+        $current_datetime_safe = $mysqli->real_escape_string($current_datetime);
+        $qna_value_safe = $mysqli->real_escape_string($qna_value);
+        $sql_insert = "INSERT INTO history_chat (booking_list_id, dateTime, qna) VALUES ($booking_list_id_safe, '$current_datetime_safe', '$qna_value_safe')";
+        if (!$mysqli->query($sql_insert)) {
+            $mysqli->close();
+            throw new Exception('Query error (history_chat insert): ' . $mysqli->error);
+        }
     }
 
-    if (!$stmt_insert->execute()) {
-        $err = $stmt_insert->error;
-        $stmt_insert->close();
-        $mysqli->close();
-        throw new Exception('Execute failed (history_chat insert): ' . $err);
+    // Step 8: Update q_level and status if selected_q_level >= 300
+    if ($selected_q_level !== null && intval($selected_q_level) >= 300) {
+        if ($isPreparedStmt) {
+            $sql_update_q = "UPDATE booking_list SET q_level = ?, status = 'Ready' WHERE booking_list_id = ?";
+            $stmt_update_q = $mysqli->prepare($sql_update_q);
+            if ($stmt_update_q === false) {
+                $mysqli->close();
+                throw new Exception('Prepare error (update q_level): ' . $mysqli->error);
+            }
+            
+            $q_level_val = intval($selected_q_level);
+            $stmt_update_q->bind_param('ii', $q_level_val, $booking_list_id);
+            if (!$stmt_update_q->execute()) {
+                $err = $stmt_update_q->error;
+                $stmt_update_q->close();
+                $mysqli->close();
+                throw new Exception('Execute failed (update q_level): ' . $err);
+            }
+            $stmt_update_q->close();
+        } else {
+            $q_level_safe = intval($selected_q_level);
+            $booking_list_id_safe = intval($booking_list_id);
+            $sql_update_q = "UPDATE booking_list SET q_level = $q_level_safe, status = 'Ready' WHERE booking_list_id = $booking_list_id_safe";
+            if (!$mysqli->query($sql_update_q)) {
+                $mysqli->close();
+                throw new Exception('Query error (update q_level): ' . $mysqli->error);
+            }
+        }
     }
 
-    $stmt_insert->close();
-
-    // Step 8: Update badge in booking_list table if selected_badge exists
+    // Step 9: Update badge in booking_list table if selected_badge exists
     if ($selected_badge !== null && $selected_badge !== '') {
         // Split selected_badge by comma if it contains multiple badges
         $badge_values = array_map('trim', explode(',', $selected_badge));
         
         // Get current badge values
-        $sql_get_badges = "SELECT badge1, badge2, badge3 FROM booking_list WHERE booking_list_id = ?";
-        $stmt_get = $mysqli->prepare($sql_get_badges);
-        if ($stmt_get === false) {
-            $mysqli->close();
-            throw new Exception('Prepare error (get badges): ' . $mysqli->error);
-        }
+        if ($isPreparedStmt) {
+            $sql_get_badges = "SELECT badge1, badge2, badge3 FROM booking_list WHERE booking_list_id = ?";
+            $stmt_get = $mysqli->prepare($sql_get_badges);
+            if ($stmt_get === false) {
+                $mysqli->close();
+                throw new Exception('Prepare error (get badges): ' . $mysqli->error);
+            }
 
-        $stmt_get->bind_param('i', $booking_list_id);
-        $stmt_get->execute();
-        $result_badges = $stmt_get->get_result();
-        $badge_row = $result_badges->fetch_assoc();
-        $stmt_get->close();
+            $stmt_get->bind_param('i', $booking_list_id);
+            $stmt_get->execute();
+            $result_badges = $stmt_get->get_result();
+            $badge_row = $result_badges->fetch_assoc();
+            $stmt_get->close();
+        } else {
+            $booking_list_id_safe = intval($booking_list_id);
+            $sql_get_badges = "SELECT badge1, badge2, badge3 FROM booking_list WHERE booking_list_id = $booking_list_id_safe";
+            $result_badges = $mysqli->query($sql_get_badges);
+            if ($result_badges === false) {
+                $mysqli->close();
+                throw new Exception('Query error (get badges): ' . $mysqli->error);
+            }
+            $badge_row = $result_badges->fetch_assoc();
+            $result_badges->close();
+        }
 
         if ($badge_row) {
             // Get available badge columns in order
@@ -868,22 +1091,34 @@ function processChatResponse($response) {
                 }
                 
                 $badge_column = $available_columns[$index];
-                $sql_update_badge = "UPDATE booking_list SET `$badge_column` = ? WHERE booking_list_id = ?";
-                $stmt_update = $mysqli->prepare($sql_update_badge);
-                if ($stmt_update === false) {
-                    $mysqli->close();
-                    throw new Exception('Prepare error (update badge): ' . $mysqli->error);
-                }
+                
+                if ($isPreparedStmt) {
+                    $sql_update_badge = "UPDATE booking_list SET `$badge_column` = ? WHERE booking_list_id = ?";
+                    $stmt_update = $mysqli->prepare($sql_update_badge);
+                    if ($stmt_update === false) {
+                        $mysqli->close();
+                        throw new Exception('Prepare error (update badge): ' . $mysqli->error);
+                    }
 
-                $stmt_update->bind_param('si', $badge_value, $booking_list_id);
-                if (!$stmt_update->execute()) {
-                    $err = $stmt_update->error;
+                    $stmt_update->bind_param('si', $badge_value, $booking_list_id);
+                    if (!$stmt_update->execute()) {
+                        $err = $stmt_update->error;
+                        $stmt_update->close();
+                        $mysqli->close();
+                        throw new Exception('Execute failed (update badge): ' . $err);
+                    }
+
                     $stmt_update->close();
-                    $mysqli->close();
-                    throw new Exception('Execute failed (update badge): ' . $err);
+                } else {
+                    $badge_value_safe = $mysqli->real_escape_string($badge_value);
+                    $booking_list_id_safe = intval($booking_list_id);
+                    $sql_update_badge = "UPDATE booking_list SET `$badge_column` = '$badge_value_safe' WHERE booking_list_id = $booking_list_id_safe";
+                    if (!$mysqli->query($sql_update_badge)) {
+                        $mysqli->close();
+                        throw new Exception('Query error (update badge): ' . $mysqli->error);
+                    }
                 }
-
-                $stmt_update->close();
+                
                 $updates_made++;
             }
         }
@@ -891,8 +1126,8 @@ function processChatResponse($response) {
 
     $mysqli->close();
     
-    // Return [selected_answer_id, selected_answer, selected_badge]
-    return [$selected_answer_id, $selected_answer, $selected_badge];
+    // Return [selected_answer_id, selected_answer, selected_badge, selected_q_level]
+    return [$selected_answer_id, $selected_answer, $selected_badge, $selected_q_level];
 }
 
 

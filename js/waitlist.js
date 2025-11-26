@@ -1,4 +1,4 @@
-const version = '0.696';
+const version = '0.698';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 
@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 let updateCounter = 0;
+let lastProcessedTimestamp = null; // Track last processed _force_update timestamp to prevent duplicate processing
 // polling_json.js 파일의 pollOnce() 함수에서 호출함
 function handleNewEvent(obj) {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -36,6 +37,20 @@ function handleNewEvent(obj) {
       console.log('HANDLE_NEW_EVENT: No valid data or subscriber_id, exiting');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       return;
+    }
+
+    // Check if this is a duplicate event (same timestamp as last processed)
+    if (lastItem._force_update && lastItem._force_update === lastProcessedTimestamp) {
+      console.log('HANDLE_NEW_EVENT: ⚠ Duplicate event detected (same timestamp), skipping');
+      console.log('HANDLE_NEW_EVENT: Timestamp:', lastItem._force_update);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      return;
+    }
+
+    // Update last processed timestamp
+    if (lastItem._force_update) {
+      lastProcessedTimestamp = lastItem._force_update;
+      console.log('HANDLE_NEW_EVENT: Updated lastProcessedTimestamp to:', lastProcessedTimestamp);
     }
 
     // Check if this event was triggered by this client (same session ID)
@@ -3059,8 +3074,17 @@ function renderWaitlist() {
           }
         }
 
-        // Hide non-last messages if row is not selected
-        const shouldHide = !isRowSelected && !isLastMessage;
+        // Hide logic for chat messages:
+        // - For completed items: hide ALL chat messages (status message will be shown instead)
+        // - For active items: hide non-last messages if row is not selected
+        let shouldHide;
+        if (hasStatusMessage) {
+          // Completed item: hide all chat messages when not selected
+          shouldHide = !isRowSelected;
+        } else {
+          // Active item: hide non-last messages when not selected
+          shouldHide = !isRowSelected && !isLastMessage;
+        }
         const hideStyle = shouldHide ? ' style="display: none;"' : '';
         
         return `<div class="text-xs ${messageChatClass} leading-relaxed" ${dataAttr}${hideStyle}>↳ [${elapsedTime}] ${chat.qna}${chatBadge}</div>`; //arrow
@@ -3077,7 +3101,9 @@ function renderWaitlist() {
           minute: '2-digit',
           second: '2-digit'
         });
-        chatHistoryHTML += `<div class="text-xs ${statusColor} leading-relaxed">↳ ${item.status} @ ${timeString}</div>`;
+        // Show status message by default when not selected (hide when row is clicked to show chat history)
+        const statusHideStyle = isRowSelected ? ' style="display: none;"' : '';
+        chatHistoryHTML += `<div class="text-xs ${statusColor} leading-relaxed"${statusHideStyle}>↳ ${item.status} @ ${timeString}</div>`;
       }
     }
 
