@@ -1,4 +1,4 @@
-const version = '0.698';
+const version = '0.699';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 
@@ -1890,29 +1890,60 @@ function createManyChatPayload(booking_list_id, questionId) {
   const booking = waitlist.find(item => item.booking_list_id == booking_list_id);
   const subscriber_id = booking ? booking.subscriber_id : null;
 
-  // Find actualMsg and answer_ids from questionnaire using questionId
+  // Find question object from questionnaire using questionId
   const questionObj = questionnaire.find(q => q.Id == questionId);
-  const booking_question = questionObj ? questionObj.actualMsg : null;
+  const question_prefix = questionObj ? questionObj.question_prefix : null;
 
-  const answer_ids = questionObj ? questionObj.answer_ids : null;
-  // Convert answer_ids string to array (e.g., '1,2,3' -> [1, 2, 3])
-  const answer_ids_array = answer_ids ? answer_ids.split(',').map(id => parseInt(id.trim())) : [];
+  // Build fields based on question_prefix
+  let fields = [];
 
-  // Find actualMsg for each answer_id from answers array
-  const actualMsg_array = answer_ids_array.map(answerId => {
-    const answerObj = answers.find(a => a.Id == answerId);
-    return answerObj ? answerObj.actualMsg : null;
-  }).filter(msg => msg !== null); // Remove null values if answer not found
+  switch (question_prefix) {
+    case 'Q:':
+      // Find actualMsg and answer_ids from questionnaire using questionId
+      const booking_question = questionObj ? questionObj.actualMsg : null;
 
-  const booking_answer_count = answer_ids_array.length;
+      const answer_ids = questionObj ? questionObj.answer_ids : null;
+      // Convert answer_ids string to array (e.g., '1,2,3' -> [1, 2, 3])
+      const answer_ids_array = answer_ids ? answer_ids.split(',').map(id => parseInt(id.trim())) : [];
 
-  // Build fields array with all ManyChat custom fields
-  const fields = [
-    getFieldIdValueSet(booking_list_id, 'BLId'),
-    getFieldIdValueSet(booking_answer_count, 'BAC'),
-    getFieldIdValueSet(booking_question, 'BQ'),
-    ...getFieldIdValueSet(actualMsg_array, 'BA') // Spread array of answer fields
-  ];
+      // Find actualMsg for each answer_id from answers array
+      const actualMsg_array = answer_ids_array.map(answerId => {
+        const answerObj = answers.find(a => a.Id == answerId);
+        return answerObj ? answerObj.actualMsg : null;
+      }).filter(msg => msg !== null); // Remove null values if answer not found
+
+      const booking_answer_count = answer_ids_array.length;
+
+      // Build fields array with all ManyChat custom fields
+      fields = [
+        getFieldIdValueSet(booking_list_id, 'BLId'),
+        getFieldIdValueSet(booking_answer_count, 'BAC'),
+        getFieldIdValueSet(booking_question, 'BQ'),
+        ...getFieldIdValueSet(actualMsg_array, 'BA') // Spread array of answer fields
+      ];
+      break;
+    case 'i:':
+      // Get actualMsg text from questionnaire
+      const informed_actualMsg = questionObj ? questionObj.actualMsg : null;
+      
+      // Split actualMsg by '\n' to create array of WhatsApp text lines
+      const whatsapp_text_arr = informed_actualMsg ? informed_actualMsg.split('LINEBREAK') : [];
+      const whatsapp_text_count = whatsapp_text_arr.length;
+
+      // Build fields array with WhatsApp text fields
+      fields = [
+        getFieldIdValueSet(booking_list_id, 'BLId'),
+        getFieldIdValueSet(whatsapp_text_count, 'WTC'),
+        ...getFieldIdValueSet(whatsapp_text_arr, 'WT') // Spread array of WhatsApp text fields (WT1, WT2, WT3, ...)
+      ];
+      break;
+      
+
+    default:
+      // Default case: no fields to send
+      fields = [];
+      break;
+  }
 
   // Filter out invalid fields (null field_id or null field_value)
   const validFields = fields.filter(field =>
