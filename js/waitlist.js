@@ -1,6 +1,17 @@
-const version = '0.700';
+const version = '0.701';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
+
+const store_id = 'DL_Sunway_Geo';
+const theme = 'dark';
+const minPax_for_bigTable = 5;    // Minimum pax for big table highlight
+const maxPax_for_smallTable = 0;  // Maximum pax for small table highlight
+
+/**Flow types that can trigger handleNewEvent
+ * Flow 1.2: New booking created via waitlist form
+ * Flow 9.2: Chat response
+ */
+const flow_arr_that_can_trigger_handleNewEvent = [1.2,9.2];
 
 // Display version in header
 document.addEventListener('DOMContentLoaded', () => {
@@ -19,18 +30,35 @@ function handleNewEvent(obj) {
   console.log('HANDLE_NEW_EVENT: updateCounter =', updateCounter);
   console.log('HANDLE_NEW_EVENT: Received obj:', obj);
   
+  // Check if obj is an array and get the last element
+  let lastItem = null;
+  if (Array.isArray(obj) && obj.length > 0) {
+    lastItem = obj[obj.length - 1];
+    console.log('HANDLE_NEW_EVENT: Array detected, using last item:', lastItem);
+  } else if (obj && !Array.isArray(obj)) {
+    lastItem = obj;
+    console.log('HANDLE_NEW_EVENT: Single object detected:', lastItem);
+  }
+
+  // Validate booking_flow - only process if it matches flow_arr_that_can_trigger_handleNewEvent
+  if (lastItem && lastItem.booking_flow !== undefined) {
+    const flowMatches = flow_arr_that_can_trigger_handleNewEvent.some(
+      flow => Math.abs(flow - lastItem.booking_flow) < 0.0001 // Float comparison with tolerance
+    );
+    
+    if (!flowMatches) {
+      console.log('HANDLE_NEW_EVENT: ⚠ booking_flow does not match trigger list, skipping');
+      console.log('HANDLE_NEW_EVENT: booking_flow:', lastItem.booking_flow);
+      console.log('HANDLE_NEW_EVENT: Allowed flows:', flow_arr_that_can_trigger_handleNewEvent);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      return;
+    }
+    
+    console.log('HANDLE_NEW_EVENT: ✓ booking_flow matches trigger list:', lastItem.booking_flow);
+  }
+  
   if (updateCounter > 0) {
     console.log('HANDLE_NEW_EVENT: Counter > 0, processing event...');
-
-    // Check if obj is an array and get the last element
-    let lastItem = null;
-    if (Array.isArray(obj) && obj.length > 0) {
-      lastItem = obj[obj.length - 1];
-      console.log('HANDLE_NEW_EVENT: Array detected, using last item:', lastItem);
-    } else if (obj && !Array.isArray(obj)) {
-      lastItem = obj;
-      console.log('HANDLE_NEW_EVENT: Single object detected:', lastItem);
-    }
 
     if (!lastItem || !lastItem.subscriber_id) {
       // No valid data, exit without notification
@@ -190,11 +218,6 @@ function handleNewEvent(obj) {
   updateCounter++;
   console.log(`HANDLE_NEW_EVENT: Incremented updateCounter to: ${updateCounter}`);
 }
-
-const store_id = 'DL_Sunway_Geo';
-const theme = 'dark';
-const minPax_for_bigTable = 5;
-const maxPax_for_smallTable = 0;
 
 // Generate unique session ID for this client
 const sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
@@ -552,7 +575,8 @@ async function forceUpdateWebhook() {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        session_id: sessionId
+        session_id: sessionId,
+        store_id: store_id
       }),
       cache: 'no-store'
     });

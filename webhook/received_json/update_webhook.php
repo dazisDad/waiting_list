@@ -29,10 +29,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 try {
-    // POST 요청에서 session_id 읽기
+    // POST 요청에서 session_id와 store_id 읽기
     $requestBody = file_get_contents('php://input');
     $requestData = json_decode($requestBody, true);
     $sessionId = isset($requestData['session_id']) ? $requestData['session_id'] : null;
+    $storeId = isset($requestData['store_id']) ? $requestData['store_id'] : 'DL_Sunway_Geo'; // 기본값
     
     $jsonFile = __DIR__ . '/webhook_waitlist_events.json';
     
@@ -63,20 +64,27 @@ try {
     $datetime = date('Y-m-d H:i:s', $timestamp);
     
     // 강제 업데이트를 위한 메타데이터 추가
-    // 배열의 마지막 항목에 _force_update 및 _session_id 필드 추가
+    // 첫 번째 항목 제거하고 새로운 항목을 끝에 추가 (배열 크기 유지)
     if (count($data) > 0) {
-        // 마지막 항목에 타임스탬프와 세션 ID 추가
-        $lastIndex = count($data) - 1;
-        $data[$lastIndex]['_force_update'] = $timestamp;
-        $data[$lastIndex]['_force_update_datetime'] = $datetime;
-        $data[$lastIndex]['_session_id'] = $sessionId;
+        // 첫 번째 항목 제거
+        array_shift($data);
+        
+        // 새로운 항목 생성하여 배열 끝에 추가
+        $data[] = [
+            'store_id' => $storeId,
+            'booking_flow' => 9.2,
+            '_force_update' => $timestamp,
+            '_force_update_datetime' => $datetime,
+            '_session_id' => $sessionId
+        ];
     } else {
         // 데이터가 없으면 더미 항목 추가
         $data[] = [
+            'store_id' => $storeId,
+            'booking_flow' => 9.2,
             '_force_update' => $timestamp,
             '_force_update_datetime' => $datetime,
-            '_session_id' => $sessionId,
-            'note' => 'Force update trigger'
+            '_session_id' => $sessionId
         ];
     }
     
