@@ -1,4 +1,4 @@
-const version = '0.695';
+const version = '0.696';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 
@@ -2542,29 +2542,70 @@ async function handleUndo(booking_number, customer_name) {
 
   renderWaitlist();
 
-  // Add highlight effect to the restored item
+  // Check if we're on mobile or desktop for row selection
+  const isMobile = window.innerWidth <= 768;
+
+  // Set row selection BEFORE scrolling (so handleScrollToActive doesn't clear it)
+  if (isMobile) {
+    expandedRowId = booking_number;
+    console.log(`UNDO: Pre-set expandedRowId to #${booking_number}`);
+  } else {
+    selectedRowId = booking_number;
+    console.log(`UNDO: Pre-set selectedRowId to #${booking_number}`);
+  }
+
+  // Scroll to active queue and highlight the restored item
   requestAnimationFrame(() => {
-    const rows = waitlistBody.getElementsByTagName('tr');
-    const targetRow = Array.from(rows).find(row => {
-      const idCell = row.querySelector('td:first-child');
-      return idCell && idCell.textContent.trim() === booking_number.toString();
+    // Update button state to check if scroll-to-active button should be enabled
+    updateScrollAndButtonState();
+
+    // Trigger scroll to active queue
+    requestAnimationFrame(() => {
+      if (scrollButton && !scrollButton.disabled) {
+        console.log('UNDO: Scrolling to active queue after undo');
+        handleScrollToActive(false, true); // false = not auto-triggered, true = keep row selection
+      }
+
+      // After scrolling, restore row selection for the undone item
+      requestAnimationFrame(() => {
+        const rows = waitlistBody.getElementsByTagName('tr');
+        const targetRow = Array.from(rows).find(row => {
+          const idCell = row.querySelector('td:first-child');
+          return idCell && idCell.textContent.trim() === booking_number.toString();
+        });
+
+        if (targetRow) {
+          // Add highlight effect
+          targetRow.classList.add('arrive-highlight'); // Reuse purple highlight for Undo
+          console.log(`HIGHLIGHT: Added purple highlight to Undo item #${booking_number}`);
+
+          // Re-apply row selection (in case handleScrollToActive cleared it)
+          if (isMobile) {
+            // Mobile: re-expand the row
+            expandedRowId = booking_number;
+            toggleRowSelection(booking_number, true);
+            addMobileActionRow(booking_number);
+            console.log(`UNDO: Re-expanded mobile row for #${booking_number}`);
+          } else {
+            // Desktop: re-select the row
+            selectedRowId = booking_number;
+            toggleRowSelection(booking_number, true);
+            console.log(`UNDO: Re-selected desktop row for #${booking_number}`);
+          }
+
+          // Remove highlight after 1 second
+          setTimeout(() => {
+            targetRow.classList.remove('arrive-highlight');
+            targetRow.classList.add('fade-out-highlight');
+
+            // Clean up fade-out class
+            setTimeout(() => {
+              targetRow.classList.remove('fade-out-highlight');
+            }, 700);
+          }, 1000);
+        }
+      });
     });
-
-    if (targetRow) {
-      targetRow.classList.add('arrive-highlight'); // Reuse purple highlight for Undo
-      console.log(`HIGHLIGHT: Added purple highlight to Undo item #${booking_number}`);
-
-      // Remove highlight after 1 second
-      setTimeout(() => {
-        targetRow.classList.remove('arrive-highlight');
-        targetRow.classList.add('fade-out-highlight');
-
-        // Clean up fade-out class
-        setTimeout(() => {
-          targetRow.classList.remove('fade-out-highlight');
-        }, 700);
-      }, 1000);
-    }
   });
 }
 
@@ -2713,8 +2754,9 @@ function updateScrollAndButtonState() {
 /**
  * Button click handler: Scrolls DOWN to the Active Queue instantly.
  * @param {boolean} isAutoTrigger - True if triggered automatically by countdown, false if user clicked
+ * @param {boolean} keepRowSelection - True to keep current row selection (used by Undo), false to clear selection
  */
-function handleScrollToActive(isAutoTrigger = false) {
+function handleScrollToActive(isAutoTrigger = false, keepRowSelection = false) {
   if (isAutoTrigger) {
     console.log("ACTION: Scroll button auto-triggered after countdown.");
   } else {
@@ -2729,16 +2771,16 @@ function handleScrollToActive(isAutoTrigger = false) {
     console.log("AUTO_HIDE: Stopped all countdown timers");
   }
 
-  // Close any selected row (desktop) before scrolling
-  if (selectedRowId !== null) {
+  // Close any selected row (desktop) before scrolling - unless keepRowSelection is true
+  if (!keepRowSelection && selectedRowId !== null) {
     console.log(`SCROLL_ACTION: Deselecting desktop row #${selectedRowId} before scroll`);
     toggleRowSelection(selectedRowId, false);
     toggleChatHistoryDisplay(selectedRowId, false);
     selectedRowId = null;
   }
 
-  // Close any expanded row (mobile) before scrolling
-  if (expandedRowId !== null) {
+  // Close any expanded row (mobile) before scrolling - unless keepRowSelection is true
+  if (!keepRowSelection && expandedRowId !== null) {
     console.log(`SCROLL_ACTION: Closing expanded row #${expandedRowId} before scroll`);
     removeMobileActionRow(expandedRowId);
     toggleRowSelection(expandedRowId, false);
