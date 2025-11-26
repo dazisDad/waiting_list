@@ -1,4 +1,4 @@
-const version = '0.694';
+const version = '0.695';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 
@@ -38,8 +38,17 @@ function handleNewEvent(obj) {
       return;
     }
 
+    // Check if this event was triggered by this client (same session ID)
+    if (lastItem._session_id && lastItem._session_id === sessionId) {
+      console.log('HANDLE_NEW_EVENT: ⚠ Event triggered by THIS client (session match), skipping notification/badge');
+      console.log('HANDLE_NEW_EVENT: Session ID:', lastItem._session_id);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      return;
+    }
+
     console.log('HANDLE_NEW_EVENT: Valid lastItem with subscriber_id:', lastItem.subscriber_id);
     console.log('HANDLE_NEW_EVENT: Valid lastItem with booking_list_id:', lastItem.booking_list_id);
+    console.log('HANDLE_NEW_EVENT: Session ID from event:', lastItem._session_id || 'none');
 
     // Find booking_number from waitlist using subscriber_id (before server update)
     // Use == for flexible type comparison (string vs number)
@@ -171,6 +180,10 @@ const store_id = 'DL_Sunway_Geo';
 const theme = 'dark';
 const minPax_for_bigTable = 5;
 const maxPax_for_smallTable = 0;
+
+// Generate unique session ID for this client
+const sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+console.log('SESSION_ID: Generated unique session ID:', sessionId);
 
 let waitlist = [];
 let chatlist = [];
@@ -497,6 +510,60 @@ async function getServerSideUpdate() {
 
   } catch (error) {
     console.error('SERVER_UPDATE: Error during server-side update:', error);
+  }
+}
+
+/**
+ * Force update webhook JSON file to trigger polling detection.
+ * This function calls update_webhook.php which modifies the webhook_waitlist_events.json file,
+ * causing polling_json.js to detect the change and trigger handleNewEvent().
+ * 
+ * Use cases:
+ * - Manual refresh trigger
+ * - Testing event handling
+ * - Force UI update after external changes
+ * 
+ * @returns {Promise<Object>} Response from PHP script
+ */
+async function forceUpdateWebhook() {
+  const phpUrl = 'webhook/received_json/update_webhook.php';
+  
+  console.log('🔄 FORCE_UPDATE: Calling update_webhook.php with session ID:', sessionId);
+  
+  try {
+    const response = await fetch(phpUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        session_id: sessionId
+      }),
+      cache: 'no-store'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      console.log('✓ FORCE_UPDATE: Webhook file updated successfully', result);
+      console.log('✓ FORCE_UPDATE: Timestamp:', result.datetime);
+    } else {
+      console.error('✗ FORCE_UPDATE: Update failed:', result.message);
+    }
+    
+    return result;
+    
+  } catch (error) {
+    console.error('✗ FORCE_UPDATE: Error calling update_webhook.php:', error);
+    return {
+      success: false,
+      message: error.message,
+      timestamp: Date.now()
+    };
   }
 }
 
@@ -1652,11 +1719,14 @@ async function handleReadyInternal(booking_number, customer_name, event, buttonI
 
     console.log('Database updated successfully for booking #' + booking_number);
 
-    // 2. Update local data after successful database update
+    // 2. Trigger webhook update to notify polling system
+    await forceUpdateWebhook();
+
+    // 3. Update local data after successful database update
     item.status = 'Ready';
     item.q_level = 300; // Update q_level to match database
 
-    // 3. Save current scroll position before re-rendering
+    // 4. Save current scroll position before re-rendering
     const currentScrollTop = waitlistContainer.scrollTop;
 
     // 4. Re-render to immediately update button state
@@ -1922,6 +1992,10 @@ async function handleQuestion(booking_list_id, question, q_level = null, buttonI
       console.error('Database insert failed:', updateResult.error);
       return; // Exit if database insert failed
     }
+
+    // Trigger webhook update to notify polling system
+    await forceUpdateWebhook();
+
     // Update q_level in booking_list table if provided
     if (q_level !== null) {
       const qLevelUpdateResult = await connector.updateDataArr(
@@ -2128,7 +2202,10 @@ async function handleArrive(booking_number, customer_name) {
 
       console.log('Database updated successfully for booking #' + booking_number);
 
-      // 2. Update local data after successful database update
+      // 2. Trigger webhook update to notify polling system
+      await forceUpdateWebhook();
+
+      // 3. Update local data after successful database update
       item.status = 'Arrived';
       item.time_cleared = Date.now(); // Set time_cleared when arrived
 
@@ -2258,7 +2335,10 @@ async function handleCancel(booking_number, customer_name) {
 
       console.log('Database updated successfully for booking #' + booking_number);
 
-      // 2. Update local data after successful database update
+      // 2. Trigger webhook update to notify polling system
+      await forceUpdateWebhook();
+
+      // 3. Update local data after successful database update
       item.status = 'Cancelled';
       item.time_cleared = Date.now(); // Set time_cleared when cancelling
 
@@ -2441,7 +2521,10 @@ async function handleUndo(booking_number, customer_name) {
 
       console.log('Database updated successfully for booking #' + booking_number);
 
-      // 2. Update local data after successful database update
+      // 2. Trigger webhook update to notify polling system
+      await forceUpdateWebhook();
+
+      // 3. Update local data after successful database update
       item.status = newStatus;
       item.time_cleared = null; // Clear the completion time
 
