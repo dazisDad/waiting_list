@@ -1,4 +1,4 @@
-const version = '0.699';
+const version = '0.700';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 
@@ -1036,14 +1036,18 @@ function toggleMobileActions(booking_number, event) {
       event.stopPropagation();
     }
 
+    // Check if we need to re-render (Ask mode changes)
+    const bookingNumberStr = String(booking_number);
+    let needsRerender = false;
+
     // Exit Ask mode for other rows when clicking a different row
     const askModeItemsArray = Array.from(askModeItems);
-    const bookingNumberStr = String(booking_number);
     if (askModeItemsArray.length > 0 && !askModeItems.has(bookingNumberStr)) {
       askModeItems.clear();
+      needsRerender = true;
     }
 
-    // Toggle row selection for desktop without re-rendering
+    // Toggle row selection for desktop
     if (selectedRowId === booking_number) {
       // Deselect current row
       selectedRowId = null;
@@ -1052,6 +1056,12 @@ function toggleMobileActions(booking_number, event) {
 
       // Stop auto-hide countdown if active
       stopUndoAutoHideCountdown(booking_number);
+
+      // Exit Ask mode for deselected row if active
+      if (askModeItems.has(bookingNumberStr)) {
+        askModeItems.delete(bookingNumberStr);
+        needsRerender = true;
+      }
 
       console.log(`DESKTOP: Deselected row #${booking_number}`);
     } else {
@@ -1087,6 +1097,16 @@ function toggleMobileActions(booking_number, event) {
       
       console.log(`DESKTOP: Selected row #${booking_number}`);
     }
+
+    // Re-render if Ask mode was changed
+    if (needsRerender) {
+      const currentScrollTop = waitlistContainer.scrollTop;
+      renderWaitlist();
+      requestAnimationFrame(() => {
+        waitlistContainer.scrollTop = currentScrollTop;
+      });
+    }
+
     return;
   }
 
@@ -1413,6 +1433,44 @@ function toggleRowSelection(booking_number, selected) {
   } else {
     row.classList.remove('row-selected');
   }
+}
+
+/**
+ * Select a row in desktop mode (handles deselecting previous row and all visual states)
+ * @param {number} booking_number - The booking number to select
+ */
+function toggleDesktopRowSelection(booking_number) {
+  // Deselect previous row if any
+  if (selectedRowId !== null && selectedRowId !== booking_number) {
+    toggleRowSelection(selectedRowId, false);
+    toggleChatHistoryDisplay(selectedRowId, false);
+    
+    // Stop auto-hide countdown for previous row if active
+    stopUndoAutoHideCountdown(selectedRowId);
+  }
+
+  // Select new row
+  selectedRowId = booking_number;
+  toggleRowSelection(booking_number, true);
+  toggleChatHistoryDisplay(booking_number, true); // Show all messages
+  
+  // Hide chat NEW badge for this booking
+  const selectedItem = waitlist.find(item => item.booking_number == booking_number);
+  if (selectedItem && selectedItem.subscriber_id && selectedItem.booking_list_id) {
+    const badgeKey = `${selectedItem.subscriber_id}_${selectedItem.booking_list_id}`;
+    chatBadgeHidden[badgeKey] = true;
+    const today = new Date().toISOString().split('T')[0];
+    localStorage.setItem(`chatBadgeHidden_${today}`, JSON.stringify(chatBadgeHidden));
+    
+    // Hide chat badge via DOM
+    const chatBadgeSpan = document.getElementById(`chat-new-badge-${selectedItem.booking_list_id}`);
+    if (chatBadgeSpan) {
+      chatBadgeSpan.style.display = 'none';
+      chatBadgeSpan.textContent = '';
+    }
+  }
+  
+  console.log(`DESKTOP: Selected row #${booking_number}`);
 }
 
 /**
@@ -1766,7 +1824,8 @@ function handleAsk(booking_number, customer_name, event) {
   const isMobile = window.innerWidth <= 768;
 
   if (!isMobile) {
-    // Desktop: Flash row (temporary) only
+    // Desktop: Select row and flash it
+    toggleDesktopRowSelection(booking_number);
     highlightRow(booking_number, true);
   }
 
@@ -1790,9 +1849,14 @@ function handleAsk(booking_number, customer_name, event) {
   // Re-render to show question buttons
   renderWaitlist();
 
-  // Restore scroll position after render completes
+  // Restore scroll position and chat history display after render completes
   requestAnimationFrame(() => {
     waitlistContainer.scrollTop = currentScrollTop;
+    
+    // Restore chat history expansion for desktop selected row
+    if (!isMobile && selectedRowId !== null) {
+      toggleChatHistoryDisplay(selectedRowId, true);
+    }
   });
 
   // On mobile, re-open the action row after rendering

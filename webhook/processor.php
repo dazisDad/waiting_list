@@ -1,5 +1,5 @@
 <?php
-// Version: 0.698
+// Version: 0.700
 
 // Global flag to control prepared statement usage
 // Set to false to use regular statements (avoids max_prepared_stmt_count limit)
@@ -738,7 +738,8 @@ function flow_execution ($inputDataSet) {
               $return_json = [
                   'success' => true,
                   'is_booking_duplicate' => count($retrieved_booking_detail) > 0 ? 1 : 0,
-                  'booking_number' => count($retrieved_booking_detail) > 0 ? $retrieved_booking_detail[0]['booking_number'] : null
+                  'booking_number' => count($retrieved_booking_detail) > 0 ? $retrieved_booking_detail[0]['booking_number'] : null,
+                  'booking_pax' => count($retrieved_booking_detail) > 0 ? $retrieved_booking_detail[0]['pax'] : null
               ];
               return $return_json;
           case 1.2:
