@@ -788,7 +788,7 @@ function processChatResponse($response) {
     // Step 5: Add "Cancel" option at the beginning
     array_unshift($answer_ids_array, 0);
     array_unshift($answer_texts, 'Cancel');
-    array_unshift($badge_arr, null);
+    array_unshift($badge_arr, 'Cancel Requested');
 
     // Step 6: Get selected values based on booking_response index
     $selected_answer_id = $answer_ids_array[$booking_response] ?? null;
@@ -824,6 +824,9 @@ function processChatResponse($response) {
 
     // Step 8: Update badge in booking_list table if selected_badge exists
     if ($selected_badge !== null && $selected_badge !== '') {
+        // Split selected_badge by comma if it contains multiple badges
+        $badge_values = array_map('trim', explode(',', $selected_badge));
+        
         // Get current badge values
         $sql_get_badges = "SELECT badge1, badge2, badge3 FROM booking_list WHERE booking_list_id = ?";
         $stmt_get = $mysqli->prepare($sql_get_badges);
@@ -839,18 +842,32 @@ function processChatResponse($response) {
         $stmt_get->close();
 
         if ($badge_row) {
-            // Determine which badge column to update
-            $badge_column = null;
+            // Get available badge columns in order
+            $available_columns = [];
             if (empty($badge_row['badge1'])) {
-                $badge_column = 'badge1';
-            } elseif (empty($badge_row['badge2'])) {
-                $badge_column = 'badge2';
-            } elseif (empty($badge_row['badge3'])) {
-                $badge_column = 'badge3';
+                $available_columns[] = 'badge1';
+            }
+            if (empty($badge_row['badge2'])) {
+                $available_columns[] = 'badge2';
+            }
+            if (empty($badge_row['badge3'])) {
+                $available_columns[] = 'badge3';
             }
 
-            // Update the badge column if available
-            if ($badge_column !== null) {
+            // Update badge columns with available space
+            $updates_made = 0;
+            foreach ($badge_values as $index => $badge_value) {
+                // Skip empty badge values
+                if (empty($badge_value)) {
+                    continue;
+                }
+                
+                // Stop if no more available columns
+                if ($index >= count($available_columns)) {
+                    break;
+                }
+                
+                $badge_column = $available_columns[$index];
                 $sql_update_badge = "UPDATE booking_list SET `$badge_column` = ? WHERE booking_list_id = ?";
                 $stmt_update = $mysqli->prepare($sql_update_badge);
                 if ($stmt_update === false) {
@@ -858,7 +875,7 @@ function processChatResponse($response) {
                     throw new Exception('Prepare error (update badge): ' . $mysqli->error);
                 }
 
-                $stmt_update->bind_param('si', $selected_badge, $booking_list_id);
+                $stmt_update->bind_param('si', $badge_value, $booking_list_id);
                 if (!$stmt_update->execute()) {
                     $err = $stmt_update->error;
                     $stmt_update->close();
@@ -867,6 +884,7 @@ function processChatResponse($response) {
                 }
 
                 $stmt_update->close();
+                $updates_made++;
             }
         }
     }

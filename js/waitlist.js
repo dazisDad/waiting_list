@@ -1,4 +1,4 @@
-const version = '0.681';
+const version = '0.694';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 
@@ -13,65 +13,134 @@ document.addEventListener('DOMContentLoaded', () => {
 let updateCounter = 0;
 // polling_json.js 파일의 pollOnce() 함수에서 호출함
 function handleNewEvent(obj) {
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('HANDLE_NEW_EVENT: Function called');
+  console.log('HANDLE_NEW_EVENT: updateCounter =', updateCounter);
+  console.log('HANDLE_NEW_EVENT: Received obj:', obj);
+  
   if (updateCounter > 0) {
-    console.log('handleNewEvent: received', obj);
+    console.log('HANDLE_NEW_EVENT: Counter > 0, processing event...');
 
     // Check if obj is an array and get the last element
     let lastItem = null;
     if (Array.isArray(obj) && obj.length > 0) {
       lastItem = obj[obj.length - 1];
+      console.log('HANDLE_NEW_EVENT: Array detected, using last item:', lastItem);
     } else if (obj && !Array.isArray(obj)) {
       lastItem = obj;
+      console.log('HANDLE_NEW_EVENT: Single object detected:', lastItem);
     }
 
     if (!lastItem || !lastItem.subscriber_id) {
       // No valid data, exit without notification
-      console.log('handleNewEvent: No valid data or subscriber_id');
+      console.log('HANDLE_NEW_EVENT: No valid data or subscriber_id, exiting');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       return;
     }
 
-    // Find booking_number from waitlist using subscriber_id
-    // 서버 업데이트 전 waitlist와 비교함
-    const bookingItem = waitlist.find(item => item.subscriber_id === lastItem.subscriber_id);
+    console.log('HANDLE_NEW_EVENT: Valid lastItem with subscriber_id:', lastItem.subscriber_id);
+    console.log('HANDLE_NEW_EVENT: Valid lastItem with booking_list_id:', lastItem.booking_list_id);
+
+    // Find booking_number from waitlist using subscriber_id (before server update)
+    // Use == for flexible type comparison (string vs number)
+    const bookingItemBefore = waitlist.find(item => item.subscriber_id == lastItem.subscriber_id);
+    console.log('HANDLE_NEW_EVENT: Searched OLD waitlist for existing booking, found:', bookingItemBefore ? `#${bookingItemBefore.booking_number}` : 'NOT FOUND');
 
     // Delay notification and UI update by 300ms
     setTimeout(async () => {
+      console.log('HANDLE_NEW_EVENT: 300ms timeout elapsed, starting server update...');
 
       // Refresh data from server first to get latest state
       await getServerSideUpdate();
+      console.log('HANDLE_NEW_EVENT: Server update completed');
 
       let title, body;
 
+      // Find booking in REFRESHED waitlist (use == for flexible type comparison)
+      const bookingItem = waitlist.find(item => item.subscriber_id == lastItem.subscriber_id);
+      console.log('HANDLE_NEW_EVENT: Searched REFRESHED waitlist for booking, found:', bookingItem);
+
+      // Determine if this is a new booking or message update by checking booking_list_id
+      const isExistingBooking = bookingItemBefore && bookingItemBefore.booking_list_id == lastItem.booking_list_id;
+      console.log('HANDLE_NEW_EVENT: Is existing booking?', isExistingBooking);
+
       // Show notification for both new and updated items
-      if (bookingItem && bookingItem.booking_number) {
+      if (isExistingBooking && bookingItem) {
+        console.log('HANDLE_NEW_EVENT: ★ EXISTING BOOKING - Processing message update');
+        
+        // UPDATED - existing booking received new message
         title = '[UPDATED] Waitlist';
         body = `Updated Booking #: ${bookingItem.booking_number}`;
+        console.log('HANDLE_NEW_EVENT: Showing notification:', title, body);
         showNotification(title, body);
+        
+        console.log('HANDLE_NEW_EVENT: Found updated item in refreshed waitlist:', bookingItem);
+        
+        if (bookingItem && bookingItem.subscriber_id && bookingItem.booking_list_id) {
+          console.log(`HANDLE_NEW_EVENT: Unhiding badge for booking_list_id: ${bookingItem.booking_list_id}`);
+          
+          // Remove badge from hidden list to show it for new message
+          const badgeKey = `${bookingItem.subscriber_id}_${bookingItem.booking_list_id}`;
+          console.log('HANDLE_NEW_EVENT: Badge key:', badgeKey);
+          console.log('HANDLE_NEW_EVENT: chatBadgeHidden BEFORE delete:', JSON.stringify(chatBadgeHidden));
+          
+          delete chatBadgeHidden[badgeKey];
+          
+          console.log('HANDLE_NEW_EVENT: chatBadgeHidden AFTER delete:', JSON.stringify(chatBadgeHidden));
+          
+          const today = new Date().toISOString().split('T')[0];
+          localStorage.setItem(`chatBadgeHidden_${today}`, JSON.stringify(chatBadgeHidden));
+          console.log('HANDLE_NEW_EVENT: Saved to localStorage:', `chatBadgeHidden_${today}`);
+          
+          // Show badge via DOM immediately
+          requestAnimationFrame(() => {
+            const chatBadgeSpan = document.getElementById(`chat-new-badge-${bookingItem.booking_list_id}`);
+            console.log('HANDLE_NEW_EVENT: Looking for badge element with ID:', `chat-new-badge-${bookingItem.booking_list_id}`);
+            console.log('HANDLE_NEW_EVENT: Badge element found:', chatBadgeSpan);
+            
+            if (chatBadgeSpan) {
+              chatBadgeSpan.style.display = 'inline';
+              console.log('HANDLE_NEW_EVENT: ✓ Badge display set to inline for booking_list_id', bookingItem.booking_list_id);
+            } else {
+              console.log('HANDLE_NEW_EVENT: ✗ Badge element NOT FOUND in DOM');
+            }
+          });
+        } else {
+          console.log('HANDLE_NEW_EVENT: ✗ Could not find updated item with required fields');
+        }
       } else {
-        // New booking detected - find it in updated waitlist and show NEW badge via DOM
-        const newBookingItem = waitlist.find(item => item.subscriber_id === lastItem.subscriber_id);
+        console.log('HANDLE_NEW_EVENT: ★ NEW BOOKING - Processing new registration');
+        
+        // New booking detected - find it in updated waitlist (use == for flexible type comparison)
+        const newBookingItem = bookingItem; // Already found above after server update
+        console.log('HANDLE_NEW_EVENT: Using booking item from refreshed waitlist:', newBookingItem);
+        
         if (newBookingItem && newBookingItem.subscriber_id) {
-          console.log(`NEW_BOOKING: Detected new booking subscriber_id: ${newBookingItem.subscriber_id}`);
+          console.log(`HANDLE_NEW_EVENT: Found new booking - subscriber_id: ${newBookingItem.subscriber_id}, booking_list_id: ${newBookingItem.booking_list_id}`);
 
           // Use double requestAnimationFrame to ensure DOM is fully ready after renderWaitlist
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
               // Chat badge: Already showing by default, just ensure it's not in hidden list
-              delete chatBadgeHidden[newBookingItem.subscriber_id];
+              const badgeKey = `${newBookingItem.subscriber_id}_${newBookingItem.booking_list_id}`;
+              console.log('HANDLE_NEW_EVENT: Ensuring badge is visible for key:', badgeKey);
+              
+              delete chatBadgeHidden[badgeKey];
               const today = new Date().toISOString().split('T')[0];
               localStorage.setItem(`chatBadgeHidden_${today}`, JSON.stringify(chatBadgeHidden));
+              console.log('HANDLE_NEW_EVENT: Badge state saved to localStorage');
 
               // Update button state and trigger scroll to active after badge is displayed
-              console.log('NEW_BOOKING: Updating scroll button state and triggering scroll');
+              console.log('HANDLE_NEW_EVENT: Updating scroll button state...');
               updateScrollAndButtonState();
 
               // Use another requestAnimationFrame to ensure button state is updated before scrolling
               requestAnimationFrame(() => {
                 if (scrollButton && !scrollButton.disabled) {
-                  console.log('NEW_BOOKING: Scroll button enabled, triggering scroll to active queue');
+                  console.log('HANDLE_NEW_EVENT: Scroll button enabled, triggering scroll to active queue');
                   handleScrollToActive(true);
                 } else {
-                  console.log('NEW_BOOKING: Scroll button is disabled, cannot scroll');
+                  console.log('HANDLE_NEW_EVENT: Scroll button is disabled, cannot scroll');
                 }
               });
             });
@@ -79,29 +148,36 @@ function handleNewEvent(obj) {
 
           title = '[NEW] Waitlist';
           body = `New Booking #: ${newBookingItem.booking_number}`;
+          console.log('HANDLE_NEW_EVENT: Showing notification:', title, body);
           showNotification(title, body);
+        } else {
+          console.log('HANDLE_NEW_EVENT: ✗ Could not find new booking item in refreshed waitlist');
         }
       }
 
+      console.log('HANDLE_NEW_EVENT: Event processing completed');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
     }, 300);
+  } else {
+    console.log('HANDLE_NEW_EVENT: Counter = 0, skipping (first poll)');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   }
   updateCounter++;
-  console.log(`Update count: ${updateCounter}`);
+  console.log(`HANDLE_NEW_EVENT: Incremented updateCounter to: ${updateCounter}`);
 }
 
 const store_id = 'DL_Sunway_Geo';
+const theme = 'dark';
+const minPax_for_bigTable = 5;
+const maxPax_for_smallTable = 0;
 
 let waitlist = [];
 let chatlist = [];
 let questionnaire = [];
 let answers = [];
 let configuration = [];
-let chatBadgeHidden = {}; // { subscriber_id: true/false } - tracks which chat NEW badges should be hidden
-
-const minPax_for_bigTable = 5;
-const maxPax_for_smallTable = 0;
-
-const theme = 'dark';
+let chatBadgeHidden = {}; // { 'subscriber_id_booking_list_id': true/false } - tracks which chat NEW badges should be hidden
 
 const color_codes = {
   theme: {
@@ -391,37 +467,7 @@ async function getServerSideUpdate() {
     // 실시간 변화하는 데이터만 병렬로 가져오기
     const [waitlistData, chatData] = await Promise.all([
       fetchBookingList(),
-      fetchChatHistory(),
-      // Load or reset badge state from localStorage with date-based keys
-      Promise.resolve().then(() => {
-        const today = new Date();
-        const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
-        const storageKey = `chatBadgeHidden_${todayStr}`;
-        
-        if (isResetLocalStorage) {
-          // Reset localStorage on every load
-          chatBadgeHidden = {};
-          localStorage.removeItem(storageKey);
-        } else {
-          // Load from localStorage for today's date only
-          const savedChat = localStorage.getItem(storageKey);
-          if (savedChat) {
-            try {
-              chatBadgeHidden = JSON.parse(savedChat);
-            } catch (e) {
-              console.error('Failed to parse chatBadgeHidden from localStorage:', e);
-              chatBadgeHidden = {};
-            }
-          }
-          
-          // Clean up old date entries (keep only today's data)
-          Object.keys(localStorage).forEach(key => {
-            if (key.startsWith('chatBadgeHidden_') && key !== storageKey) {
-              localStorage.removeItem(key);
-            }
-          });
-        }
-      })
+      fetchChatHistory()
     ]);
 
     console.log('SERVER_UPDATE: All data loaded successfully');
@@ -436,10 +482,16 @@ async function getServerSideUpdate() {
 
     console.log('SERVER_UPDATE: Global variables updated, re-rendering waitlist...');
 
+    // Save current scroll position before re-rendering
+    const currentScrollTop = waitlistContainer.scrollTop;
+
     // 새 데이터로 렌더링
     renderWaitlist();
 
-
+    // Restore scroll position after render completes
+    requestAnimationFrame(() => {
+      waitlistContainer.scrollTop = currentScrollTop;
+    });
 
     console.log('SERVER_UPDATE: Update completed successfully');
 
@@ -846,8 +898,10 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
 
   // Special handling for Ready button - use touchstart/mousedown instead of click for long press
   if (buttonDef.functionName === 'handleReady' && !isDisabled) {
+    // Generate unique button ID for Ready button
+    const buttonId = `ready-btn-${booking_number}`;
     // Ready button needs special event handling for long press
-    const readyHandlerCall = `handleReadyWithLongPress(${booking_number}, '${customer_name}', event)`;
+    const readyHandlerCall = `handleReadyWithLongPress(${booking_number}, '${customer_name}', event, '${buttonId}')`;
     const onTouchStart = `ontouchstart="${readyHandlerCall}"`;
     const onMouseDown = `onmousedown="${readyHandlerCall}"`;
     // Add blur for desktop after long press completes
@@ -855,7 +909,7 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
       ? `onclick="event.preventDefault(); return false;"`
       : `onclick="event.preventDefault(); setTimeout(() => this.blur(), 100); return false;"`;
 
-    return `<button ${onTouchStart} ${onMouseDown} ${preventClick} class="${classes}">${buttonDef.label}</button>`;
+    return `<button id="${buttonId}" ${onTouchStart} ${onMouseDown} ${preventClick} class="${classes}">${buttonDef.label}</button>`;
   }
 
   // Standard button handling for all other buttons
@@ -865,9 +919,10 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
     : `${buttonDef.functionName}(${booking_number}, '${customer_name}')`;
 
   // Add blur on click to remove focus highlight (desktop only)
+  // Also add event.stopPropagation() to prevent row click from interfering
   const onclickHandler = isMobile
-    ? `${fnCall}`
-    : `${fnCall}; setTimeout(() => this.blur(), 100);`;
+    ? `event.stopPropagation(); ${fnCall}`
+    : `event.stopPropagation(); ${fnCall}; setTimeout(() => this.blur(), 100);`;
 
   // If disabled, prevent onclick
   const finalOnclickHandler = isDisabled ? '' : `onclick="${onclickHandler}"`;
@@ -932,15 +987,16 @@ function toggleMobileActions(booking_number, event) {
       toggleRowSelection(booking_number, true);
       toggleChatHistoryDisplay(booking_number, true); // Show all messages
       
-      // Hide chat NEW badge for this subscriber
+      // Hide chat NEW badge for this booking
       const selectedItem = waitlist.find(item => item.booking_number == booking_number);
-      if (selectedItem && selectedItem.subscriber_id) {
-        chatBadgeHidden[selectedItem.subscriber_id] = true;
+      if (selectedItem && selectedItem.subscriber_id && selectedItem.booking_list_id) {
+        const badgeKey = `${selectedItem.subscriber_id}_${selectedItem.booking_list_id}`;
+        chatBadgeHidden[badgeKey] = true;
         const today = new Date().toISOString().split('T')[0];
         localStorage.setItem(`chatBadgeHidden_${today}`, JSON.stringify(chatBadgeHidden));
         
         // Hide chat badge via DOM
-        const chatBadgeSpan = document.getElementById(`chat-new-badge-${selectedItem.subscriber_id}`);
+        const chatBadgeSpan = document.getElementById(`chat-new-badge-${selectedItem.booking_list_id}`);
         if (chatBadgeSpan) {
           chatBadgeSpan.style.display = 'none';
           chatBadgeSpan.textContent = '';
@@ -1087,15 +1143,16 @@ function toggleMobileActions(booking_number, event) {
   // Add mobile action row
   addMobileActionRow(booking_number);
 
-  // Hide chat NEW badge for this subscriber
+  // Hide chat NEW badge for this booking
   const expandedItem = waitlist.find(item => item.booking_number == booking_number);
-  if (expandedItem && expandedItem.subscriber_id) {
-    chatBadgeHidden[expandedItem.subscriber_id] = true;
+  if (expandedItem && expandedItem.subscriber_id && expandedItem.booking_list_id) {
+    const badgeKey = `${expandedItem.subscriber_id}_${expandedItem.booking_list_id}`;
+    chatBadgeHidden[badgeKey] = true;
     const today = new Date().toISOString().split('T')[0];
     localStorage.setItem(`chatBadgeHidden_${today}`, JSON.stringify(chatBadgeHidden));
     
     // Hide chat badge via DOM
-    const chatBadgeSpan = document.getElementById(`chat-new-badge-${expandedItem.subscriber_id}`);
+    const chatBadgeSpan = document.getElementById(`chat-new-badge-${expandedItem.booking_list_id}`);
     if (chatBadgeSpan) {
       chatBadgeSpan.style.display = 'none';
       chatBadgeSpan.textContent = '';
@@ -1510,7 +1567,7 @@ function isLongPress(event, duration = 500) {
  * Special wrapper for Ready button that handles long press detection
  * This function is called from touchstart/mousedown events on Ready buttons
  */
-async function handleReadyWithLongPress(booking_number, customer_name, event) {
+async function handleReadyWithLongPress(booking_number, customer_name, event, buttonId) {
   // Check for long press first
   const longPress = await isLongPress(event);
   if (!longPress) {
@@ -1520,7 +1577,7 @@ async function handleReadyWithLongPress(booking_number, customer_name, event) {
   }
 
   // Call the actual Ready handler
-  await handleReadyInternal(booking_number, customer_name, event);
+  await handleReadyInternal(booking_number, customer_name, event, buttonId);
 }
 
 /**
@@ -1534,7 +1591,7 @@ async function handleReady(booking_number, customer_name, event) {
 /**
  * Internal Ready handler that performs the actual ready action
  */
-async function handleReadyInternal(booking_number, customer_name, event) {
+async function handleReadyInternal(booking_number, customer_name, event, buttonId = null) {
   console.log(`ACTION: Marking customer ${customer_name} (#${booking_number}) as ready.`);
   console.log(`INFO: [${customer_name}, #${booking_number}] 고객님께 테이블이 준비되었음을 알립니다.`);
 
@@ -1547,53 +1604,72 @@ async function handleReadyInternal(booking_number, customer_name, event) {
     flashButton(event);
   }
 
-  const item = waitlist.find(item => item.booking_number === booking_number);
+  const item = waitlist.find(item => item.booking_number == booking_number);
+
+  if (!item) {
+    console.error('Item not found for booking_number:', booking_number);
+    return;
+  }
 
   // Find the Ready button question from questionnaire
   const readyQuestion = questionnaire.find(q => q.invokedWithBtn === 'Ready');
   if (readyQuestion) {
-    handleQuestion(item.booking_list_id, readyQuestion.question);
+    handleQuestion(
+      parseInt(item.booking_list_id), 
+      readyQuestion.question, 
+      readyQuestion.q_level, 
+      buttonId, // Pass the Ready button ID
+      readyQuestion.Id
+    );
   } else {
     // Fallback to default question if no Ready question found in questionnaire
     console.warn('No Ready button question found in questionnaire, using fallback');
-    handleQuestion(item.booking_list_id, 'Table is Ready. Coming?');
+    handleQuestion(parseInt(item.booking_list_id), 'Table is Ready. Coming?', 300, buttonId, null);
   }
 
   // Update database and local data
-  if (item) {
-    try {
-      // 1. Update database first
-      const updateResult = await connector.updateDataArr(
-        'waitlist', // dbKey
-        'booking_list', // tableName
-        [{
-          booking_list_id: item.booking_list_id, // Include the ID for WHERE condition
-          status: 'Ready',
-          time_cleared: null,
-          q_level: 300
-        }], // dataSetArr
-        ['booking_list_id'], // whereSet - will match against booking_list_id
-        'booking_list_id' // primaryKey - use booking_list_id as primary key
-      );
+  try {
+    // 1. Update database first
+    const updateResult = await connector.updateDataArr(
+      'waitlist', // dbKey
+      'booking_list', // tableName
+      [{
+        booking_list_id: item.booking_list_id, // Include the ID for WHERE condition
+        status: 'Ready',
+        time_cleared: null,
+        q_level: 300
+      }], // dataSetArr
+      ['booking_list_id'], // whereSet - will match against booking_list_id
+      'booking_list_id' // primaryKey - use booking_list_id as primary key
+    );
 
-      if (!updateResult.success) {
-        console.error('Database update failed:', updateResult.error);
-        return; // Exit if database update failed
-      }
+    console.log('Database update result:', updateResult);
 
-      console.log('Database updated successfully for booking #' + booking_number);
-
-      // 2. Update local data after successful database update
-      item.status = 'Ready';
-      item.q_level = 300; // Update q_level to match database
-
-      // 3. Re-render to immediately update button state
-      renderWaitlist();
-
-    } catch (error) {
-      console.error('Error updating database:', error);
-      return; // Exit if there's an error
+    if (!updateResult || !updateResult.success) {
+      console.error('Database update failed:', updateResult);
+      return; // Exit if database update failed
     }
+
+    console.log('Database updated successfully for booking #' + booking_number);
+
+    // 2. Update local data after successful database update
+    item.status = 'Ready';
+    item.q_level = 300; // Update q_level to match database
+
+    // 3. Save current scroll position before re-rendering
+    const currentScrollTop = waitlistContainer.scrollTop;
+
+    // 4. Re-render to immediately update button state
+    renderWaitlist();
+
+    // 5. Restore scroll position after render completes
+    requestAnimationFrame(() => {
+      waitlistContainer.scrollTop = currentScrollTop;
+    });
+
+  } catch (error) {
+    console.error('Error updating database:', error);
+    return; // Exit if there's an error
   }
 }
 
@@ -1903,8 +1979,16 @@ async function handleQuestion(booking_list_id, question, q_level = null, buttonI
       }
     }
 
+    // Save current scroll position before re-rendering
+    const currentScrollTop = waitlistContainer.scrollTop;
+
     // ALWAYS execute: Re-render to show the new question in chat history
     renderWaitlist();
+
+    // Restore scroll position after render completes
+    requestAnimationFrame(() => {
+      waitlistContainer.scrollTop = currentScrollTop;
+    });
 
   } catch (error) {
     console.error('handleQuestion error:', error);
@@ -1929,36 +2013,16 @@ function handleNextQuestion(booking_number) {
 
   console.log(`QUESTION_PAGE: #${booking_number} moved to page ${questionPageIndex[booking_number]} of ${totalPages}`);
 
+  // Save current scroll position before re-rendering
+  const currentScrollTop = waitlistContainer.scrollTop;
+
   // Re-render to show next page of questions
   renderWaitlist();
 
-  // On mobile, re-open the action row after rendering
-  const isMobile = window.innerWidth <= 768;
-  if (isMobile) {
-    requestAnimationFrame(() => {
-      const mainRow = document.querySelector(`tr[data-item-id="${booking_number}"]`);
-      if (mainRow) {
-        expandedRowId = booking_number;
-        const questionButtonsHTML = generateQuestionButtonsHTML(filteredQuestions, booking_number, item.customer_name, true);
-
-        const mobileActionRowId = `mobile-actions-${booking_number}`;
-        const mobileRow = document.createElement('tr');
-        mobileRow.id = mobileActionRowId;
-        mobileRow.className = 'mobile-action-row selected-action-row';
-        mobileRow.innerHTML = `
-              <td colspan="4" class="px-2 py-3">
-                <div class="flex gap-1.5">
-                  ${questionButtonsHTML}
-                </div>
-              </td>
-            `;
-
-        mainRow.insertAdjacentElement('afterend', mobileRow);
-        mainRow.classList.add('row-selected');
-        console.log(`MOBILE: Re-opened action row for #${booking_number} after Next`);
-      }
-    });
-  }
+  // Restore scroll position after render completes
+  requestAnimationFrame(() => {
+    waitlistContainer.scrollTop = currentScrollTop;
+  });
 }
 
 /**
@@ -1988,7 +2052,7 @@ function handleExitAsk(booking_number) {
 function handleCall(booking_number, customer_name) {
   console.log(`ACTION: Calling customer ${customer_name} (#${booking_number})`);
 
-  const item = waitlist.find(item => item.booking_number === booking_number);
+  const item = waitlist.find(item => item.booking_number == booking_number);
 
   if (!item) {
     console.error(`Customer #${booking_number} not found in waitlist`);
@@ -2014,8 +2078,12 @@ function handleCall(booking_number, customer_name) {
  * Handles customer actions (Arrive). Updates initialScrollTop and performs scroll.
  */
 async function handleArrive(booking_number, customer_name) {
-  console.log(`ACTION: Customer ${customer_name} (#${booking_number}) has arrived.`);
-  const item = waitlist.find(item => item.booking_number === booking_number);
+  console.log(`🟣 ACTION: handleArrive called for ${customer_name} (#${booking_number})`);
+  console.log('🔍 DEBUG: Looking for item with booking_number:', booking_number, 'Type:', typeof booking_number);
+  console.log('🔍 DEBUG: Waitlist booking_numbers:', waitlist.map(i => ({ num: i.booking_number, type: typeof i.booking_number })));
+  
+  const item = waitlist.find(item => item.booking_number == booking_number);
+  console.log('🔍 DEBUG: Item found?', item ? 'YES' : 'NO', item);
   let shouldScroll = false;
 
   if (item) {
@@ -2032,6 +2100,13 @@ async function handleArrive(booking_number, customer_name) {
         String(currentTime.getMinutes()).padStart(2, '0') + ':' +
         String(currentTime.getSeconds()).padStart(2, '0');
 
+      console.log('🔵 DB_UPDATE: Calling updateDataArr for Arrive...', {
+        booking_list_id: item.booking_list_id,
+        booking_number: booking_number,
+        status: 'Arrived',
+        time_cleared: formattedTime
+      });
+
       const updateResult = await connector.updateDataArr(
         'waitlist', // dbKey
         'booking_list', // tableName
@@ -2044,8 +2119,10 @@ async function handleArrive(booking_number, customer_name) {
         'booking_list_id' // primaryKey - use booking_list_id as primary key
       );
 
-      if (!updateResult.success) {
-        console.error('Database update failed:', updateResult.error);
+      console.log('Database update result:', updateResult);
+
+      if (!updateResult || !updateResult.success) {
+        console.error('Database update failed:', updateResult);
         return; // Exit if database update failed
       }
 
@@ -2074,68 +2151,69 @@ async function handleArrive(booking_number, customer_name) {
   // Start auto-hide countdown for this completed item
   startUndoAutoHideCountdown(booking_number);
 
-  // IMPORTANT FIX: Scroll must happen AFTER the DOM is updated by renderWaitlist.
-  if (shouldScroll) {
-    requestAnimationFrame(() => {
-      // Find the position of the just completed item in the DOM
-      const rows = waitlistBody.getElementsByTagName('tr');
-      let targetScrollTop = 0;
-      let itemFound = false;
+  // 5. Always scroll to show the completed item
+  requestAnimationFrame(() => {
+    // Find the position of the just completed item in the DOM
+    const rows = waitlistBody.getElementsByTagName('tr');
+    let targetScrollTop = 0;
+    let itemFound = false;
 
-      // Look for the row that contains the just completed item
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
-        const idCell = row.querySelector('td:first-child div:first-child');
+    // Look for the row that contains the just completed item
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const idCell = row.querySelector('td:first-child div:first-child');
 
-        if (idCell && idCell.textContent.trim() === booking_number.toString()) {
-          // Found the just completed item - scroll to show it at the top
-          itemFound = true;
-          break;
-        }
-        targetScrollTop += row.offsetHeight;
+      if (idCell && idCell.textContent.trim() === booking_number.toString()) {
+        // Found the just completed item - scroll to show it at the top
+        itemFound = true;
+        break;
       }
+      targetScrollTop += row.offsetHeight;
+    }
 
-      if (itemFound) {
-        waitlistContainer.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
-        console.log(`SCROLL_ACTION_RAF: Arrive scroll to show item #${booking_number} at ${targetScrollTop.toFixed(2)}px`);
-        initialScrollTop = targetScrollTop;
+    if (itemFound) {
+      waitlistContainer.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
+      console.log(`SCROLL_ACTION_RAF: Arrive scroll to show item #${booking_number} at ${targetScrollTop.toFixed(2)}px`);
 
-        // Add highlight effect to the completed item
-        setTimeout(() => {
-          const targetRow = Array.from(rows).find(row => {
-            const idCell = row.querySelector('td:first-child');
-            return idCell && idCell.textContent.trim() === booking_number.toString();
-          });
+      // Add highlight effect to the completed item
+      setTimeout(() => {
+        const targetRow = Array.from(rows).find(row => {
+          const idCell = row.querySelector('td:first-child');
+          return idCell && idCell.textContent.trim() === booking_number.toString();
+        });
 
-          if (targetRow) {
-            targetRow.classList.add('arrive-highlight');
-            console.log(`HIGHLIGHT: Added purple highlight to Arrive item #${booking_number}`);
+        if (targetRow) {
+          targetRow.classList.add('arrive-highlight');
+          console.log(`HIGHLIGHT: Added purple highlight to Arrive item #${booking_number}`);
 
-            // Remove highlight after 1 second
+          // Remove highlight after 1 second
+          setTimeout(() => {
+            targetRow.classList.remove('arrive-highlight');
+            targetRow.classList.add('fade-out-highlight');
+
+            // Clean up fade-out class
             setTimeout(() => {
-              targetRow.classList.remove('arrive-highlight');
-              targetRow.classList.add('fade-out-highlight');
-
-              // Clean up fade-out class
-              setTimeout(() => {
-                targetRow.classList.remove('fade-out-highlight');
-              }, 700);
-            }, 1000);
-          }
-        }, 300); // Small delay to ensure smooth scroll is started
-      } else {
-        console.log(`SCROLL_ACTION_RAF: Could not find item #${booking_number} in DOM`);
-      }
-    });
-  }
+              targetRow.classList.remove('fade-out-highlight');
+            }, 700);
+          }, 1000);
+        }
+      }, 300); // Small delay to ensure smooth scroll is started
+    } else {
+      console.log(`SCROLL_ACTION_RAF: Could not find item #${booking_number} in DOM`);
+    }
+  });
 }
 
 /**
  * Handles customer actions (Cancel). Updates initialScrollTop and performs scroll.
  */
 async function handleCancel(booking_number, customer_name) {
-  console.log(`ACTION: Cancelling customer ${customer_name} (#${booking_number}).`);
-  const item = waitlist.find(item => item.booking_number === booking_number);
+  console.log(`🔴 ACTION: handleCancel called for ${customer_name} (#${booking_number})`);
+  console.log('🔍 DEBUG: Looking for item with booking_number:', booking_number, 'Type:', typeof booking_number);
+  console.log('🔍 DEBUG: Waitlist booking_numbers:', waitlist.map(i => ({ num: i.booking_number, type: typeof i.booking_number })));
+  
+  const item = waitlist.find(item => item.booking_number == booking_number);
+  console.log('🔍 DEBUG: Item found?', item ? 'YES' : 'NO', item);
   let shouldScroll = false;
 
   if (item) {
@@ -2152,6 +2230,13 @@ async function handleCancel(booking_number, customer_name) {
         String(currentTime.getMinutes()).padStart(2, '0') + ':' +
         String(currentTime.getSeconds()).padStart(2, '0');
 
+      console.log('🔵 DB_UPDATE: Calling updateDataArr for Cancel...', {
+        booking_list_id: item.booking_list_id,
+        booking_number: booking_number,
+        status: 'Cancelled',
+        time_cleared: formattedTime
+      });
+
       const updateResult = await connector.updateDataArr(
         'waitlist', // dbKey
         'booking_list', // tableName
@@ -2164,8 +2249,10 @@ async function handleCancel(booking_number, customer_name) {
         'booking_list_id' // primaryKey - use booking_list_id as primary key
       );
 
-      if (!updateResult.success) {
-        console.error('Database update failed:', updateResult.error);
+      console.log('Database update result:', updateResult);
+
+      if (!updateResult || !updateResult.success) {
+        console.error('Database update failed:', updateResult);
         return; // Exit if database update failed
       }
 
@@ -2194,60 +2281,57 @@ async function handleCancel(booking_number, customer_name) {
   // Start auto-hide countdown for this completed item
   startUndoAutoHideCountdown(booking_number);
 
-  // IMPORTANT FIX: Scroll must happen AFTER the DOM is updated by renderWaitlist.
-  if (shouldScroll) {
-    requestAnimationFrame(() => {
-      // Find the position of the just completed item in the DOM
-      const rows = waitlistBody.getElementsByTagName('tr');
-      let targetScrollTop = 0;
-      let itemFound = false;
+  // 5. Always scroll to show the completed item
+  requestAnimationFrame(() => {
+    // Find the position of the just completed item in the DOM
+    const rows = waitlistBody.getElementsByTagName('tr');
+    let targetScrollTop = 0;
+    let itemFound = false;
 
-      // Look for the row that contains the just completed item
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
-        const idCell = row.querySelector('td:first-child div:first-child');
+    // Look for the row that contains the just completed item
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const idCell = row.querySelector('td:first-child div:first-child');
 
-        if (idCell && idCell.textContent.trim() === booking_number.toString()) {
-          // Found the just completed item - scroll to show it at the top
-          itemFound = true;
-          break;
-        }
-        targetScrollTop += row.offsetHeight;
+      if (idCell && idCell.textContent.trim() === booking_number.toString()) {
+        // Found the just completed item - scroll to show it at the top
+        itemFound = true;
+        break;
       }
+      targetScrollTop += row.offsetHeight;
+    }
 
-      if (itemFound) {
-        waitlistContainer.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
-        console.log(`SCROLL_ACTION_RAF: Cancel scroll to show item #${booking_number} at ${targetScrollTop.toFixed(2)}px`);
-        initialScrollTop = targetScrollTop;
+    if (itemFound) {
+      waitlistContainer.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
+      console.log(`SCROLL_ACTION_RAF: Cancel scroll to show item #${booking_number} at ${targetScrollTop.toFixed(2)}px`);
 
-        // Add highlight effect to the completed item
-        setTimeout(() => {
-          const targetRow = Array.from(rows).find(row => {
-            const idCell = row.querySelector('td:first-child');
-            return idCell && idCell.textContent.trim() === booking_number.toString();
-          });
+      // Add highlight effect to the completed item
+      setTimeout(() => {
+        const targetRow = Array.from(rows).find(row => {
+          const idCell = row.querySelector('td:first-child');
+          return idCell && idCell.textContent.trim() === booking_number.toString();
+        });
 
-          if (targetRow) {
-            targetRow.classList.add('cancel-highlight');
-            console.log(`HIGHLIGHT: Added red highlight to Cancel item #${booking_number}`);
+        if (targetRow) {
+          targetRow.classList.add('cancel-highlight');
+          console.log(`HIGHLIGHT: Added red highlight to Cancel item #${booking_number}`);
 
-            // Remove highlight after 1 second
+          // Remove highlight after 1 second
+          setTimeout(() => {
+            targetRow.classList.remove('cancel-highlight');
+            targetRow.classList.add('fade-out-highlight');
+
+            // Clean up fade-out class
             setTimeout(() => {
-              targetRow.classList.remove('cancel-highlight');
-              targetRow.classList.add('fade-out-highlight');
-
-              // Clean up fade-out class
-              setTimeout(() => {
-                targetRow.classList.remove('fade-out-highlight');
-              }, 700);
-            }, 1000);
-          }
-        }, 300); // Small delay to ensure smooth scroll is started
-      } else {
-        console.log(`SCROLL_ACTION_RAF: Could not find item #${booking_number} in DOM`);
-      }
-    });
-  }
+              targetRow.classList.remove('fade-out-highlight');
+            }, 700);
+          }, 1000);
+        }
+      }, 300); // Small delay to ensure smooth scroll is started
+    } else {
+      console.log(`SCROLL_ACTION_RAF: Could not find item #${booking_number} in DOM`);
+    }
+  });
 }
 
 /**
@@ -2328,7 +2412,7 @@ async function handleUndo(booking_number, customer_name) {
   // Stop auto-hide countdown for this item
   stopUndoAutoHideCountdown(booking_number);
 
-  const item = waitlist.find(item => item.booking_number === booking_number);
+  const item = waitlist.find(item => item.booking_number == booking_number);
 
   if (item && (item.status === 'Arrived' || item.status === 'Cancelled')) {
     const wasCompleted = true;
@@ -2745,8 +2829,9 @@ function renderWaitlist() {
       // Add NEW badge for Reservation (only for active items)
       let reservationBadge = '';
       if (item.status === 'Waiting' || item.status === 'Ready') {
-        const chatBadgeId = `chat-new-badge-${item.subscriber_id}`;
-        const isChatHidden = chatBadgeHidden[item.subscriber_id];
+        const chatBadgeId = `chat-new-badge-${item.booking_list_id}`;
+        const badgeKey = `${item.subscriber_id}_${item.booking_list_id}`;
+        const isChatHidden = chatBadgeHidden[badgeKey];
         if (isChatHidden) {
           reservationBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-white px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: none;">NEW</span>`;
         } else {
@@ -2774,11 +2859,10 @@ function renderWaitlist() {
       const chatClass = statusPriority === 0 ? 'text-slate-400' : 'text-slate-400';
       const hasStatusMessage = item.status === 'Arrived' || item.status === 'Cancelled';
 
-      // Determine which messages to show based on row selection
-      const messagesToShow = isRowSelected ? chatHistory : chatHistory.slice(-1); // Show all if selected, last one if not
-
-      chatHistoryHTML = messagesToShow.map((chat, index) => {
-        const originalIndex = isRowSelected ? index : (chatHistory.length - 1); // Get original index for last message calculations
+      // Always render ALL messages in DOM, but hide non-selected ones with display:none
+      // This allows toggleChatHistoryDisplay to work without re-rendering
+      chatHistoryHTML = chatHistory.map((chat, index) => {
+        const originalIndex = index;
         let elapsedTime;
         const isLastMessage = originalIndex === chatHistory.length - 1;
 
@@ -2839,9 +2923,10 @@ function renderWaitlist() {
         // Only show chat badge for active items (Waiting/Ready), not for completed items (Arrived/Cancelled)
         let chatBadge = '';
         if (isLastMessage && (item.status === 'Waiting' || item.status === 'Ready')) {
-          const chatBadgeId = `chat-new-badge-${item.subscriber_id}`;
+          const chatBadgeId = `chat-new-badge-${item.booking_list_id}`;
           // Chat badge: shown by default, hidden if user clicked row (tracked in chatBadgeHidden)
-          const isChatHidden = chatBadgeHidden[item.subscriber_id];
+          const badgeKey = `${item.subscriber_id}_${item.booking_list_id}`;
+          const isChatHidden = chatBadgeHidden[badgeKey];
           if (isChatHidden) {
             chatBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-white px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: none;">NEW</span>`;
           } else {
@@ -2849,7 +2934,11 @@ function renderWaitlist() {
           }
         }
 
-        return `<div class="text-xs ${messageChatClass} leading-relaxed" ${dataAttr}>↳ [${elapsedTime}] ${chat.qna}${chatBadge}</div>`; //arrow
+        // Hide non-last messages if row is not selected
+        const shouldHide = !isRowSelected && !isLastMessage;
+        const hideStyle = shouldHide ? ' style="display: none;"' : '';
+        
+        return `<div class="text-xs ${messageChatClass} leading-relaxed" ${dataAttr}${hideStyle}>↳ [${elapsedTime}] ${chat.qna}${chatBadge}</div>`; //arrow
       }).join('');
 
       // Add status message if item is Arrived or Cancelled with completion time
@@ -3259,11 +3348,68 @@ waitlistContainer.addEventListener('scroll', () => {
 // 2. Initialize data loading and setup after completion
 async function startInitialization() {
   try {
+    // Load or reset badge state from localStorage with date-based keys (once only on page load)
+    // This must be done BEFORE getServerSideUpdate() so badge state is ready for first render
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+    const storageKey = `chatBadgeHidden_${todayStr}`;
+    
+    if (isResetLocalStorage) {
+      // Reset localStorage on every load
+      chatBadgeHidden = {};
+      localStorage.removeItem(storageKey);
+      console.log('INIT: Reset mode enabled - cleared all badge states');
+    } else {
+      // Load from localStorage for today's date only
+      const savedChat = localStorage.getItem(storageKey);
+      console.log('INIT: localStorage key:', storageKey);
+      console.log('INIT: localStorage raw value:', savedChat);
+      
+      if (savedChat) {
+        try {
+          chatBadgeHidden = JSON.parse(savedChat);
+          console.log('INIT: Loaded badge state from localStorage:', Object.keys(chatBadgeHidden).length, 'items');
+          console.log('INIT: Badge state:', chatBadgeHidden);
+        } catch (e) {
+          console.error('Failed to parse chatBadgeHidden from localStorage:', e);
+          chatBadgeHidden = {};
+        }
+      } else {
+        // First load of the day - will initialize after data is loaded
+        chatBadgeHidden = {};
+        console.log('INIT: No localStorage found for today - will initialize after data load');
+      }
+      
+      // Clean up old date entries (keep only today's data)
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('chatBadgeHidden_') && key !== storageKey) {
+          localStorage.removeItem(key);
+          console.log('INIT: Cleaned up old localStorage key:', key);
+        }
+      });
+    }
+
     // Load static data first (once only)
     await loadStaticData();
 
-    // Load dynamic data
+    // Load dynamic data (this will render the waitlist)
     await getServerSideUpdate();
+
+    // If this is first load of the day (no localStorage), initialize all bookings as "seen"
+    if (!isResetLocalStorage && Object.keys(chatBadgeHidden).length === 0 && waitlist.length > 0) {
+      waitlist.forEach(item => {
+        if (item.subscriber_id && item.booking_list_id) {
+          const badgeKey = `${item.subscriber_id}_${item.booking_list_id}`;
+          chatBadgeHidden[badgeKey] = true;
+        }
+      });
+      // Save initial state to localStorage
+      localStorage.setItem(storageKey, JSON.stringify(chatBadgeHidden));
+      console.log('INIT: First load today - initialized', Object.keys(chatBadgeHidden).length, 'bookings as seen');
+      
+      // Re-render to hide all badges
+      renderWaitlist();
+    }
 
     // Initial scroll setup: Set position and initial button state after data is loaded and rendered
     // requestAnimationFrame을 사용하여 DOM이 렌더링된 후 정확한 위치로 이동합니다.

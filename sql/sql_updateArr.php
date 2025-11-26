@@ -181,8 +181,13 @@ foreach ($dataArray as $dataSet) {
             $escapedUpdateSet = [];
             foreach ($dataSet as $key => $value) {
                 if (!in_array($key, $whereColumns) && $key !== $primaryKeyColumn) {
-                    $escapedValue = mysqli_real_escape_string($connection, $value);
-                    $escapedUpdateSet[] = "`{$key}` = '{$escapedValue}'";
+                    // Handle null values properly
+                    if ($value === null) {
+                        $escapedUpdateSet[] = "`{$key}` = NULL";
+                    } else {
+                        $escapedValue = mysqli_real_escape_string($connection, $value);
+                        $escapedUpdateSet[] = "`{$key}` = '{$escapedValue}'";
+                    }
                 }
             }
             $updateSetClause = implode(', ', $escapedUpdateSet);
