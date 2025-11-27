@@ -1,7 +1,7 @@
 /**
  * modal_add.js
  * Handles the Add button functionality with a modal dialog
- * version 0.705
+ * version 0.706
  */
 
 const reservation_ahead_minutes = 30; // Reservations can be made at least 30 minutes ahead
@@ -138,6 +138,16 @@ function handleAdd() {
                   oninput="updatePhoneDisplay()"
                   class="flex-1 px-4 py-2 rounded-lg bg-slate-900 border border-slate-600 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition"
                 />
+                <button 
+                  onclick="copyFromClipboard()" 
+                  class="w-10 h-10 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 border border-slate-600 flex items-center justify-center transition"
+                  title="Paste from clipboard"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="8" y="4" width="8" height="4" rx="1" stroke="currentColor" stroke-width="2"/>
+                    <path d="M8 6H6C4.89543 6 4 6.89543 4 8V19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19V8C20 6.89543 19.1046 6 18 6H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </button>
               </div>
             </div>
             
@@ -261,6 +271,102 @@ function closeAddModal() {
   const dialog = document.getElementById('add-modal-dialog');
   if (dialog) {
     dialog.close();
+    resetModalForm();
+  }
+}
+
+/**
+ * Reset all modal form fields to default values
+ */
+function resetModalForm() {
+  // Reset state variables
+  modalPaxCount = 2;
+  modalSeating = null;
+  modalSplitTable = false;
+  modalSharingTable = false;
+  modalIsReservation = false;
+  modalReservationTime = null;
+  
+  // Reset pax counter display
+  const paxCounter = document.getElementById('pax-counter');
+  if (paxCounter) {
+    paxCounter.textContent = '2';
+  }
+  
+  // Reset phone number input
+  const phoneInput = document.getElementById('phone-number-input');
+  if (phoneInput) {
+    phoneInput.value = '';
+    phoneInput.classList.remove('border-red-500', 'focus:ring-red-500');
+    phoneInput.classList.add('border-slate-600', 'focus:ring-amber-400');
+  }
+  
+  // Reset seating buttons
+  const insideBtn = document.getElementById('toggle-inside');
+  const outsideBtn = document.getElementById('toggle-outside');
+  if (insideBtn && outsideBtn) {
+    insideBtn.className = 'flex-1 px-4 py-2 rounded-lg bg-slate-700 text-slate-300 border border-slate-600 font-medium transition hover:bg-slate-600';
+    outsideBtn.className = 'flex-1 px-4 py-2 rounded-lg bg-slate-700 text-slate-300 border border-slate-600 font-medium transition hover:bg-slate-600';
+  }
+  
+  // Reset split table toggle
+  const splitToggle = document.getElementById('toggle-split-table');
+  if (splitToggle) {
+    const stateText = splitToggle.querySelector('.toggle-state-text');
+    const switchContainer = splitToggle.querySelector('.toggle-switch-container');
+    const switchCircle = splitToggle.querySelector('.toggle-switch');
+    
+    if (stateText) stateText.textContent = 'No';
+    if (switchContainer) {
+      switchContainer.classList.add('bg-slate-600');
+      switchContainer.classList.remove('bg-amber-400');
+    }
+    if (switchCircle) {
+      switchCircle.classList.add('bg-slate-300');
+      switchCircle.classList.remove('bg-slate-900');
+      switchCircle.style.transform = 'translateX(0)';
+    }
+  }
+  
+  // Reset sharing table toggle
+  const sharingToggle = document.getElementById('toggle-sharing-table');
+  if (sharingToggle) {
+    const stateText = sharingToggle.querySelector('.toggle-state-text');
+    const switchContainer = sharingToggle.querySelector('.toggle-switch-container');
+    const switchCircle = sharingToggle.querySelector('.toggle-switch');
+    
+    if (stateText) stateText.textContent = 'No';
+    if (switchContainer) {
+      switchContainer.classList.add('bg-slate-600');
+      switchContainer.classList.remove('bg-amber-400');
+    }
+    if (switchCircle) {
+      switchCircle.classList.add('bg-slate-300');
+      switchCircle.classList.remove('bg-slate-900');
+      switchCircle.style.transform = 'translateX(0)';
+    }
+  }
+  
+  // Reset modal mode to Waitlist
+  const title = document.getElementById('modal-title');
+  const submitButton = document.getElementById('submit-button');
+  const modeToggleContainer = document.querySelector('#toggle-modal-mode .toggle-switch-container');
+  const modeToggleCircle = document.querySelector('#toggle-modal-mode .toggle-switch');
+  const timeSection = document.getElementById('reservation-time-section');
+  
+  if (title) title.textContent = 'Add Waitlist';
+  if (submitButton) submitButton.textContent = 'Add to Waitlist';
+  if (modeToggleContainer) {
+    modeToggleContainer.classList.add('bg-slate-600');
+    modeToggleContainer.classList.remove('bg-amber-400');
+  }
+  if (modeToggleCircle) {
+    modeToggleCircle.classList.add('bg-slate-300');
+    modeToggleCircle.classList.remove('bg-slate-900');
+    modeToggleCircle.style.transform = 'translateX(0)';
+  }
+  if (timeSection) {
+    timeSection.style.display = 'none';
   }
 }
 
@@ -686,6 +792,69 @@ function updatePhoneDisplay() {
   }
   
   input.setSelectionRange(newCursorPosition, newCursorPosition);
+}
+
+/**
+ * Copy phone number from clipboard +
+ */
+async function copyFromClipboard() {
+  try {
+    const text = await navigator.clipboard.readText();
+    const phoneInput = document.getElementById('phone-number-input');
+    
+    // Validate if the text contains valid phone number characters (digits, +, -, spaces)
+    const phonePattern = /^[\d\s+\-()]+$/;
+    
+    if (!phonePattern.test(text.trim())) {
+      // Save original placeholder
+      const originalPlaceholder = phoneInput.placeholder;
+      
+      // Show error state
+      phoneInput.classList.remove('border-slate-600', 'focus:ring-amber-400');
+      phoneInput.classList.add('border-red-500', 'focus:ring-red-500');
+      phoneInput.placeholder = 'Copied phone invalid';
+      
+      // Restore after 2 seconds
+      setTimeout(() => {
+        phoneInput.classList.remove('border-red-500', 'focus:ring-red-500');
+        phoneInput.classList.add('border-slate-600', 'focus:ring-amber-400');
+        phoneInput.placeholder = originalPlaceholder;
+      }, 2000);
+      
+      return;
+    }
+    
+    // Process the phone number: remove all non-digits
+    let cleanedNumber = text.replace(/\D/g, '');
+    
+    // Remove leading 6 if present
+    if (cleanedNumber.startsWith('6')) {
+      cleanedNumber = cleanedNumber.substring(1);
+    }
+    
+    // Set the cleaned number to input
+    phoneInput.value = cleanedNumber;
+    
+    // Trigger the input event to format the phone number
+    updatePhoneDisplay();
+    
+    // Focus the input
+    phoneInput.focus();
+  } catch (err) {
+    console.error('Failed to read clipboard:', err);
+    const phoneInput = document.getElementById('phone-number-input');
+    const originalPlaceholder = phoneInput.placeholder;
+    
+    phoneInput.classList.remove('border-slate-600', 'focus:ring-amber-400');
+    phoneInput.classList.add('border-red-500', 'focus:ring-red-500');
+    phoneInput.placeholder = 'Failed to read clipboard';
+    
+    setTimeout(() => {
+      phoneInput.classList.remove('border-red-500', 'focus:ring-red-500');
+      phoneInput.classList.add('border-slate-600', 'focus:ring-amber-400');
+      phoneInput.placeholder = originalPlaceholder;
+    }, 2000);
+  }
 }
 
 /**
