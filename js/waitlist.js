@@ -1,4 +1,4 @@
-const version = '0.708';
+const version = '0.709';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 
@@ -1049,6 +1049,26 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
  * Desktop: Toggle row highlight and exit Ask mode for other rows
  */
 function toggleMobileActions(booking_number, event) {
+  // Check for Pax Click (Mobile & Desktop)
+  if (event) {
+    const paxElement = event.target.closest('[data-pax-clickable="true"]');
+    if (paxElement) {
+      // Check if row is already selected
+      const isMobile = window.innerWidth <= 768;
+      const isSelected = isMobile ? (expandedRowId == booking_number) : (selectedRowId == booking_number);
+      
+      if (isSelected) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (typeof changePax === 'function') {
+            changePax(booking_number);
+        }
+        return; // Stop function here, do not toggle row
+      }
+      // Row not selected. Allow execution to proceed to toggle row selection
+    }
+  }
+  
   // Check if we're on mobile (screen width <= 768px)
   if (window.innerWidth > 768) {
     // Desktop: Toggle row highlight (persistent)
@@ -3304,7 +3324,7 @@ function renderWaitlist() {
                         <td class="px-2 py-2 whitespace-nowrap text-sm font-medium ${idClass} text-center">
                             <div>${item.booking_number}</div>
                             <div class="mt-0.5">
-                                <span class="${paxHighlightClass}">Pax: ${item.pax}</span>
+                                <span id="pax-${item.booking_number}" class="${paxHighlightClass}" data-pax-clickable="true" data-booking-number="${item.booking_number}" style="display: inline-block; cursor: pointer; pointer-events: auto; position: relative; z-index: 10;">Pax: ${item.pax}</span>
                             </div>
                         </td>
                         <td class="px-2 py-2 text-sm">
@@ -3779,6 +3799,18 @@ async function startInitialization() {
     renderWaitlist();
   }
 }
+
+/**
+ * Handles Pax click action.
+ * This function is called when the Pax span is clicked on an already selected row.
+ */
+function changePax(booking_number) {
+  console.log(`PAX_CHANGE: Triggered for booking #${booking_number}`);
+  // Add your logic here to change Pax count
+  // For example, open a modal or prompt
+  alert(`Change Pax for #${booking_number}`);
+}
+
 
 // 3. Start the initialization process
 startInitialization();
