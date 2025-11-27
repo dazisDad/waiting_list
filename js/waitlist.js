@@ -1,4 +1,4 @@
-const version = '0.701';
+const version = '0.702';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 
@@ -6,6 +6,7 @@ const store_id = 'DL_Sunway_Geo';
 const theme = 'dark';
 const minPax_for_bigTable = 5;    // Minimum pax for big table highlight
 const maxPax_for_smallTable = 0;  // Maximum pax for small table highlight
+const scrollPositionTolerance = 5; // Tolerance (px) for determining if scrolled to Active Queue position
 
 /**Flow types that can trigger handleNewEvent
  * Flow 1.2: New booking created via waitlist form
@@ -2829,8 +2830,8 @@ function updateScrollAndButtonState() {
 
   // Check if the current position is the Active Queue position (increased tolerance for variable heights)
   const isScrolledToActive = shouldEnableScrolling && totalHeightToScroll > 0 &&
-    waitlistContainer.scrollTop >= (totalHeightToScroll - 30) &&
-    waitlistContainer.scrollTop <= (totalHeightToScroll + 30);
+    waitlistContainer.scrollTop >= (totalHeightToScroll - scrollPositionTolerance) &&
+    waitlistContainer.scrollTop <= (totalHeightToScroll + scrollPositionTolerance);
 
   /*
   console.log(`--- Current Scroll State ---`);
