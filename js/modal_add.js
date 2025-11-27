@@ -124,6 +124,17 @@ function handleAdd() {
               </div>
             </div>
             
+            <!-- Name -->
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-2">Name</label>
+              <input 
+                type="text" 
+                id="customer-name-input" 
+                placeholder="Enter customer name"
+                class="w-full px-4 py-2 rounded-lg bg-slate-900 border border-slate-600 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition"
+              />
+            </div>
+            
             <!-- Phone Number -->
             <div>
               <label class="block text-sm font-medium text-slate-300 mb-2">Phone Number</label>
@@ -293,6 +304,12 @@ function resetModalForm() {
     paxCounter.textContent = '2';
   }
   
+  // Reset name input
+  const nameInput = document.getElementById('customer-name-input');
+  if (nameInput) {
+    nameInput.value = '';
+  }
+  
   // Reset phone number input
   const phoneInput = document.getElementById('phone-number-input');
   if (phoneInput) {
@@ -378,6 +395,8 @@ function submitAddModal() {
   
   // Get form values
   const pax = parseInt(document.getElementById('pax-counter').textContent);
+  const customerNameRaw = document.getElementById('customer-name-input').value.trim();
+  const customerName = customerNameRaw || 'Web User'; // Default to 'Web User' if empty
   const phoneNumberInput = document.getElementById('phone-number-input');
   const phoneNumberRaw = phoneNumberInput.value.trim();
   const seating = modalSeating; // null, 'inside', or 'outside'
@@ -431,28 +450,34 @@ function submitAddModal() {
   
   // Add seating preference badge
   if (seating === 'inside') {
-    badge.push('In');
+    badge.push('IN');
   } else if (seating === 'outside') {
-    badge.push('Out');
+    badge.push('OUT');
   }
   
   // Add split table badge
   if (isSplitTableAllowed) {
-    badge.push('Split');
+    badge.push('SPLIT');
   }
   
   // Add sharing table badge
   if (isSharingTableAllowed) {
-    badge.push('Share');
+    badge.push('SHARE');
   }
   
   // Create form data object
+  // formData structure 수정 시 local_receiver.php도 함께 수정 필요
   const formData = {
+    booking_flow: 1.9,
     store_id: store_id,
     booking_from: 'WEB',
-    pax: pax,
+    subscriber_id: null,
+    customer_name: customerName,
     customer_phone: phoneNumber,
-    time_created: timeCreated
+    pax: pax,
+    time_created: timeCreated,
+    status: 'Waiting',
+    q_level: 100,
   };
   
   // Add badges as badge1, badge2, badge3, etc.
@@ -470,9 +495,30 @@ function submitAddModal() {
   }
   
   console.log('Form data:', formData);
-  
-  // TODO: Implement submission logic
-  closeAddModal();
+
+  // Send data to local_receiver.php
+  fetch('webhook/local_receiver.php', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(formData)
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log('Server response:', data);
+    toastMsg('New record successfully inserted');
+    closeAddModal();
+  })
+  .catch((error) => {
+    console.error('Failed to insert record:', error);
+    toastMsg('Failed to insert record');
+  });
 }
 
 /**

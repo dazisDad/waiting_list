@@ -317,6 +317,136 @@ function insert_to_booking_list(array $inputDataSet) {
     return intval($insertId);
 }
 
+function insert_to_booking_list_from_local(array $inputDataSet) {
+    global $isPreparedStmt;
+    
+    $required = ['store_id', 'booking_from', 'customer_name', 'customer_phone', 'pax', 'time_created', 'dine_dateTime', 'status', 'q_level'];
+    foreach ($required as $k) {
+        if (!array_key_exists($k, $inputDataSet)) {
+            throw new Exception('Missing required input: ' . $k);
+        }
+    }
+
+    $cfg = get_db_config();
+    if ($cfg['user'] === '' || $cfg['name'] === '') {
+        throw new Exception('Database configuration incomplete: DB_USERNAME and DB_NAME are required');
+    }
+
+    $mysqli = new mysqli($cfg['host'], $cfg['user'], $cfg['pass'], $cfg['name']);
+    if ($mysqli->connect_errno) {
+        throw new Exception('DB connect error: ' . $mysqli->connect_error);
+    }
+
+    // Normalize params
+    $store_id = strval($inputDataSet['store_id']);
+    $booking_from = strval($inputDataSet['booking_from']);
+    $subscriber_id = isset($inputDataSet['subscriber_id']) ? intval($inputDataSet['subscriber_id']) : 0;
+    $customer_name = strval($inputDataSet['customer_name']);
+    $customer_phone = strval($inputDataSet['customer_phone']);
+    $pax = intval($inputDataSet['pax']);
+    $time_created = strval($inputDataSet['time_created']);
+    $dine_dateTime = strval($inputDataSet['dine_dateTime']);
+    $status = strval($inputDataSet['status']);
+    $q_level = intval($inputDataSet['q_level']);
+    
+    // Badge fields - optional, default to NULL
+    $badge1 = isset($inputDataSet['badge1']) && $inputDataSet['badge1'] !== '' ? strval($inputDataSet['badge1']) : null;
+    $badge2 = isset($inputDataSet['badge2']) && $inputDataSet['badge2'] !== '' ? strval($inputDataSet['badge2']) : null;
+    $badge3 = isset($inputDataSet['badge3']) && $inputDataSet['badge3'] !== '' ? strval($inputDataSet['badge3']) : null;
+
+    if ($isPreparedStmt) {
+        $sql = 'INSERT INTO booking_list (store_id, booking_from, subscriber_id, customer_name, customer_phone, pax, time_created, dine_dateTime, status, q_level, badge1, badge2, badge3) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)';
+        $stmt = $mysqli->prepare($sql);
+        if ($stmt === false) {
+            $err = $mysqli->error;
+            $mysqli->close();
+            throw new Exception('Prepare failed: ' . $err);
+        }
+
+        if (!$stmt->bind_param('ssississsisss', $store_id, $booking_from, $subscriber_id, $customer_name, $customer_phone, $pax, $time_created, $dine_dateTime, $status, $q_level, $badge1, $badge2, $badge3)) {
+            $err = $stmt->error;
+            $stmt->close();
+            $mysqli->close();
+            throw new Exception('Bind failed: ' . $err);
+        }
+
+        if (!$stmt->execute()) {
+            $err = $stmt->error;
+            $stmt->close();
+            $mysqli->close();
+            throw new Exception('Execute failed: ' . $err);
+        }
+
+        $insertId = $mysqli->insert_id;
+        $stmt->close();
+    } else {
+        $store_id_esc = $mysqli->real_escape_string($store_id);
+        $booking_from_esc = $mysqli->real_escape_string($booking_from);
+        $customer_name_esc = $mysqli->real_escape_string($customer_name);
+        $customer_phone_esc = $mysqli->real_escape_string($customer_phone);
+        $time_created_esc = $mysqli->real_escape_string($time_created);
+        $dine_dateTime_esc = $mysqli->real_escape_string($dine_dateTime);
+        $status_esc = $mysqli->real_escape_string($status);
+        
+        // Handle badge values - NULL if not set
+        $badge1_sql = $badge1 !== null ? "'" . $mysqli->real_escape_string($badge1) . "'" : 'NULL';
+        $badge2_sql = $badge2 !== null ? "'" . $mysqli->real_escape_string($badge2) . "'" : 'NULL';
+        $badge3_sql = $badge3 !== null ? "'" . $mysqli->real_escape_string($badge3) . "'" : 'NULL';
+        
+        $sql = "INSERT INTO booking_list (store_id, booking_from, subscriber_id, customer_name, customer_phone, pax, time_created, dine_dateTime, status, q_level, badge1, badge2, badge3) VALUES ('{$store_id_esc}','{$booking_from_esc}',{$subscriber_id},'{$customer_name_esc}','{$customer_phone_esc}',{$pax},'{$time_created_esc}','{$dine_dateTime_esc}','{$status_esc}',{$q_level},{$badge1_sql},{$badge2_sql},{$badge3_sql})";
+        
+        if (!$mysqli->query($sql)) {
+            $err = $mysqli->error;
+            $mysqli->close();
+            throw new Exception('Query failed: ' . $err);
+        }
+        
+        $insertId = $mysqli->insert_id;
+    }
+
+    // Insert into history_chat table
+    $qna = 'Waiting';
+    
+    if ($isPreparedStmt) {
+        $sql_history = 'INSERT INTO history_chat (booking_list_id, dateTime, qna) VALUES (?,?,?)';
+        $stmt_history = $mysqli->prepare($sql_history);
+        if ($stmt_history === false) {
+            $err = $mysqli->error;
+            $mysqli->close();
+            throw new Exception('Prepare failed for history_chat: ' . $err);
+        }
+
+        if (!$stmt_history->bind_param('iss', $insertId, $dine_dateTime, $qna)) {
+            $err = $stmt_history->error;
+            $stmt_history->close();
+            $mysqli->close();
+            throw new Exception('Bind failed for history_chat: ' . $err);
+        }
+
+        if (!$stmt_history->execute()) {
+            $err = $stmt_history->error;
+            $stmt_history->close();
+            $mysqli->close();
+            throw new Exception('Execute failed for history_chat: ' . $err);
+        }
+
+        $stmt_history->close();
+    } else {
+        $dine_dateTime_esc = $mysqli->real_escape_string($dine_dateTime);
+        $qna_esc = $mysqli->real_escape_string($qna);
+        $sql_history = "INSERT INTO history_chat (booking_list_id, dateTime, qna) VALUES ({$insertId},'{$dine_dateTime_esc}','{$qna_esc}')";
+        
+        if (!$mysqli->query($sql_history)) {
+            $err = $mysqli->error;
+            $mysqli->close();
+            throw new Exception('Query failed for history_chat: ' . $err);
+        }
+    }
+
+    $mysqli->close();
+    return intval($insertId);
+}
+
 /**
  * update_booking_list
  * Update a single column for a booking row identified by booking_list_id.
@@ -764,6 +894,20 @@ function flow_execution ($inputDataSet) {
                   'booking_ahead' => $booking_ahead,
                   'estimate_waiting_time' => estimate_waiting_time($booking_ahead),
                   'is_booking_loop' => $isBookingLoop,
+                  'booking_number' => $booking_number
+              ];
+              return $return_json;
+          case 1.9: // 로컬(WEB)에서 새 레코드 입력 시
+              // New Booking
+              $booking_list_id = insert_to_booking_list_from_local($inputDataSet);
+              $booking_list = get_booking_list($store_id);
+              $booking_number = generate_booking_number($inputDataSet['pax'],$booking_list_id);
+              update_booking_list($booking_list_id, 'booking_number', $booking_number);
+
+              $success = true;
+              $return_json = [
+                  'success' => $success,
+                  'booking_list_id' => $booking_list_id,
                   'booking_number' => $booking_number
               ];
               return $return_json;

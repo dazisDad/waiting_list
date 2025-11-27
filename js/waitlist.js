@@ -1,4 +1,4 @@
-const version = '0.702';
+const version = '0.707';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 
@@ -12,7 +12,7 @@ const scrollPositionTolerance = 5; // Tolerance (px) for determining if scrolled
  * Flow 1.2: New booking created via waitlist form
  * Flow 9.2: Chat response
  */
-const flow_arr_that_can_trigger_handleNewEvent = [1.2,9.2];
+const flow_arr_that_can_trigger_handleNewEvent = [1.2,1.9,9.2];
 
 // Display version in header
 document.addEventListener('DOMContentLoaded', () => {
