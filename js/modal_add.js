@@ -1,6 +1,7 @@
 /**
  * modal_add.js
  * Handles the Add button functionality with a modal dialog
+ * version 0.704
  */
 
 /**
@@ -18,28 +19,77 @@ function handleAdd() {
     dialog.id = 'add-modal-dialog';
     dialog.className = 'rounded-xl shadow-2xl border border-slate-700 bg-slate-800 p-0 backdrop:bg-black backdrop:bg-opacity-70';
     dialog.style.maxWidth = '90vw';
-    dialog.style.maxHeight = '90vh';
+    dialog.style.maxHeight = '95vh';
+    
+    // Add custom style for hiding scrollbar
+    const style = document.createElement('style');
+    style.textContent = `
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    `;
+    document.head.appendChild(style);
     
     // Dialog content
     dialog.innerHTML = `
-      <div class="flex flex-col h-full min-w-[400px]">
+      <div class="flex flex-col h-full w-full min-w-[280px] max-w-[90vw]">
         <!-- Header -->
         <div class="flex justify-between items-center p-6 border-b border-slate-700">
-          <h2 class="text-xl font-semibold text-slate-100">Add Waitlist</h2>
-          <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-200 transition">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
+          <h2 id="modal-title" class="text-xl font-semibold text-slate-100">Add Waitlist</h2>
+          <div onclick="toggleModalMode(event)" id="toggle-modal-mode" class="cursor-pointer flex items-center">
+            <div class="toggle-switch-container w-12 h-6 bg-slate-600 rounded-full relative transition duration-200">
+              <div class="toggle-switch absolute left-1 top-1 w-4 h-4 bg-slate-300 rounded-full transition-all duration-200" style="transform: translateX(0);"></div>
+            </div>
+          </div>
         </div>
         
         <!-- Content -->
         <div class="flex-1 p-6 overflow-y-auto">
           <div class="space-y-6">
+            <!-- Reservation Time (only visible in reservation mode) -->
+            <div id="reservation-time-section" style="display: none;">
+              <label class="block text-sm font-medium text-slate-300 mb-2">Reservation Time</label>
+              <div class="flex gap-3 items-center justify-center">
+                <!-- Hour Picker -->
+                <div class="flex flex-col items-center">
+                  <div class="relative w-16 h-24 overflow-hidden rounded-lg bg-slate-900 border border-slate-600">
+                    <div class="absolute inset-0 pointer-events-none z-10">
+                      <div class="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-slate-900 to-transparent"></div>
+                      <div class="absolute top-6 left-0 right-0 h-12 border-y-2 border-amber-400"></div>
+                      <div class="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-slate-900 to-transparent"></div>
+                    </div>
+                    <div id="hour-picker" class="overflow-y-scroll h-full snap-y snap-mandatory scrollbar-hide" style="scroll-padding: 24px;">
+                      <!-- Hour options will be populated dynamically -->
+                    </div>
+                  </div>
+                </div>
+                
+                <span class="text-xl text-slate-100 font-bold">:</span>
+                
+                <!-- Minute Picker -->
+                <div class="flex flex-col items-center">
+                  <div class="relative w-16 h-24 overflow-hidden rounded-lg bg-slate-900 border border-slate-600">
+                    <div class="absolute inset-0 pointer-events-none z-10">
+                      <div class="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-slate-900 to-transparent"></div>
+                      <div class="absolute top-6 left-0 right-0 h-12 border-y-2 border-amber-400"></div>
+                      <div class="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-slate-900 to-transparent"></div>
+                    </div>
+                    <div id="minute-picker" class="overflow-y-scroll h-full snap-y snap-mandatory scrollbar-hide" style="scroll-padding: 24px;">
+                      <!-- Minute options will be populated dynamically -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
             <!-- Pax Counter and Seating Preference -->
             <div class="flex gap-6">
               <!-- Pax Counter -->
-              <div class="w-[40%]">
+              <div class="w-[35%] flex-shrink-0">
                 <label class="block text-sm font-medium text-slate-300 mb-2">Pax</label>
                 <div class="flex items-center gap-1">
                   <button onclick="decrementPax()" class="w-10 h-10 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 border border-slate-600 flex items-center justify-center transition">
@@ -58,7 +108,7 @@ function handleAdd() {
               </div>
               
               <!-- Seating Preference -->
-              <div class="w-[60%]">
+              <div class="flex-1 min-w-0">
                 <label class="block text-sm font-medium text-slate-300 mb-2">Seating Preference</label>
                 <div class="flex gap-2">
                   <button onclick="toggleSeating('inside')" id="toggle-inside" class="flex-1 px-4 py-2 rounded-lg bg-slate-700 text-slate-300 border border-slate-600 font-medium transition hover:bg-slate-600">
@@ -111,7 +161,7 @@ function handleAdd() {
           <button onclick="closeAddModal()" class="px-4 py-2 rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-700 transition">
             Cancel
           </button>
-          <button onclick="submitAddModal()" class="px-4 py-2 rounded-lg bg-amber-400 text-slate-900 hover:bg-amber-500 transition font-medium">
+          <button id="submit-button" onclick="submitAddModal()" class="px-4 py-2 rounded-lg bg-amber-400 text-slate-900 hover:bg-amber-500 transition font-medium">
             Add to Waitlist
           </button>
         </div>
@@ -124,18 +174,21 @@ function handleAdd() {
   // Show dialog
   dialog.showModal();
   
-  // Close on backdrop click
-  dialog.addEventListener('click', (e) => {
-    const rect = dialog.getBoundingClientRect();
-    if (
-      e.clientX < rect.left ||
-      e.clientX > rect.right ||
-      e.clientY < rect.top ||
-      e.clientY > rect.bottom
-    ) {
-      closeAddModal();
-    }
-  });
+  // Close on backdrop click (only add listener once)
+  if (!dialog.dataset.listenerAdded) {
+    dialog.addEventListener('click', (e) => {
+      const rect = dialog.getBoundingClientRect();
+      if (
+        e.clientX < rect.left ||
+        e.clientX > rect.right ||
+        e.clientY < rect.top ||
+        e.clientY > rect.bottom
+      ) {
+        closeAddModal();
+      }
+    });
+    dialog.dataset.listenerAdded = 'true';
+  }
 }
 
 /**
@@ -226,6 +279,8 @@ let modalPaxCount = 2;
 let modalSeating = null; // null, 'inside', or 'outside'
 let modalSplitTable = false;
 let modalSharingTable = false;
+let modalIsReservation = false; // false = Waitlist, true = Reservation
+let modalReservationTime = null; // Selected reservation time
 
 /**
  * Increment pax counter
@@ -242,6 +297,164 @@ function decrementPax() {
   if (modalPaxCount > 1) {
     modalPaxCount--;
     document.getElementById('pax-counter').textContent = modalPaxCount;
+  }
+}
+
+/**
+ * Toggle between Waitlist and Reservation mode
+ */
+function toggleModalMode(event) {
+  if (event) {
+    event.stopPropagation();
+  }
+  
+  modalIsReservation = !modalIsReservation;
+  const title = document.getElementById('modal-title');
+  const submitButton = document.getElementById('submit-button');
+  const switchContainer = document.querySelector('#toggle-modal-mode .toggle-switch-container');
+  const switchCircle = document.querySelector('#toggle-modal-mode .toggle-switch');
+  const timeSection = document.getElementById('reservation-time-section');
+  
+  if (modalIsReservation) {
+    title.textContent = 'Add Reservation';
+    submitButton.textContent = 'Add to Reservation';
+    switchContainer.classList.add('bg-amber-400');
+    switchContainer.classList.remove('bg-slate-600');
+    switchCircle.classList.add('bg-slate-900');
+    switchCircle.classList.remove('bg-slate-300');
+    switchCircle.style.transform = 'translateX(20px)';
+    timeSection.style.display = 'block';
+    populateReservationTimes();
+  } else {
+    title.textContent = 'Add Waitlist';
+    submitButton.textContent = 'Add to Waitlist';
+    switchContainer.classList.add('bg-slate-600');
+    switchContainer.classList.remove('bg-amber-400');
+    switchCircle.classList.add('bg-slate-300');
+    switchCircle.classList.remove('bg-slate-900');
+    switchCircle.style.transform = 'translateX(0)';
+    timeSection.style.display = 'none';
+  }
+}
+
+/**
+ * Populate reservation time picker with scroll wheel style
+ */
+function populateReservationTimes() {
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinutes = now.getMinutes();
+  const roundedMinutes = Math.ceil(currentMinutes / 15) * 15;
+  
+  let startHour = currentHour;
+  let startMinute = roundedMinutes;
+  if (startMinute === 60) {
+    startHour = (startHour + 1) % 24;
+    startMinute = 0;
+  }
+  
+  // Populate hour picker (24 hours)
+  const hourPicker = document.getElementById('hour-picker');
+  hourPicker.innerHTML = '';
+  
+  // Add padding items at top and bottom for better UX
+  hourPicker.innerHTML += '<div class="h-6"></div>';
+  
+  for (let i = 0; i < 24; i++) {
+    const hour = (startHour + i) % 24;
+    const hourDiv = document.createElement('div');
+    hourDiv.className = 'h-12 flex items-center justify-center text-slate-100 text-lg font-semibold snap-center cursor-pointer hover:text-amber-400 transition';
+    hourDiv.textContent = hour.toString().padStart(2, '0');
+    hourDiv.dataset.value = hour;
+    hourPicker.appendChild(hourDiv);
+  }
+  
+  hourPicker.innerHTML += '<div class="h-6"></div>';
+  
+  // Populate minute picker (00, 15, 30, 45)
+  const minutePicker = document.getElementById('minute-picker');
+  minutePicker.innerHTML = '';
+  
+  minutePicker.innerHTML += '<div class="h-6"></div>';
+  
+  const minutes = [0, 15, 30, 45];
+  minutes.forEach(min => {
+    const minDiv = document.createElement('div');
+    minDiv.className = 'h-12 flex items-center justify-center text-slate-100 text-lg font-semibold snap-center cursor-pointer hover:text-amber-400 transition';
+    minDiv.textContent = min.toString().padStart(2, '0');
+    minDiv.dataset.value = min;
+    minutePicker.appendChild(minDiv);
+  });
+  
+  minutePicker.innerHTML += '<div class="h-6"></div>';
+  
+  // Set initial scroll positions
+  hourPicker.scrollTop = 0;
+  
+  // Find the starting minute index
+  let startMinuteIndex = 0;
+  if (startMinute === 15) startMinuteIndex = 1;
+  else if (startMinute === 30) startMinuteIndex = 2;
+  else if (startMinute === 45) startMinuteIndex = 3;
+  
+  minutePicker.scrollTop = startMinuteIndex * 48; // 48px per item (h-12)
+  
+  // Add scroll event listeners to snap to center
+  let hourScrollTimeout;
+  hourPicker.addEventListener('scroll', () => {
+    clearTimeout(hourScrollTimeout);
+    hourScrollTimeout = setTimeout(() => {
+      const scrollTop = hourPicker.scrollTop;
+      const itemHeight = 48;
+      const index = Math.round(scrollTop / itemHeight);
+      hourPicker.scrollTo({ top: index * itemHeight, behavior: 'smooth' });
+      updateReservationTime();
+    }, 150);
+  });
+  
+  let minuteScrollTimeout;
+  minutePicker.addEventListener('scroll', () => {
+    clearTimeout(minuteScrollTimeout);
+    minuteScrollTimeout = setTimeout(() => {
+      const scrollTop = minutePicker.scrollTop;
+      const itemHeight = 48;
+      const index = Math.round(scrollTop / itemHeight);
+      minutePicker.scrollTo({ top: index * itemHeight, behavior: 'smooth' });
+      updateReservationTime();
+    }, 150);
+  });
+  
+  // Initialize reservation time
+  updateReservationTime();
+}
+
+/**
+ * Update selected reservation time based on picker positions
+ */
+function updateReservationTime() {
+  const hourPicker = document.getElementById('hour-picker');
+  const minutePicker = document.getElementById('minute-picker');
+  
+  const hourIndex = Math.round(hourPicker.scrollTop / 48);
+  const minuteIndex = Math.round(minutePicker.scrollTop / 48);
+  
+  const hourItems = hourPicker.querySelectorAll('div[data-value]');
+  const minuteItems = minutePicker.querySelectorAll('div[data-value]');
+  
+  if (hourItems[hourIndex] && minuteItems[minuteIndex]) {
+    const selectedHour = parseInt(hourItems[hourIndex].dataset.value);
+    const selectedMinute = parseInt(minuteItems[minuteIndex].dataset.value);
+    
+    const now = new Date();
+    const reservationDate = new Date(now);
+    reservationDate.setHours(selectedHour, selectedMinute, 0, 0);
+    
+    // If selected time is in the past, add one day
+    if (reservationDate < now) {
+      reservationDate.setDate(reservationDate.getDate() + 1);
+    }
+    
+    modalReservationTime = reservationDate.toISOString();
   }
 }
 
