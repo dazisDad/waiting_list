@@ -121,73 +121,77 @@ if (json_last_error() !== JSON_ERROR_NONE) {
     exit;
 }
 
-// Ensure destination directory exists
-$destDir = dirname($dest);
-if (!is_dir($destDir)) {
-    if (!mkdir($destDir, 0755, true)) {
+// Execute flow_execution first
+$return_json = flow_execution($json);
+
+// Only proceed with file operations if success is true
+if (isset($return_json['success']) && $return_json['success'] === true) {
+    // Ensure destination directory exists
+    $destDir = dirname($dest);
+    if (!is_dir($destDir)) {
+        if (!mkdir($destDir, 0755, true)) {
+            http_response_code(500);
+            echo json_encode(['ok' => false, 'error' => 'directory_creation_failed', 'path' => $destDir]);
+            exit;
+        }
+    }
+
+    // Persist to file atomically with lock
+    $temp = $dest . '.tmp';
+
+    if ($isAppend) {
+        $items = [];
+        if (file_exists($dest)) {
+            $existing = file_get_contents($dest);
+            if ($existing !== false && $existing !== '') {
+                $existingJson = json_decode($existing, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    if (is_array($existingJson)) {
+                        // Distinguish associative object vs list
+                        $isAssoc = array_keys($existingJson) !== range(0, count($existingJson) - 1);
+                        if ($isAssoc) {
+                            $items = [$existingJson];
+                        } else {
+                            $items = $existingJson;
+                        }
+                    } else {
+                        // Existing JSON is not an array/object; keep it as single item
+                        $items = [$existingJson];
+                    }
+                } else {
+                    // If existing file is invalid JSON, discard and start fresh
+                    $items = [];
+                }
+            }
+        }
+
+        // Append the new item
+        $items[] = $json;
+        // Trim to appendMax if configured (>0). Keep the most recent entries.
+        if ($appendMax > 0 && count($items) > $appendMax) {
+            $items = array_slice($items, -1 * $appendMax);
+        }
+
+        $dataToWrite = json_encode($items, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    } else {
+        // Overwrite mode (original behavior)
+        $dataToWrite = json_encode($json, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    if (file_put_contents($temp, $dataToWrite, LOCK_EX) === false) {
         http_response_code(500);
-        echo json_encode(['ok' => false, 'error' => 'directory_creation_failed', 'path' => $destDir]);
+        echo json_encode(['ok' => false, 'error' => 'write_failed']);
+        exit;
+    }
+
+    // Replace atomically
+    if (!rename($temp, $dest)) {
+        http_response_code(500);
+        echo json_encode(['ok' => false, 'error' => 'rename_failed']);
         exit;
     }
 }
 
-// Persist to file atomically with lock
-$temp = $dest . '.tmp';
-
-if ($isAppend) {
-    $items = [];
-    if (file_exists($dest)) {
-        $existing = file_get_contents($dest);
-        if ($existing !== false && $existing !== '') {
-            $existingJson = json_decode($existing, true);
-            if (json_last_error() === JSON_ERROR_NONE) {
-                if (is_array($existingJson)) {
-                    // Distinguish associative object vs list
-                    $isAssoc = array_keys($existingJson) !== range(0, count($existingJson) - 1);
-                    if ($isAssoc) {
-                        $items = [$existingJson];
-                    } else {
-                        $items = $existingJson;
-                    }
-                } else {
-                    // Existing JSON is not an array/object; keep it as single item
-                    $items = [$existingJson];
-                }
-            } else {
-                // If existing file is invalid JSON, discard and start fresh
-                $items = [];
-            }
-        }
-    }
-
-    // Append the new item
-    $items[] = $json;
-    // Trim to appendMax if configured (>0). Keep the most recent entries.
-    if ($appendMax > 0 && count($items) > $appendMax) {
-        $items = array_slice($items, -1 * $appendMax);
-    }
-
-    $dataToWrite = json_encode($items, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-} else {
-    // Overwrite mode (original behavior)
-    $dataToWrite = json_encode($json, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-}
-
-if (file_put_contents($temp, $dataToWrite, LOCK_EX) === false) {
-    http_response_code(500);
-    echo json_encode(['ok' => false, 'error' => 'write_failed']);
-    exit;
-}
-
-// Replace atomically
-if (!rename($temp, $dest)) {
-    http_response_code(500);
-    echo json_encode(['ok' => false, 'error' => 'rename_failed']);
-    exit;
-}
-
-// Success - prepare structured response
-$return_json = flow_execution($json);
-
+// Return the response from flow_execution
 echo json_encode($return_json);
 exit;

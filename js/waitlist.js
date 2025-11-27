@@ -1,4 +1,4 @@
-const version = '0.707';
+const version = '0.708';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 

@@ -898,6 +898,14 @@ function flow_execution ($inputDataSet) {
               ];
               return $return_json;
           case 1.9: // 로컬(WEB)에서 새 레코드 입력 시
+              $retrieved = get_booking_detail('subscriber_id', $inputDataSet['subscriber_id'], true);
+              if (count($retrieved) > 0) {
+                  return [
+                      'success' => false,
+                      'false_reason' => 'Duplicate booking.'
+                  ];
+              }
+
               // New Booking
               $booking_list_id = insert_to_booking_list_from_local($inputDataSet);
               $booking_list = get_booking_list($store_id);

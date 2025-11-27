@@ -471,7 +471,7 @@ function submitAddModal() {
     booking_flow: 1.9,
     store_id: store_id,
     booking_from: 'WEB',
-    subscriber_id: null,
+    subscriber_id: phoneNumber,
     customer_name: customerName,
     customer_phone: phoneNumber,
     pax: pax,
@@ -512,8 +512,46 @@ function submitAddModal() {
   })
   .then(data => {
     console.log('Server response:', data);
-    toastMsg('New record successfully inserted');
-    closeAddModal();
+    
+    if (data.success) {
+      toastMsg('New record successfully inserted');
+      closeAddModal();
+    } else {
+      // Handle failure case
+      const phoneInput = document.getElementById('phone-number-input');
+      
+      // Reset phone number input
+      phoneInput.value = '';
+      
+      // Highlight with error state
+      phoneInput.classList.remove('border-slate-600', 'focus:ring-amber-400');
+      phoneInput.classList.add('border-red-500', 'focus:ring-red-500');
+      
+      // Show error message in toast
+      const errorMsg = data.false_reason || 'Failed to insert record';
+      
+      const originalPlaceholder = phoneInput.placeholder;
+      // Show error state
+      phoneInput.classList.remove('border-slate-600', 'focus:ring-amber-400');
+      phoneInput.classList.add('border-red-500', 'focus:ring-red-500');
+      phoneInput.placeholder = errorMsg;
+      
+      // Restore after 2 seconds
+      setTimeout(() => {
+        phoneInput.classList.remove('border-red-500', 'focus:ring-red-500');
+        phoneInput.classList.add('border-slate-600', 'focus:ring-amber-400');
+        phoneInput.placeholder = originalPlaceholder;
+      }, 2000);
+      
+      // Focus the input
+      phoneInput.focus();
+      
+      // Add animation
+      phoneInput.classList.add('animate-pulse');
+      setTimeout(() => {
+        phoneInput.classList.remove('animate-pulse');
+      }, 1000);
+    }
   })
   .catch((error) => {
     console.error('Failed to insert record:', error);
