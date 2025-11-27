@@ -1,8 +1,11 @@
 /**
  * modal_add.js
  * Handles the Add button functionality with a modal dialog
- * version 0.704
+ * version 0.705
  */
+
+const reservation_ahead_minutes = 30; // Reservations can be made at least 30 minutes ahead
+const reservation_interval_minutes = 10; // Reservation time slots interval
 
 /**
  * Opens a modal dialog for adding new content
@@ -72,7 +75,7 @@ function handleAdd() {
                 
                 <!-- Minute Picker -->
                 <div class="flex flex-col items-center">
-                  <div class="relative w-16 h-24 overflow-hidden rounded-lg bg-slate-900 border border-slate-600">
+                  <div id="minute-picker-container" class="relative w-16 h-24 overflow-hidden rounded-lg bg-slate-900 border border-slate-600 transition-colors">
                     <div class="absolute inset-0 pointer-events-none z-10">
                       <div class="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-slate-900 to-transparent"></div>
                       <div class="absolute top-6 left-0 right-0 h-12 border-y-2 border-amber-400"></div>
@@ -124,12 +127,18 @@ function handleAdd() {
             <!-- Phone Number -->
             <div>
               <label class="block text-sm font-medium text-slate-300 mb-2">Phone Number</label>
-              <input 
-                type="tel" 
-                id="phone-number-input" 
-                placeholder="Enter phone number"
-                class="w-full px-4 py-2 rounded-lg bg-slate-900 border border-slate-600 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition"
-              />
+              <div class="flex gap-2">
+                <div class="px-4 py-2 rounded-lg bg-slate-900 border border-slate-600 text-slate-100 flex items-center font-medium">
+                  +60
+                </div>
+                <input 
+                  type="tel" 
+                  id="phone-number-input" 
+                  placeholder="12-345-6789"
+                  oninput="updatePhoneDisplay()"
+                  class="flex-1 px-4 py-2 rounded-lg bg-slate-900 border border-slate-600 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition"
+                />
+              </div>
             </div>
             
             <!-- Is Split Table Allowed Toggle -->
@@ -263,15 +272,115 @@ function submitAddModal() {
   
   // Get form values
   const pax = parseInt(document.getElementById('pax-counter').textContent);
-  const phoneNumber = document.getElementById('phone-number-input').value;
+  const phoneNumberInput = document.getElementById('phone-number-input');
+  const phoneNumberRaw = phoneNumberInput.value.trim();
   const seating = modalSeating; // null, 'inside', or 'outside'
-  const isSplitTableAllowed = document.getElementById('toggle-split-table').dataset.value === 'true';
-  const isSharingTableAllowed = document.getElementById('toggle-sharing-table').dataset.value === 'true';
+  const isSplitTableAllowed = modalSplitTable;
+  const isSharingTableAllowed = modalSharingTable;
+  const isReservation = modalIsReservation;
   
-  console.log('Form data:', { pax, phoneNumber, seating, isSplitTableAllowed, isSharingTableAllowed });
+  // Validate phone number
+  let digits = phoneNumberRaw.replace(/\D/g, '');
+  
+  // Remove leading zeros only if there are more digits after them
+  const originalDigits = digits;
+  if (digits.length > 1 && digits.startsWith('0')) {
+    digits = digits.replace(/^0+/, '');
+  }
+  
+  // Check if phone number is empty or invalid
+  const isPhoneEmpty = phoneNumberRaw === '';
+  const isPhoneInvalid = digits.length > 0 && !digits.startsWith('1') && originalDigits !== '0';
+  const isPhoneTooShort = digits.length < 9; // Minimum 9 digits required (excluding leading 0)
+  
+  if (isPhoneEmpty || isPhoneInvalid || isPhoneTooShort) {
+    // Highlight phone number input with error state
+    phoneNumberInput.classList.remove('border-slate-600', 'focus:ring-amber-400');
+    phoneNumberInput.classList.add('border-red-500', 'focus:ring-red-500');
+    phoneNumberInput.focus();
+    
+    // Show visual feedback with a brief animation
+    phoneNumberInput.classList.add('animate-pulse');
+    setTimeout(() => {
+      phoneNumberInput.classList.remove('animate-pulse');
+    }, 1000);
+    
+    return; // Don't close modal
+  }
+  
+  // Process phone number: remove non-digits, add prefix based on starting digit
+  let phoneNumber = phoneNumberRaw.replace(/\D/g, ''); // Remove non-digits
+  if (phoneNumber.startsWith('0')) {
+    phoneNumber = '6' + phoneNumber;
+  } else if (phoneNumber.startsWith('1')) {
+    phoneNumber = '60' + phoneNumber;
+  }
+  
+  // Format current time as yyyy-mm-dd hh:mm:ss
+  const now = new Date();
+  const timeCreated = formatDateTime(now);
+  
+  // Create badge array
+  const badge = [];
+  
+  // Add seating preference badge
+  if (seating === 'inside') {
+    badge.push('In');
+  } else if (seating === 'outside') {
+    badge.push('Out');
+  }
+  
+  // Add split table badge
+  if (isSplitTableAllowed) {
+    badge.push('Split');
+  }
+  
+  // Add sharing table badge
+  if (isSharingTableAllowed) {
+    badge.push('Share');
+  }
+  
+  // Create form data object
+  const formData = {
+    store_id: store_id,
+    booking_from: 'WEB',
+    pax: pax,
+    customer_phone: phoneNumber,
+    time_created: timeCreated
+  };
+  
+  // Add badges as badge1, badge2, badge3, etc.
+  badge.forEach((badgeText, index) => {
+    formData[`badge${index + 1}`] = badgeText;
+  });
+  
+  // Add dine_dateTime
+  if (isReservation && modalReservationTime) {
+    const dineDate = new Date(modalReservationTime);
+    formData.dine_dateTime = formatDateTime(dineDate);
+  } else {
+    // For waitlist, dine_dateTime is same as time_created
+    formData.dine_dateTime = timeCreated;
+  }
+  
+  console.log('Form data:', formData);
   
   // TODO: Implement submission logic
   closeAddModal();
+}
+
+/**
+ * Format Date object to yyyy-mm-dd hh:mm:ss
+ */
+function formatDateTime(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
 // Modal state variables
@@ -342,18 +451,25 @@ function toggleModalMode(event) {
  */
 function populateReservationTimes() {
   const now = new Date();
-  const currentHour = now.getHours();
-  const currentMinutes = now.getMinutes();
-  const roundedMinutes = Math.ceil(currentMinutes / 15) * 15;
   
-  let startHour = currentHour;
+  // Calculate minimum allowed reservation time (now + reservation_ahead_minutes)
+  const minReservationTime = new Date(now.getTime() + reservation_ahead_minutes * 60000);
+  
+  // Round up to next interval
+  const minMinutes = minReservationTime.getMinutes();
+  const roundedMinutes = Math.ceil(minMinutes / reservation_interval_minutes) * reservation_interval_minutes;
+  
+  let startHour = minReservationTime.getHours();
   let startMinute = roundedMinutes;
-  if (startMinute === 60) {
+  if (startMinute >= 60) {
     startHour = (startHour + 1) % 24;
-    startMinute = 0;
+    startMinute = startMinute % 60;
   }
   
-  // Populate hour picker (24 hours)
+  // Store minimum time for validation
+  window.minReservationTime = minReservationTime;
+  
+  // Populate hour picker (24 hours starting from minimum hour)
   const hourPicker = document.getElementById('hour-picker');
   hourPicker.innerHTML = '';
   
@@ -371,14 +487,19 @@ function populateReservationTimes() {
   
   hourPicker.innerHTML += '<div class="h-6"></div>';
   
-  // Populate minute picker (00, 15, 30, 45)
+  // Populate minute picker based on reservation_interval_minutes
   const minutePicker = document.getElementById('minute-picker');
   minutePicker.innerHTML = '';
   
   minutePicker.innerHTML += '<div class="h-6"></div>';
   
-  const minutes = [0, 15, 30, 45];
-  minutes.forEach(min => {
+  // Generate minute options based on interval
+  const minuteOptions = [];
+  for (let min = 0; min < 60; min += reservation_interval_minutes) {
+    minuteOptions.push(min);
+  }
+  
+  minuteOptions.forEach(min => {
     const minDiv = document.createElement('div');
     minDiv.className = 'h-12 flex items-center justify-center text-slate-100 text-lg font-semibold snap-center cursor-pointer hover:text-amber-400 transition';
     minDiv.textContent = min.toString().padStart(2, '0');
@@ -392,10 +513,10 @@ function populateReservationTimes() {
   hourPicker.scrollTop = 0;
   
   // Find the starting minute index
-  let startMinuteIndex = 0;
-  if (startMinute === 15) startMinuteIndex = 1;
-  else if (startMinute === 30) startMinuteIndex = 2;
-  else if (startMinute === 45) startMinuteIndex = 3;
+  let startMinuteIndex = minuteOptions.indexOf(startMinute);
+  if (startMinuteIndex === -1) {
+    startMinuteIndex = 0;
+  }
   
   minutePicker.scrollTop = startMinuteIndex * 48; // 48px per item (h-12)
   
@@ -455,6 +576,18 @@ function updateReservationTime() {
     }
     
     modalReservationTime = reservationDate.toISOString();
+    
+    // Validate: show red border if selected time is before minimum allowed time
+    const minTime = window.minReservationTime;
+    const minutePickerContainer = document.getElementById('minute-picker-container');
+    
+    if (minTime && reservationDate < minTime) {
+      minutePickerContainer.classList.remove('border-slate-600');
+      minutePickerContainer.classList.add('border-red-500');
+    } else {
+      minutePickerContainer.classList.remove('border-red-500');
+      minutePickerContainer.classList.add('border-slate-600');
+    }
   }
 }
 
@@ -482,6 +615,77 @@ function toggleSeating(preference) {
       outsideBtn.className = 'flex-1 px-4 py-2 rounded-lg bg-amber-400 text-slate-900 font-medium transition hover:bg-amber-500';
     }
   }
+}
+
+/**
+ * Update phone number display with formatting (XX-XXX-XXXX or XX-XXXX-XXXX)
+ */
+function updatePhoneDisplay() {
+  const input = document.getElementById('phone-number-input');
+  const cursorPosition = input.selectionStart;
+  const oldLength = input.value.length;
+  
+  // Remove all non-digits
+  let digits = input.value.replace(/\D/g, '');
+  
+  // Store original digits before removing leading zeros
+  const originalDigits = digits;
+  
+  // Remove leading zeros only if there are more digits after them
+  if (digits.length > 1 && digits.startsWith('0')) {
+    digits = digits.replace(/^0+/, '');
+  }
+  
+  // Validate: if has digits and doesn't start with 1 (and original wasn't just '0'), show error
+  if (digits.length > 0 && !digits.startsWith('1') && originalDigits !== '0') {
+    input.classList.remove('border-slate-600', 'focus:ring-amber-400');
+    input.classList.add('border-red-500', 'focus:ring-red-500');
+  } else {
+    input.classList.remove('border-red-500', 'focus:ring-red-500');
+    input.classList.add('border-slate-600', 'focus:ring-amber-400');
+  }
+  
+  // Limit to 10 digits
+  digits = digits.substring(0, 10);
+  
+  // Format based on length
+  let formatted = '';
+  if (digits.length > 0) {
+    formatted = digits.substring(0, 2);
+    
+    if (digits.length === 10) {
+      // 10 digits: XX-XXXX-XXXX
+      if (digits.length >= 3) {
+        formatted += '-' + digits.substring(2, 6);
+      }
+      if (digits.length >= 7) {
+        formatted += '-' + digits.substring(6, 10);
+      }
+    } else {
+      // 9 or fewer digits: XX-XXX-XXXX
+      if (digits.length >= 3) {
+        formatted += '-' + digits.substring(2, 5);
+      }
+      if (digits.length >= 6) {
+        formatted += '-' + digits.substring(5, 10);
+      }
+    }
+  }
+  
+  // Update input value
+  input.value = formatted;
+  
+  // Restore cursor position (adjust for added dashes)
+  const newLength = formatted.length;
+  const lengthDiff = newLength - oldLength;
+  let newCursorPosition = cursorPosition + lengthDiff;
+  
+  // Adjust cursor to skip over dashes
+  if (formatted[newCursorPosition - 1] === '-') {
+    newCursorPosition++;
+  }
+  
+  input.setSelectionRange(newCursorPosition, newCursorPosition);
 }
 
 /**
