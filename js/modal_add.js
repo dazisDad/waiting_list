@@ -4,8 +4,8 @@
  * version 0.706
  */
 
-const reservation_ahead_minutes = 30; // Reservations can be made at least 30 minutes ahead
-const reservation_interval_minutes = 10; // Reservation time slots interval
+const webBooking_ahead_minutes = 30; // Web Bookings can be made at least 30 minutes ahead
+const webBooking_interval_minutes = 10; // Web Booking time slots interval
 
 /**
  * Opens a modal dialog for adding new content
@@ -53,9 +53,9 @@ function handleAdd() {
         <!-- Content -->
         <div class="flex-1 p-6 overflow-y-auto">
           <div class="space-y-6">
-            <!-- Reservation Time (only visible in reservation mode) -->
-            <div id="reservation-time-section" style="display: none;">
-              <label class="block text-sm font-medium text-slate-300 mb-2">Reservation Time</label>
+            <!-- Web Booking Time (only visible in webBooking mode) -->
+            <div id="webBooking-time-section" style="display: none;">
+              <label class="block text-sm font-medium text-slate-300 mb-2">Web Booking Time</label>
               <div class="flex gap-3 items-center justify-center">
                 <!-- Hour Picker -->
                 <div class="flex flex-col items-center">
@@ -295,8 +295,8 @@ function resetModalForm() {
   modalSeating = null;
   modalSplitTable = false;
   modalSharingTable = false;
-  modalIsReservation = false;
-  modalReservationTime = null;
+  modalIsWebBooking = false;
+  modalWebBookingTime = null;
   
   // Reset pax counter display
   const paxCounter = document.getElementById('pax-counter');
@@ -369,7 +369,7 @@ function resetModalForm() {
   const submitButton = document.getElementById('submit-button');
   const modeToggleContainer = document.querySelector('#toggle-modal-mode .toggle-switch-container');
   const modeToggleCircle = document.querySelector('#toggle-modal-mode .toggle-switch');
-  const timeSection = document.getElementById('reservation-time-section');
+  const timeSection = document.getElementById('webBooking-time-section');
   
   if (title) title.textContent = 'Add Waitlist';
   if (submitButton) submitButton.textContent = 'Add to Waitlist';
@@ -402,7 +402,7 @@ function submitAddModal() {
   const seating = modalSeating; // null, 'inside', or 'outside'
   const isSplitTableAllowed = modalSplitTable;
   const isSharingTableAllowed = modalSharingTable;
-  const isReservation = modalIsReservation;
+  const isWebBooking = modalIsWebBooking;
   
   // Validate phone number
   let digits = phoneNumberRaw.replace(/\D/g, '');
@@ -486,8 +486,8 @@ function submitAddModal() {
   });
   
   // Add dine_dateTime
-  if (isReservation && modalReservationTime) {
-    const dineDate = new Date(modalReservationTime);
+  if (isWebBooking && modalWebBookingTime) {
+    const dineDate = new Date(modalWebBookingTime);
     formData.dine_dateTime = formatDateTime(dineDate);
   } else {
     // For waitlist, dine_dateTime is same as time_created
@@ -578,8 +578,8 @@ let modalPaxCount = 2;
 let modalSeating = null; // null, 'inside', or 'outside'
 let modalSplitTable = false;
 let modalSharingTable = false;
-let modalIsReservation = false; // false = Waitlist, true = Reservation
-let modalReservationTime = null; // Selected reservation time
+let modalIsWebBooking = false; // false = Waitlist, true = Web Booking
+let modalWebBookingTime = null; // Selected webBooking time
 
 /**
  * Increment pax counter
@@ -600,21 +600,21 @@ function decrementPax() {
 }
 
 /**
- * Toggle between Waitlist and Reservation mode
+ * Toggle between Waitlist and Web Booking mode
  */
 function toggleModalMode(event) {
   if (event) {
     event.stopPropagation();
   }
   
-  modalIsReservation = !modalIsReservation;
+  modalIsWebBooking = !modalIsWebBooking;
   const title = document.getElementById('modal-title');
   const submitButton = document.getElementById('submit-button');
   const switchContainer = document.querySelector('#toggle-modal-mode .toggle-switch-container');
   const switchCircle = document.querySelector('#toggle-modal-mode .toggle-switch');
-  const timeSection = document.getElementById('reservation-time-section');
+  const timeSection = document.getElementById('webBooking-time-section');
   
-  if (modalIsReservation) {
+  if (modalIsWebBooking) {
     title.textContent = 'Add Web Booking Ahead';
     submitButton.textContent = 'Submit';
     switchContainer.classList.add('bg-amber-400');
@@ -623,7 +623,7 @@ function toggleModalMode(event) {
     switchCircle.classList.remove('bg-slate-300');
     switchCircle.style.transform = 'translateX(20px)';
     timeSection.style.display = 'block';
-    populateReservationTimes();
+    populateWebBookingTimes();
   } else {
     title.textContent = 'Add Web Booking Now';
     submitButton.textContent = 'Submit';
@@ -637,19 +637,19 @@ function toggleModalMode(event) {
 }
 
 /**
- * Populate reservation time picker with scroll wheel style
+ * Populate webBooking time picker with scroll wheel style
  */
-function populateReservationTimes() {
+function populateWebBookingTimes() {
   const now = new Date();
   
-  // Calculate minimum allowed reservation time (now + reservation_ahead_minutes)
-  const minReservationTime = new Date(now.getTime() + reservation_ahead_minutes * 60000);
+  // Calculate minimum allowed webBooking time (now + webBooking_ahead_minutes)
+  const minWebBookingTime = new Date(now.getTime() + webBooking_ahead_minutes * 60000);
   
   // Round up to next interval
-  const minMinutes = minReservationTime.getMinutes();
-  const roundedMinutes = Math.ceil(minMinutes / reservation_interval_minutes) * reservation_interval_minutes;
+  const minMinutes = minWebBookingTime.getMinutes();
+  const roundedMinutes = Math.ceil(minMinutes / webBooking_interval_minutes) * webBooking_interval_minutes;
   
-  let startHour = minReservationTime.getHours();
+  let startHour = minWebBookingTime.getHours();
   let startMinute = roundedMinutes;
   if (startMinute >= 60) {
     startHour = (startHour + 1) % 24;
@@ -657,7 +657,7 @@ function populateReservationTimes() {
   }
   
   // Store minimum time for validation
-  window.minReservationTime = minReservationTime;
+  window.minWebBookingTime = minWebBookingTime;
   
   // Populate hour picker (24 hours starting from minimum hour)
   const hourPicker = document.getElementById('hour-picker');
@@ -677,7 +677,7 @@ function populateReservationTimes() {
   
   hourPicker.innerHTML += '<div class="h-6"></div>';
   
-  // Populate minute picker based on reservation_interval_minutes
+  // Populate minute picker based on webBooking_interval_minutes
   const minutePicker = document.getElementById('minute-picker');
   minutePicker.innerHTML = '';
   
@@ -685,7 +685,7 @@ function populateReservationTimes() {
   
   // Generate minute options based on interval
   const minuteOptions = [];
-  for (let min = 0; min < 60; min += reservation_interval_minutes) {
+  for (let min = 0; min < 60; min += webBooking_interval_minutes) {
     minuteOptions.push(min);
   }
   
@@ -719,7 +719,7 @@ function populateReservationTimes() {
       const itemHeight = 48;
       const index = Math.round(scrollTop / itemHeight);
       hourPicker.scrollTo({ top: index * itemHeight, behavior: 'smooth' });
-      updateReservationTime();
+      updateWebBookingTime();
     }, 150);
   });
   
@@ -731,18 +731,18 @@ function populateReservationTimes() {
       const itemHeight = 48;
       const index = Math.round(scrollTop / itemHeight);
       minutePicker.scrollTo({ top: index * itemHeight, behavior: 'smooth' });
-      updateReservationTime();
+      updateWebBookingTime();
     }, 150);
   });
   
-  // Initialize reservation time
-  updateReservationTime();
+  // Initialize webBooking time
+  updateWebBookingTime();
 }
 
 /**
- * Update selected reservation time based on picker positions
+ * Update selected webBooking time based on picker positions
  */
-function updateReservationTime() {
+function updateWebBookingTime() {
   const hourPicker = document.getElementById('hour-picker');
   const minutePicker = document.getElementById('minute-picker');
   
@@ -757,21 +757,21 @@ function updateReservationTime() {
     const selectedMinute = parseInt(minuteItems[minuteIndex].dataset.value);
     
     const now = new Date();
-    const reservationDate = new Date(now);
-    reservationDate.setHours(selectedHour, selectedMinute, 0, 0);
+    const webBookingDate = new Date(now);
+    webBookingDate.setHours(selectedHour, selectedMinute, 0, 0);
     
     // If selected time is in the past, add one day
-    if (reservationDate < now) {
-      reservationDate.setDate(reservationDate.getDate() + 1);
+    if (webBookingDate < now) {
+      webBookingDate.setDate(webBookingDate.getDate() + 1);
     }
     
-    modalReservationTime = reservationDate.toISOString();
+    modalWebBookingTime = webBookingDate.toISOString();
     
     // Validate: show red border if selected time is before minimum allowed time
-    const minTime = window.minReservationTime;
+    const minTime = window.minWebBookingTime;
     const minutePickerContainer = document.getElementById('minute-picker-container');
     
-    if (minTime && reservationDate < minTime) {
+    if (minTime && webBookingDate < minTime) {
       minutePickerContainer.classList.remove('border-slate-600');
       minutePickerContainer.classList.add('border-red-500');
     } else {

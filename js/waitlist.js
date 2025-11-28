@@ -1,4 +1,4 @@
-const version = '0.724';
+const version = '0.725';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 const isShowNewPaxBadge = false; // Set to true to show "New Pax" badge (false = only show Pax color change)
@@ -351,10 +351,10 @@ const color_codes = {
       chat_cancelled: '#f87171',        // Chat cancelled status (red-400)
 
       // Background highlights
-      reservation_active_bg: '#374151',  // Active reservation background (slate-700)
-      reservation_active_text: '#cbd5e1', // Active reservation text (slate-300)
-      reservation_completed_bg: '#475569', // Completed reservation background (slate-600)
-      reservation_completed_text: '#e2e8f0', // Completed reservation text (slate-200)
+      webBooking_active_bg: '#374151',  // Active webBooking background (slate-700)
+      webBooking_active_text: '#cbd5e1', // Active webBooking text (slate-300)
+      webBooking_completed_bg: '#475569', // Completed webBooking background (slate-600)
+      webBooking_completed_text: '#e2e8f0', // Completed webBooking text (slate-200)
 
       // Toast message
       toast_background: '#343A40',        // Toast message background
@@ -367,7 +367,7 @@ const color_codes = {
   }
 };
 
-const isEnableReadyAskBtn_for_reservation = false; // 추후에 과금 가능한 상황에서 메세지 보낼 시 활성화
+const isEnableReadyAskBtn_for_webBooking = false; // 추후에 과금 가능한 상황에서 메세지 보낼 시 활성화
 
 // --- Database Connection ---
 // Connector 인스턴스 생성 (preProd 환경, urlPrefix는 waitlist.html 기준 상대 경로)
@@ -1051,8 +1051,8 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
 
   if (buttonDef.functionName === 'handleAsk') {
     if (item) {
-      // Disable Ask button for WEB bookings (based on isEnableReadyAskBtn_for_reservation setting) or when no questions available
-      if (item.booking_from === 'WEB' && !isEnableReadyAskBtn_for_reservation) {
+      // Disable Ask button for WEB bookings (based on isEnableReadyAskBtn_for_webBooking setting) or when no questions available
+      if (item.booking_from === 'WEB' && !isEnableReadyAskBtn_for_webBooking) {
         isDisabled = true;
         const disabledBtnClass = isMobile ? 'mobile-btn-disabled' : 'btn-disabled';
         classes = `${baseClasses} ${disabledBtnClass} ${flexClass}`;
@@ -1068,8 +1068,8 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
     }
   } else if (buttonDef.functionName === 'handleReady') {
     if (item) {
-      // Disable Ready button for WEB bookings (based on isEnableReadyAskBtn_for_reservation setting) or when already ready
-      if ((item.booking_from === 'WEB' && !isEnableReadyAskBtn_for_reservation) || item.q_level >= 300) {
+      // Disable Ready button for WEB bookings (based on isEnableReadyAskBtn_for_webBooking setting) or when already ready
+      if ((item.booking_from === 'WEB' && !isEnableReadyAskBtn_for_webBooking) || item.q_level >= 300) {
         isDisabled = true;
         const disabledBtnClass = isMobile ? 'mobile-btn-disabled' : 'btn-disabled';
         classes = `${baseClasses} ${disabledBtnClass} ${flexClass}`;
@@ -1438,7 +1438,7 @@ function formatElapsedTime(item) {
     const elapsedMs = Date.now() - item.dine_dateTime;
     const totalSeconds = Math.floor(elapsedMs / 1000);
 
-    // Handle negative time (future reservations) with simplified format
+    // Handle negative time (future webBookings) with simplified format
     if (totalSeconds < 0) {
       const absMinutes = Math.floor(Math.abs(totalSeconds) / 60);
       if (absMinutes >= 60) {
@@ -3243,7 +3243,7 @@ function renderWaitlist() {
     // Check if this row is actually selected (for showing all messages vs last one)
     const isRowSelected = (selectedRowId === item.booking_number) || (expandedRowId === item.booking_number);
 
-    // Check if this is a WEB booking - show simple reservation info instead of chat history
+    // Check if this is a WEB booking - show simple webBooking info instead of chat history
     if (item.booking_from === 'WEB') {
       const chatClass = statusPriority === 0 ? 'text-slate-400' : 'text-slate-400';
 
@@ -3256,22 +3256,22 @@ function renderWaitlist() {
       });
 
       // Show "Web booking @ dine_dateTime" line with background highlight (similar to PAX >= 5 style but maintaining gray color)
-      const reservationHighlight = statusPriority === 0 ? 'bg-slate-600 text-slate-200 px-1 py-0.5 rounded font-bold' : 'bg-slate-700 text-slate-300 px-1 py-0.5 rounded font-bold';
+      const webBookingHighlight = statusPriority === 0 ? 'bg-slate-600 text-slate-200 px-1 py-0.5 rounded font-bold' : 'bg-slate-700 text-slate-300 px-1 py-0.5 rounded font-bold';
 
-      // Add NEW badge for Reservation (only for active items)
-      let reservationBadge = '';
+      // Add NEW badge for Web Booking (only for active items)
+      let webBookingBadge = '';
       if (item.status === 'Waiting' || item.status === 'Ready') {
         const chatBadgeId = `chat-new-badge-${item.booking_list_id}`;
         const badgeKey = `${item.subscriber_id}_${item.booking_list_id}`;
         const isChatHidden = chatBadgeHidden[badgeKey];
         if (isChatHidden) {
-          reservationBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-slate-800 px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: none;">NEW</span>`;
+          webBookingBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-slate-800 px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: none;">NEW</span>`;
         } else {
-          reservationBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-slate-800 px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: inline;">NEW</span>`;
+          webBookingBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-slate-800 px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: inline;">NEW</span>`;
         }
       }
 
-      chatHistoryHTML = `<div class="text-xs ${chatClass} leading-relaxed">↳ <span class="${reservationHighlight}">Web booking @ ${timeString}</span>${reservationBadge}</div>`;
+      chatHistoryHTML = `<div class="text-xs ${chatClass} leading-relaxed">↳ <span class="${webBookingHighlight}">Web booking @ ${timeString}</span>${webBookingBadge}</div>`;
 
       // Add status message if item is Arrived or Cancelled with completion time (always show for WEB bookings)
       if (item.status === 'Arrived' || item.status === 'Cancelled') {
