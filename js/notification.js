@@ -53,19 +53,44 @@ async function ensureNotificationPermission() {
   return p === 'granted';
 }
 
-function showNotification(title, body) {
-  console.log('showNotification:', title, body);
+function showNotification(title, body, url = null) {
+  console.log('showNotification:', title, body, url);
+  
+  const options = {
+    body: body,
+    data: url ? { url: url } : {},
+    icon: '/favicon.ico', // Optional: add your icon path
+    badge: '/favicon.ico', // Optional: add your badge icon
+    requireInteraction: false
+  };
+  
   if (swRegistration && swRegistration.showNotification) {
     try {
-      swRegistration.showNotification(title, { body });
-      console.log('showNotification: sent via service worker');
+      swRegistration.showNotification(title, options);
+      console.log('showNotification: sent via service worker' + (url ? ' with URL: ' + url : ' (no URL - click disabled)'));
     } catch (e) {
       console.log('showNotification: service worker failed, fallback', e);
-      if (Notification.permission === 'granted') new Notification(title, { body });
+      if (Notification.permission === 'granted') {
+        const notification = new Notification(title, options);
+        if (url) {
+          notification.onclick = function() {
+            window.focus();
+            window.location.href = url;
+            notification.close();
+          };
+        }
+      }
     }
   } else if (Notification.permission === 'granted') {
-    new Notification(title, { body });
-    console.log('showNotification: sent via Notification API');
+    const notification = new Notification(title, options);
+    if (url) {
+      notification.onclick = function() {
+        window.focus();
+        window.location.href = url;
+        notification.close();
+      };
+    }
+    console.log('showNotification: sent via Notification API' + (url ? ' with URL: ' + url : ' (no URL - click disabled)'));
   } else {
     console.log('showNotification: not permitted');
   }
