@@ -1,4 +1,4 @@
-const version = '0.718';
+const version = '0.720';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 
@@ -186,6 +186,12 @@ function handleNewEvent(obj) {
               console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - ✓ Badge text:', chatBadgeSpan.textContent);
               console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - ✓ Badge style.display:', chatBadgeSpan.style.display);
               console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - ✓ For booking_list_id:', bookingItem.booking_list_id);
+              
+              // Update Pax colors if this is a "New Pax" badge
+              if (badgeText === 'New Pax') {
+                console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - Updating Pax colors for booking_number:', bookingItem.booking_number);
+                updatePaxColors(bookingItem.booking_number);
+              }
             } else {
               console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - ✗ Badge element NOT FOUND in DOM');
             }
@@ -1189,6 +1195,9 @@ function toggleMobileActions(booking_number, event) {
           chatBadgeSpan.style.display = 'none';
           chatBadgeSpan.textContent = '';
         }
+        
+        // Update Pax colors after hiding badge
+        updatePaxColors(booking_number);
       }
 
       console.log(`DESKTOP: Selected row #${booking_number}`);
@@ -1355,6 +1364,9 @@ function toggleMobileActions(booking_number, event) {
       chatBadgeSpan.style.display = 'none';
       chatBadgeSpan.textContent = '';
     }
+    
+    // Update Pax colors after hiding badge
+    updatePaxColors(booking_number);
   }
 
   console.log(`MOBILE: Expanded row for item #${booking_number}`);
@@ -1572,9 +1584,65 @@ function toggleDesktopRowSelection(booking_number) {
       chatBadgeSpan.style.display = 'none';
       chatBadgeSpan.textContent = '';
     }
+    
+    // Update Pax colors after hiding badge
+    updatePaxColors(booking_number);
   }
 
   console.log(`DESKTOP: Selected row #${booking_number}`);
+}
+
+/**
+ * Update Pax display colors based on badge state
+ * Called after badge is hidden to restore normal colors
+ */
+function updatePaxColors(booking_number) {
+  const item = waitlist.find(i => i.booking_number == booking_number);
+  if (!item) return;
+
+  const badgeKey = `${item.subscriber_id}_${item.booking_list_id}`;
+  const hasNewPaxBadge = chatBadgeType[badgeKey] === 'New Pax' && !chatBadgeHidden[badgeKey];
+  const statusPriority = getSortPriority(item.status);
+  const paxElement = document.getElementById(`pax-${booking_number}`);
+  
+  if (!paxElement) return;
+
+  const paxLabel = paxElement.querySelector('span:first-child');
+  const paxNumber = paxElement.querySelector('.pax-number');
+
+  if (hasNewPaxBadge) {
+    // Red colors for "New Pax" badge
+    if (item.pax >= minPax_for_bigTable) {
+      // 5명 이상: 빨간 배경 + 흰색 텍스트 (Pax: 레이블도 흰색)
+      if (paxLabel) paxLabel.className = 'font-bold text-slate-800';
+      if (paxNumber) {
+        paxNumber.className = 'pax-number bg-red-500 text-slate-800 px-1 py-0.5 rounded font-bold';
+        paxElement.className = paxElement.className.replace(/bg-\S+/g, '').replace(/text-\S+/g, '').trim() + ' bg-red-500 text-xs text-slate-800';
+      }
+    } else {
+      // 4명 이하: 빨간 텍스트
+      if (paxLabel) paxLabel.className = 'font-bold text-red-500';
+      if (paxNumber) {
+        paxNumber.className = 'pax-number pr-1 font-bold text-red-500';
+      }
+    }
+  } else {
+    // Normal colors (restore to default)
+    if (paxLabel) paxLabel.className = 'font-bold';
+    if (paxNumber) {
+      if (item.pax >= minPax_for_bigTable) {
+        if (statusPriority === 0) {
+          paxNumber.className = 'pax-number bg-white text-slate-800 px-1 py-0.5 rounded font-bold';
+          paxElement.className = paxElement.className.replace(/bg-\S+/g, '').trim() + ' bg-white text-slate-800';
+        } else {
+          paxNumber.className = 'pax-number bg-yellow-400 text-slate-800 px-1 py-0.5 rounded font-bold';
+          paxElement.className = paxElement.className.replace(/bg-\S+/g, '').trim() + ' bg-yellow-400 text-slate-800';
+        }
+      } else {
+        paxNumber.className = 'pax-number pr-1 font-bold';
+      }
+    }
+  }
 }
 
 /**
@@ -3355,21 +3423,48 @@ function renderWaitlist() {
     const nameMarginClass = hasHighlight ? 'mb-1.5' : '';
 
     // PAX display with highlight styling (moved to No. column)
+    // Check if this item has "New Pax" badge
+    const badgeKey = `${item.subscriber_id}_${item.booking_list_id}`;
+    const hasNewPaxBadge = chatBadgeType[badgeKey] === 'New Pax' && !chatBadgeHidden[badgeKey];
+    
     // Base classes for Pax container (border will be added via pax-selected class)
     const paxContainerClass = 'px-0.5 py-0.5 rounded font-bold text-xs';
 
-    // Label styling (always same)
-    const paxLabelClass = 'font-bold';
+    // Label styling - depends on "New Pax" badge and pax count
+    let paxLabelClass;
+    if (hasNewPaxBadge) {
+      // 5명 이상: 테이블 배경색(slate-800) 텍스트, 4명 이하: 빨간색 텍스트
+      paxLabelClass = item.pax >= minPax_for_bigTable ? 'font-bold text-slate-800' : 'font-bold text-red-500';
+    } else {
+      paxLabelClass = 'font-bold';
+    }
 
     // Number styling - background highlight for big tables only
-    const paxNumberClass = item.pax >= minPax_for_bigTable ?
-      (statusPriority === 0 ? 'bg-white text-slate-800 px-1 py-0.5 rounded font-bold' : 'bg-yellow-400 text-slate-800 px-1 py-0.5 rounded font-bold') :
-      'pr-1 font-bold';
+    // If "New Pax" badge exists, use red color instead of yellow/white
+    let paxNumberClass;
+    if (hasNewPaxBadge) {
+      // Red color for "New Pax" badge
+      paxNumberClass = item.pax >= minPax_for_bigTable ?
+        'bg-red-500 text-slate-800 px-1 py-0.5 rounded font-bold' :
+        'pr-1 font-bold text-red-500';
+    } else {
+      // Normal colors (yellow for active, white for completed)
+      paxNumberClass = item.pax >= minPax_for_bigTable ?
+        (statusPriority === 0 ? 'bg-white text-slate-800 px-1 py-0.5 rounded font-bold' : 'bg-yellow-400 text-slate-800 px-1 py-0.5 rounded font-bold') :
+        'pr-1 font-bold';
+    }
 
     // Initial background for big tables (will have border added when selected)
-    const paxInitialBg = item.pax >= minPax_for_bigTable ?
-      (statusPriority === 0 ? 'bg-white text-slate-800' : 'bg-yellow-400 text-slate-800') :
-      '';
+    let paxInitialBg;
+    if (hasNewPaxBadge) {
+      // Red background for "New Pax" badge
+      paxInitialBg = item.pax >= minPax_for_bigTable ? 'bg-red-500 text-slate-800' : '';
+    } else {
+      // Normal backgrounds
+      paxInitialBg = item.pax >= minPax_for_bigTable ?
+        (statusPriority === 0 ? 'bg-white text-slate-800' : 'bg-yellow-400 text-slate-800') :
+        '';
+    }
 
     const paxHighlightClass = `${paxContainerClass} ${paxInitialBg}`;
 
