@@ -165,7 +165,13 @@ if (isset($return_json['success']) && $return_json['success'] === true) {
             }
         }
 
-        // Append the new item
+        // Append the new item with session_id transformation
+        // If session_id exists in payload, add it as _session_id for webhook detection
+        if (isset($json['session_id'])) {
+            $json['_session_id'] = $json['session_id'];
+            // Optionally remove the original session_id from stored data
+            // unset($json['session_id']);
+        }
         $items[] = $json;
         // Trim to appendMax if configured (>0). Keep the most recent entries.
         if ($appendMax > 0 && count($items) > $appendMax) {

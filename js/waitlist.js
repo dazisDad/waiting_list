@@ -1,4 +1,4 @@
-const version = '0.716';
+const version = '0.718';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 
@@ -173,6 +173,13 @@ function handleNewEvent(obj) {
               const badgeText = (lastItem.booking_flow === 2.2) ? 'New Pax' : 'NEW';
               console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - Selected badge text:', badgeText);
               
+              // Save badge type to chatBadgeType for persistence across refreshes
+              const badgeKey = `${bookingItem.subscriber_id}_${bookingItem.booking_list_id}`;
+              chatBadgeType[badgeKey] = badgeText;
+              const today = new Date().toISOString().split('T')[0];
+              localStorage.setItem(`chatBadgeType_${today}`, JSON.stringify(chatBadgeType));
+              console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - Saved badge type to localStorage:', badgeText);
+              
               chatBadgeSpan.textContent = badgeText;
               chatBadgeSpan.style.display = 'inline';
               console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - ✓ Badge display set to inline');
@@ -255,6 +262,7 @@ let questionnaire = [];
 let answers = [];
 let configuration = [];
 let chatBadgeHidden = {}; // { 'subscriber_id_booking_list_id': true/false } - tracks which chat NEW badges should be hidden
+let chatBadgeType = {}; // { 'subscriber_id_booking_list_id': 'NEW' | 'New Pax' } - tracks badge text type
 
 const color_codes = {
   theme: {
@@ -3259,10 +3267,12 @@ function renderWaitlist() {
           // Chat badge: shown by default, hidden if user clicked row (tracked in chatBadgeHidden)
           const badgeKey = `${item.subscriber_id}_${item.booking_list_id}`;
           const isChatHidden = chatBadgeHidden[badgeKey];
+          // Get badge text from chatBadgeType, default to 'NEW'
+          const badgeText = chatBadgeType[badgeKey] || 'NEW';
           if (isChatHidden) {
-            chatBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-white px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: none;">NEW</span>`;
+            chatBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-white px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: none;">${badgeText}</span>`;
           } else {
-            chatBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-white px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: inline;">NEW</span>`;
+            chatBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-white px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: inline;">${badgeText}</span>`;
           }
         }
 
@@ -3718,13 +3728,17 @@ async function startInitialization() {
     if (isResetLocalStorage) {
       // Reset localStorage on every load
       chatBadgeHidden = {};
+      chatBadgeType = {};
       localStorage.removeItem(storageKey);
+      localStorage.removeItem(`chatBadgeType_${todayStr}`);
       console.log('INIT: Reset mode enabled - cleared all badge states');
     } else {
       // Load from localStorage for today's date only
       const savedChat = localStorage.getItem(storageKey);
+      const savedType = localStorage.getItem(`chatBadgeType_${todayStr}`);
       console.log('INIT: localStorage key:', storageKey);
       console.log('INIT: localStorage raw value:', savedChat);
+      console.log('INIT: localStorage badge type value:', savedType);
 
       if (savedChat) {
         try {
@@ -3741,9 +3755,24 @@ async function startInitialization() {
         console.log('INIT: No localStorage found for today - will initialize after data load');
       }
 
+      if (savedType) {
+        try {
+          chatBadgeType = JSON.parse(savedType);
+          console.log('INIT: Loaded badge type from localStorage:', Object.keys(chatBadgeType).length, 'items');
+          console.log('INIT: Badge types:', chatBadgeType);
+        } catch (e) {
+          console.error('Failed to parse chatBadgeType from localStorage:', e);
+          chatBadgeType = {};
+        }
+      } else {
+        chatBadgeType = {};
+        console.log('INIT: No badge type found in localStorage');
+      }
+
       // Clean up old date entries (keep only today's data)
       Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('chatBadgeHidden_') && key !== storageKey) {
+        if ((key.startsWith('chatBadgeHidden_') || key.startsWith('chatBadgeType_')) && 
+            key !== storageKey && key !== `chatBadgeType_${todayStr}`) {
           localStorage.removeItem(key);
           console.log('INIT: Cleaned up old localStorage key:', key);
         }
