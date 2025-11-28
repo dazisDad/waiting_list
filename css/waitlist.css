@@ -630,3 +630,27 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
     display: none !important;
   }
 }
+
+/* Pax selected state - border highlight when row is selected */
+.pax-selected {
+  border: 1px solid #fbbf24 !important;
+}
+
+/* For big tables (5+ pax), when selected: keep background on number only, add border to whole container */
+.pax-selected[data-pax-count] {
+  /* Remove background from container when selected */
+  background-color: transparent !important;
+  /* Change label text color to yellow when background is removed */
+  color: #fbbf24 !important;
+}
+
+/* Keep background on number for big tables when selected */
+.pax-selected .pax-number {
+  /* Background stays from initial render classes (bg-yellow-400 or bg-white) */
+}
+
+/* Completed items: different border and text color when selected */
+.pax-selected[data-is-completed="true"] {
+  border-color: #f1f5f9 !important;
+  color: #f1f5f9 !important;
+}

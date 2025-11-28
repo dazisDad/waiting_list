@@ -1,4 +1,4 @@
-const version = '0.709';
+const version = '0.710';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 
@@ -1473,10 +1473,18 @@ function toggleRowSelection(booking_number, selected) {
   const row = document.querySelector(`tr[data-item-id="${booking_number}"]`);
   if (!row) return;
 
+  const paxElement = document.getElementById(`pax-${booking_number}`);
+
   if (selected) {
     row.classList.add('row-selected');
+    if (paxElement) {
+      paxElement.classList.add('pax-selected');
+    }
   } else {
     row.classList.remove('row-selected');
+    if (paxElement) {
+      paxElement.classList.remove('pax-selected');
+    }
   }
 }
 
@@ -3293,11 +3301,23 @@ function renderWaitlist() {
     const nameMarginClass = hasHighlight ? 'mb-1.5' : '';
 
     // PAX display with highlight styling (moved to No. column)
-    const paxHighlightClass = item.pax >= minPax_for_bigTable ?
-      (statusPriority === 0 ? 'bg-white text-slate-800 px-1 py-0.5 rounded font-bold text-xs' : 'bg-yellow-400 text-slate-800 px-1 py-0.5 rounded font-bold text-xs') :
-      (item.pax <= maxPax_for_smallTable ?
-        (statusPriority === 0 ? 'border border-slate-100 px-1 py-0.5 rounded font-bold text-xs' : 'border border-amber-400 px-1 py-0.5 rounded font-bold text-xs') :
-        'text-xs opacity-75');
+    // Base classes for Pax container (border will be added via pax-selected class)
+    const paxContainerClass = 'px-1 py-0.5 rounded font-bold text-xs';
+    
+    // Label styling (always same)
+    const paxLabelClass = 'font-bold';
+    
+    // Number styling - background highlight for big tables only
+    const paxNumberClass = item.pax >= minPax_for_bigTable ?
+      (statusPriority === 0 ? 'bg-white text-slate-800 px-1 py-0.5 rounded font-bold' : 'bg-yellow-400 text-slate-800 px-1 py-0.5 rounded font-bold') :
+      'font-bold';
+    
+    // Initial background for big tables (will have border added when selected)
+    const paxInitialBg = item.pax >= minPax_for_bigTable ?
+      (statusPriority === 0 ? 'bg-white text-slate-800' : 'bg-yellow-400 text-slate-800') :
+      '';
+    
+    const paxHighlightClass = `${paxContainerClass} ${paxInitialBg}`;
 
     // Generate highlight tags for badge1, badge2, badge3 (same as Pax styling - all same color, only completed/active difference)
     const highlights = [];
@@ -3324,7 +3344,7 @@ function renderWaitlist() {
                         <td class="px-2 py-2 whitespace-nowrap text-sm font-medium ${idClass} text-center">
                             <div>${item.booking_number}</div>
                             <div class="mt-0.5">
-                                <span id="pax-${item.booking_number}" class="${paxHighlightClass}" data-pax-clickable="true" data-booking-number="${item.booking_number}" style="display: inline-block; cursor: pointer; pointer-events: auto; position: relative; z-index: 10;">Pax: ${item.pax}</span>
+                                <span id="pax-${item.booking_number}" class="${paxHighlightClass}" data-pax-clickable="true" data-booking-number="${item.booking_number}" data-pax-count="${item.pax}" data-is-completed="${statusPriority === 0}" style="display: inline-block; cursor: pointer; pointer-events: auto; position: relative; z-index: 10;"><span class="${paxLabelClass}" style="pointer-events: none;">Pax:</span> <span class="pax-number ${paxNumberClass}" style="pointer-events: none;">${item.pax}</span></span>
                             </div>
                         </td>
                         <td class="px-2 py-2 text-sm">
