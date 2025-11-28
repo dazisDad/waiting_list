@@ -1,4 +1,4 @@
-const version = '0.722';
+const version = '0.723';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 const isShowNewPaxBadge = false; // Set to true to show "New Pax" badge (false = only show Pax color change)
@@ -57,10 +57,33 @@ function handleNewEvent(obj) {
     }
 
     console.log('HANDLE_NEW_EVENT: ✓ booking_flow matches trigger list:', lastItem.booking_flow);
+    
+    // Special debugging for flow 9.2 (chat response)
+    if (Math.abs(lastItem.booking_flow - 9.2) < 0.0001) {
+      console.log('HANDLE_NEW_EVENT: 💬 FLOW 9.2 DETECTED - Chat Response Processing');
+      console.log('HANDLE_NEW_EVENT: 💬 Full lastItem object:', JSON.stringify(lastItem, null, 2));
+      console.log('HANDLE_NEW_EVENT: 💬 booking_list_id:', lastItem.booking_list_id);
+      console.log('HANDLE_NEW_EVENT: 💬 subscriber_id:', lastItem.subscriber_id);
+      console.log('HANDLE_NEW_EVENT: 💬 booking_response:', lastItem.booking_response);
+      console.log('HANDLE_NEW_EVENT: 💬 _session_id:', lastItem._session_id);
+      console.log('HANDLE_NEW_EVENT: 💬 _force_update:', lastItem._force_update);
+    }
   }
 
-  if (updateCounter > 0) {
-    console.log('HANDLE_NEW_EVENT: Counter > 0, processing event...');
+  // Check if this is a critical flow (Chat Response) that happened recently (within 10 seconds)
+  // This allows processing chat responses even on the first poll (e.g. immediately after refresh)
+  const isCriticalFlow = lastItem && lastItem.booking_flow && Math.abs(lastItem.booking_flow - 9.2) < 0.0001;
+  const eventTime = lastItem ? (lastItem._force_update || 0) : 0;
+  const now = Date.now();
+  // If _force_update is missing, we can't determine recency, so we skip to avoid duplicates on every refresh
+  const isRecent = eventTime > 0 && (now - eventTime) < 10000; 
+
+  if (updateCounter > 0 || (isCriticalFlow && isRecent)) {
+    if (updateCounter === 0) {
+      console.log('HANDLE_NEW_EVENT: ⚡ Processing critical recent event on first poll!');
+    } else {
+      console.log('HANDLE_NEW_EVENT: Counter > 0, processing event...');
+    }
 
     if (!lastItem || !lastItem.subscriber_id) {
       // No valid data, exit without notification

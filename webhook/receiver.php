@@ -140,6 +140,11 @@ if ($method !== 'POST' || $body === false || $body === '') {
     header('Content-Type: application/json');
     //echo json_encode(['ok' => false, 'error' => 'invalid_request']);
 
+    $inputDataSet_1_0 = [
+        'store_id' => 'DL_Sunway_Geo',
+        'booking_flow' => 1.0,
+        'subscriber_id' => 306159212
+    ];
     $inputDataSet_1_1 = [
         'store_id' => 'DL_Sunway_Geo',
         'booking_flow' => 1.1,
@@ -174,13 +179,13 @@ if ($method !== 'POST' || $body === false || $body === '') {
     $inputDataSet_9_2 = [
         'store_id' => 'DL_Sunway_Geo',
         'booking_flow' => 9.2,
-        'booking_list_id' => 8,
-        'booking_response' => 1,
+        'booking_list_id' => 11,
+        'booking_response' => 0,
     ];
     //$return_json = get_booking_detail('subscriber_id', $inputDataSet_1_1['subscriber_id'], true);
     
     //$return_json = get_booking_detail('booking_list_id',39);
-    $return_json = flow_execution($inputDataSet_1_2);
+    $return_json = flow_execution($inputDataSet_9_2);
     //$return_json = processChatResponse($inputDataSet_9_2);
     echo json_encode($return_json);
 
@@ -233,6 +238,11 @@ if (json_last_error() !== JSON_ERROR_NONE) {
     http_response_code(400);
     echo json_encode(['ok' => false, 'error' => 'invalid_json']);
     exit;
+}
+
+// Add timestamp for duplicate detection in frontend
+if (!isset($json['_force_update'])) {
+    $json['_force_update'] = round(microtime(true) * 1000);
 }
 
 // Ensure destination directory exists

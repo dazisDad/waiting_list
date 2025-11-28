@@ -39,17 +39,18 @@ INSERT INTO history_chat (
   Id,
   booking_list_id,
   dateTime,
-  qna
+  qna,
+  qna_id
 ) VALUES
-(1, '1', FROM_UNIXTIME(UNIX_TIMESTAMP() - 840), 'Waiting'),
-(2, '2', FROM_UNIXTIME(UNIX_TIMESTAMP() - 900), 'Waiting'),
-(3, '3', FROM_UNIXTIME(UNIX_TIMESTAMP() - 870), 'Waiting'),
-(4, '4', FROM_UNIXTIME(UNIX_TIMESTAMP() - 660), 'Waiting'),
-(5, '5', FROM_UNIXTIME(UNIX_TIMESTAMP() - 600), 'Waiting'),
-(6, '6', FROM_UNIXTIME(UNIX_TIMESTAMP() - 540), 'Waiting'),
-(7, '5', FROM_UNIXTIME(UNIX_TIMESTAMP() - 568), 'Q: Table is Ready. Coming?'),
-(8, '5', FROM_UNIXTIME(UNIX_TIMESTAMP() - 542), 'A: Coming in 5 mins'),
-(9, '7', FROM_UNIXTIME(UNIX_TIMESTAMP() - 480), 'Waiting'),
-(10, '7', FROM_UNIXTIME(UNIX_TIMESTAMP() - 450), 'Q: Is outdoor seating OK?'),
-(11, '8', FROM_UNIXTIME(UNIX_TIMESTAMP() - 420), 'Waiting'),
-(12, '9', FROM_UNIXTIME(UNIX_TIMESTAMP() - 300), 'Waiting')
+(1, '1', FROM_UNIXTIME(UNIX_TIMESTAMP() - 840), 'Waiting',8),
+(2, '2', FROM_UNIXTIME(UNIX_TIMESTAMP() - 900), 'Waiting',8),
+(3, '3', FROM_UNIXTIME(UNIX_TIMESTAMP() - 870), 'Waiting',8),
+(4, '4', FROM_UNIXTIME(UNIX_TIMESTAMP() - 660), 'Waiting',8),
+(5, '5', FROM_UNIXTIME(UNIX_TIMESTAMP() - 600), 'Waiting',8),
+(6, '6', FROM_UNIXTIME(UNIX_TIMESTAMP() - 540), 'Waiting',8),
+(7, '5', FROM_UNIXTIME(UNIX_TIMESTAMP() - 568), 'Q: Table is Ready. Coming?',0),
+(8, '5', FROM_UNIXTIME(UNIX_TIMESTAMP() - 542), 'A: Coming in 5 mins',0),
+(9, '7', FROM_UNIXTIME(UNIX_TIMESTAMP() - 480), 'Waiting',8),
+(10, '7', FROM_UNIXTIME(UNIX_TIMESTAMP() - 450), 'Q: Is outdoor seating OK?',0),
+(11, '8', FROM_UNIXTIME(UNIX_TIMESTAMP() - 420), 'Waiting',8),
+(12, '9', FROM_UNIXTIME(UNIX_TIMESTAMP() - 300), 'Waiting',8)

@@ -276,9 +276,10 @@ function insert_to_booking_list(array $inputDataSet) {
 
     // Insert into history_chat table
     $qna = 'Waiting';
+    $qna_id = 8; // Default id for 'Waiting'
     
     if ($isPreparedStmt) {
-        $sql_history = 'INSERT INTO history_chat (booking_list_id, dateTime, qna) VALUES (?,?,?)';
+        $sql_history = 'INSERT INTO history_chat (booking_list_id, dateTime, qna, qna_id) VALUES (?,?,?,?)';
         $stmt_history = $mysqli->prepare($sql_history);
         if ($stmt_history === false) {
             $err = $mysqli->error;
@@ -286,7 +287,7 @@ function insert_to_booking_list(array $inputDataSet) {
             throw new Exception('Prepare failed for history_chat: ' . $err);
         }
 
-        if (!$stmt_history->bind_param('iss', $insertId, $dine_dateTime, $qna)) {
+        if (!$stmt_history->bind_param('issi', $insertId, $dine_dateTime, $qna, $qna_id)) {
             $err = $stmt_history->error;
             $stmt_history->close();
             $mysqli->close();
@@ -304,7 +305,8 @@ function insert_to_booking_list(array $inputDataSet) {
     } else {
         $dine_dateTime_esc = $mysqli->real_escape_string($dine_dateTime);
         $qna_esc = $mysqli->real_escape_string($qna);
-        $sql_history = "INSERT INTO history_chat (booking_list_id, dateTime, qna) VALUES ({$insertId},'{$dine_dateTime_esc}','{$qna_esc}')";
+        $qna_id_safe = intval($qna_id);
+        $sql_history = "INSERT INTO history_chat (booking_list_id, dateTime, qna, qna_id) VALUES ({$insertId},'{$dine_dateTime_esc}','{$qna_esc}',{$qna_id_safe})";
         
         if (!$mysqli->query($sql_history)) {
             $err = $mysqli->error;
@@ -406,9 +408,10 @@ function insert_to_booking_list_from_local(array $inputDataSet) {
 
     // Insert into history_chat table
     $qna = 'Waiting';
+    $qna_id = 8; // Default id for 'Waiting'
     
     if ($isPreparedStmt) {
-        $sql_history = 'INSERT INTO history_chat (booking_list_id, dateTime, qna) VALUES (?,?,?)';
+        $sql_history = 'INSERT INTO history_chat (booking_list_id, dateTime, qna, qna_id) VALUES (?,?,?,?)';
         $stmt_history = $mysqli->prepare($sql_history);
         if ($stmt_history === false) {
             $err = $mysqli->error;
@@ -416,7 +419,7 @@ function insert_to_booking_list_from_local(array $inputDataSet) {
             throw new Exception('Prepare failed for history_chat: ' . $err);
         }
 
-        if (!$stmt_history->bind_param('iss', $insertId, $dine_dateTime, $qna)) {
+        if (!$stmt_history->bind_param('issi', $insertId, $dine_dateTime, $qna, $qna_id)) {
             $err = $stmt_history->error;
             $stmt_history->close();
             $mysqli->close();
@@ -434,7 +437,8 @@ function insert_to_booking_list_from_local(array $inputDataSet) {
     } else {
         $dine_dateTime_esc = $mysqli->real_escape_string($dine_dateTime);
         $qna_esc = $mysqli->real_escape_string($qna);
-        $sql_history = "INSERT INTO history_chat (booking_list_id, dateTime, qna) VALUES ({$insertId},'{$dine_dateTime_esc}','{$qna_esc}')";
+        $qna_id_safe = intval($qna_id);
+        $sql_history = "INSERT INTO history_chat (booking_list_id, dateTime, qna, qna_id) VALUES ({$insertId},'{$dine_dateTime_esc}','{$qna_esc}',{$qna_id_safe})";
         
         if (!$mysqli->query($sql_history)) {
             $err = $mysqli->error;
@@ -768,12 +772,12 @@ function change_pax($booking_list_id, $new_pax) {
     if ($pax_new === 0) {
         return [
             'success' => false,
-            'false_reason' => 'Invalid number of pax entered.',
+            'false_reason' => 'Your number of pax is invalid. Please enter a valid number of pax.',
             'is_booking_loop' => 1
         ];
     }
     if (!$isChangePaxAllowed) {
-        $reason = ($pax_current === $pax_new) ? 'Same pax as before' : 'New pax exceeds allowed limit. Please contact staff for assistance.';
+        $reason = ($pax_current === $pax_new) ? 'You have entered the same pax number. We will keep it for your booking.' : 'The number of pax exceeds our seating capacity. One of our staff will call for confirmation. Please hold.';
         return [
             'success' => false,
             'false_reason' => $reason,
@@ -862,6 +866,16 @@ function flow_execution ($inputDataSet) {
     $flow = $inputDataSet['booking_flow'];
     $store_id = $inputDataSet['store_id'];
     switch ($flow) {
+          case 1.0:
+              // return booking_list_id
+              $retrieved_booking_detail = get_booking_detail('subscriber_id', $inputDataSet['subscriber_id'], true);
+              $return_json = [
+                  'success' => true,
+                  'booking_number' => count($retrieved_booking_detail) > 0 ? $retrieved_booking_detail[0]['booking_number'] : null,
+                  'booking_pax' => count($retrieved_booking_detail) > 0 ? $retrieved_booking_detail[0]['pax'] : null,
+                  'booking_list_id' => count($retrieved_booking_detail) > 0 ? $retrieved_booking_detail[0]['booking_list_id'] : null
+              ];
+              return $return_json;
           case 1.1:
               // Check for duplicate booking
               $retrieved_booking_detail = get_booking_detail('subscriber_id', $inputDataSet['subscriber_id'], true);
@@ -1123,14 +1137,14 @@ function processChatResponse($response) {
     $qna_value = $selected_answer ?? '';
 
     if ($isPreparedStmt) {
-        $sql_insert = "INSERT INTO history_chat (booking_list_id, dateTime, qna) VALUES (?, ?, ?)";
+        $sql_insert = "INSERT INTO history_chat (booking_list_id, dateTime, qna, qna_id) VALUES (?, ?, ?, ?)";
         $stmt_insert = $mysqli->prepare($sql_insert);
         if ($stmt_insert === false) {
             $mysqli->close();
             throw new Exception('Prepare error (history_chat insert): ' . $mysqli->error);
         }
 
-        if (!$stmt_insert->bind_param('iss', $booking_list_id, $current_datetime, $qna_value)) {
+        if (!$stmt_insert->bind_param('issi', $booking_list_id, $current_datetime, $qna_value, $qna_id)) {
             $err = $stmt_insert->error;
             $stmt_insert->close();
             $mysqli->close();
@@ -1149,7 +1163,8 @@ function processChatResponse($response) {
         $booking_list_id_safe = intval($booking_list_id);
         $current_datetime_safe = $mysqli->real_escape_string($current_datetime);
         $qna_value_safe = $mysqli->real_escape_string($qna_value);
-        $sql_insert = "INSERT INTO history_chat (booking_list_id, dateTime, qna) VALUES ($booking_list_id_safe, '$current_datetime_safe', '$qna_value_safe')";
+        $qna_id_safe = intval($qna_id);
+        $sql_insert = "INSERT INTO history_chat (booking_list_id, dateTime, qna, qna_id) VALUES ($booking_list_id_safe, '$current_datetime_safe', '$qna_value_safe', $qna_id_safe)";
         if (!$mysqli->query($sql_insert)) {
             $mysqli->close();
             throw new Exception('Query error (history_chat insert): ' . $mysqli->error);
