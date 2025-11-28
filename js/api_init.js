@@ -82,3 +82,13 @@ async function executeFlow(btnId, flow_ns) {
 
   return await httpsRequestAction(btnId, inputDataSet);
 }
+
+async function createSubscriber(btnId, payload) {
+  const inputDataSet = {
+    requestTo: 'manychat', // This will be used to lookup bearer token from .env
+    url: 'https://api.manychat.com/fb/subscriber/createSubscriber', // Target API URL
+    payload: payload
+  };
+
+  return await httpsRequestAction(btnId, inputDataSet);
+}

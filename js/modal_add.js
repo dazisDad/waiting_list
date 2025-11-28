@@ -191,8 +191,8 @@ function handleAdd() {
           <button onclick="closeAddModal()" class="px-4 py-2 rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-700 transition">
             Cancel
           </button>
-          <button id="submit-button" onclick="submitAddModal()" class="px-4 py-2 rounded-lg bg-amber-400 text-slate-900 hover:bg-amber-500 transition font-medium">
-            Add to Waitlist
+          <button id="submit-button" onclick="submitAddModal('submit-button')" class="px-4 py-2 rounded-lg bg-amber-400 text-slate-900 hover:bg-amber-500 transition font-medium">
+            Submit
           </button>
         </div>
       </div>
@@ -366,13 +366,11 @@ function resetModalForm() {
   
   // Reset modal mode to Waitlist
   const title = document.getElementById('modal-title');
-  const submitButton = document.getElementById('submit-button');
   const modeToggleContainer = document.querySelector('#toggle-modal-mode .toggle-switch-container');
   const modeToggleCircle = document.querySelector('#toggle-modal-mode .toggle-switch');
   const timeSection = document.getElementById('webBooking-time-section');
   
-  if (title) title.textContent = 'Add Waitlist';
-  if (submitButton) submitButton.textContent = 'Add to Waitlist';
+  if (title) title.textContent = 'Add Web Booking Now';
   if (modeToggleContainer) {
     modeToggleContainer.classList.add('bg-slate-600');
     modeToggleContainer.classList.remove('bg-amber-400');
@@ -390,20 +388,23 @@ function resetModalForm() {
 /**
  * Handles form submission from add modal
  */
-function submitAddModal() {
-  console.log('ACTION: Add modal submitted');
+async function submitAddModal(btnId) {
+  console.log('ACTION: Add modal submitted with button', btnId);
   
   // Get form values
+  const phoneNumberInput = document.getElementById('phone-number-input');
+  const phoneNumberRaw = phoneNumberInput.value.trim();
+  
+  /* commented out for testing - uncomment after test
   const pax = parseInt(document.getElementById('pax-counter').textContent);
   const customerNameRaw = document.getElementById('customer-name-input').value.trim();
   const customerName = customerNameRaw || 'Web User'; // Default to 'Web User' if empty
-  const phoneNumberInput = document.getElementById('phone-number-input');
-  const phoneNumberRaw = phoneNumberInput.value.trim();
   const seating = modalSeating; // null, 'inside', or 'outside'
   const isSplitTableAllowed = modalSplitTable;
   const isSharingTableAllowed = modalSharingTable;
   const isWebBooking = modalIsWebBooking;
-  
+  */
+
   // Validate phone number
   let digits = phoneNumberRaw.replace(/\D/g, '');
   
@@ -441,6 +442,34 @@ function submitAddModal() {
     phoneNumber = '60' + phoneNumber;
   }
   
+  // Create subscriber first via ManyChat API
+  const createSubscriberPayload = {
+    whatsapp_phone: phoneNumber,
+    opt_in_whatsapp: true,
+    consent_phrase: `I agree to receive messages from ${trading_name} on WhatsApp.`
+  };
+  
+  console.log('TEST: Calling createSubscriber with payload:', createSubscriberPayload);
+  
+  try {
+    const subscriberResponse = await createSubscriber(btnId, createSubscriberPayload);
+    console.log('TEST: createSubscriber response:', subscriberResponse);
+    
+    // Extract subscriber_id from response
+    const subscriber_id = subscriberResponse?.data?.id;
+    console.log('TEST: Extracted subscriber_id:', subscriber_id);
+    
+    if (!subscriber_id) {
+      console.error('TEST: Failed to extract subscriber_id from response');
+      return;
+    }
+    
+  } catch (error) {
+    console.error('TEST: createSubscriber error:', error);
+    return;
+  }
+  
+  /* COMMENTED OUT FOR TESTING - UNCOMMENT AFTER TEST
   // Format current time as yyyy-mm-dd hh:mm:ss
   const now = new Date();
   const timeCreated = formatDateTime(now);
@@ -557,6 +586,7 @@ function submitAddModal() {
     console.error('Failed to insert record:', error);
     toastMsg('Failed to insert record');
   });
+  END OF COMMENTED OUT FOR TESTING */
 }
 
 /**
@@ -609,14 +639,12 @@ function toggleModalMode(event) {
   
   modalIsWebBooking = !modalIsWebBooking;
   const title = document.getElementById('modal-title');
-  const submitButton = document.getElementById('submit-button');
   const switchContainer = document.querySelector('#toggle-modal-mode .toggle-switch-container');
   const switchCircle = document.querySelector('#toggle-modal-mode .toggle-switch');
   const timeSection = document.getElementById('webBooking-time-section');
   
   if (modalIsWebBooking) {
     title.textContent = 'Add Web Booking Ahead';
-    submitButton.textContent = 'Submit';
     switchContainer.classList.add('bg-amber-400');
     switchContainer.classList.remove('bg-slate-600');
     switchCircle.classList.add('bg-slate-900');
@@ -626,7 +654,6 @@ function toggleModalMode(event) {
     populateWebBookingTimes();
   } else {
     title.textContent = 'Add Web Booking Now';
-    submitButton.textContent = 'Submit';
     switchContainer.classList.add('bg-slate-600');
     switchContainer.classList.remove('bg-amber-400');
     switchCircle.classList.add('bg-slate-300');

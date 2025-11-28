@@ -1,8 +1,9 @@
-const version = '0.727';
+const version = '0.728';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 const isShowNewPaxBadge = false; // Set to true to show "New Pax" badge (false = only show Pax color change)
 
+const trading_name = 'Donkas Lab';
 const store_id = 'DL_Sunway_Geo';
 const theme = 'dark';
 const minPax_for_bigTable = 5;    // Minimum pax for big table highlight
