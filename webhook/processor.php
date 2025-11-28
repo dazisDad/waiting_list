@@ -787,7 +787,7 @@ function change_pax($booking_list_id, $new_pax) {
         return [
             'success' => true,
             'false_reason' => '',
-            'is_booking_loop' => 1,
+            'is_booking_loop' => 1
         ];
     } catch (Exception $e) {
         return [

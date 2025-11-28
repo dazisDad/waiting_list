@@ -34,6 +34,7 @@ try {
     $requestData = json_decode($requestBody, true);
     $sessionId = isset($requestData['session_id']) ? $requestData['session_id'] : null;
     $storeId = isset($requestData['store_id']) ? $requestData['store_id'] : 'DL_Sunway_Geo'; // 기본값
+    $subscriber_id = isset($requestData['subscriber_id']) ? intval($requestData['subscriber_id']) : 0;
     
     $jsonFile = __DIR__ . '/webhook_waitlist_events.json';
     
@@ -72,6 +73,7 @@ try {
         // 새로운 항목 생성하여 배열 끝에 추가
         $data[] = [
             'store_id' => $storeId,
+            'subscriber_id' => $subscriber_id,
             'booking_flow' => 9.2,
             '_force_update' => $timestamp,
             '_force_update_datetime' => $datetime,
@@ -81,6 +83,7 @@ try {
         // 데이터가 없으면 더미 항목 추가
         $data[] = [
             'store_id' => $storeId,
+            'subscriber_id' => $subscriber_id,
             'booking_flow' => 9.2,
             '_force_update' => $timestamp,
             '_force_update_datetime' => $datetime,

@@ -1,4 +1,4 @@
-const version = '0.711';
+const version = '0.716';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 
@@ -12,7 +12,7 @@ const scrollPositionTolerance = 5; // Tolerance (px) for determining if scrolled
  * Flow 1.2: New booking created via waitlist form
  * Flow 9.2: Chat response
  */
-const flow_arr_that_can_trigger_handleNewEvent = [1.2,1.9,9.2];
+const flow_arr_that_can_trigger_handleNewEvent = [1.2, 1.9, 2.2, 9.2];
 
 // Display version in header
 document.addEventListener('DOMContentLoaded', () => {
@@ -30,7 +30,7 @@ function handleNewEvent(obj) {
   console.log('HANDLE_NEW_EVENT: Function called');
   console.log('HANDLE_NEW_EVENT: updateCounter =', updateCounter);
   console.log('HANDLE_NEW_EVENT: Received obj:', obj);
-  
+
   // Check if obj is an array and get the last element
   let lastItem = null;
   if (Array.isArray(obj) && obj.length > 0) {
@@ -46,7 +46,7 @@ function handleNewEvent(obj) {
     const flowMatches = flow_arr_that_can_trigger_handleNewEvent.some(
       flow => Math.abs(flow - lastItem.booking_flow) < 0.0001 // Float comparison with tolerance
     );
-    
+
     if (!flowMatches) {
       console.log('HANDLE_NEW_EVENT: ⚠ booking_flow does not match trigger list, skipping');
       console.log('HANDLE_NEW_EVENT: booking_flow:', lastItem.booking_flow);
@@ -54,10 +54,10 @@ function handleNewEvent(obj) {
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       return;
     }
-    
+
     console.log('HANDLE_NEW_EVENT: ✓ booking_flow matches trigger list:', lastItem.booking_flow);
   }
-  
+
   if (updateCounter > 0) {
     console.log('HANDLE_NEW_EVENT: Counter > 0, processing event...');
 
@@ -98,6 +98,14 @@ function handleNewEvent(obj) {
     // Use == for flexible type comparison (string vs number)
     const bookingItemBefore = waitlist.find(item => item.subscriber_id == lastItem.subscriber_id);
     console.log('HANDLE_NEW_EVENT: Searched OLD waitlist for existing booking, found:', bookingItemBefore ? `#${bookingItemBefore.booking_number}` : 'NOT FOUND');
+    if (bookingItemBefore) {
+      console.log('HANDLE_NEW_EVENT: bookingItemBefore details:', {
+        booking_list_id: bookingItemBefore.booking_list_id,
+        booking_number: bookingItemBefore.booking_number,
+        subscriber_id: bookingItemBefore.subscriber_id,
+        customer_name: bookingItemBefore.customer_name
+      });
+    }
 
     // Delay notification and UI update by 300ms
     setTimeout(async () => {
@@ -113,49 +121,66 @@ function handleNewEvent(obj) {
       const bookingItem = waitlist.find(item => item.subscriber_id == lastItem.subscriber_id);
       console.log('HANDLE_NEW_EVENT: Searched REFRESHED waitlist for booking, found:', bookingItem);
 
-      // Determine if this is a new booking or message update by checking booking_list_id
-      const isExistingBooking = bookingItemBefore && bookingItemBefore.booking_list_id == lastItem.booking_list_id;
+      // Determine if this is a new booking or message update by checking if booking existed before
+      console.log('HANDLE_NEW_EVENT: 🔍 DEBUG - Comparing subscriber_id:');
+      console.log('HANDLE_NEW_EVENT:   bookingItemBefore exists?', !!bookingItemBefore);
+      console.log('HANDLE_NEW_EVENT:   bookingItemBefore.subscriber_id:', bookingItemBefore?.subscriber_id, 'Type:', typeof bookingItemBefore?.subscriber_id);
+      console.log('HANDLE_NEW_EVENT:   lastItem.subscriber_id:', lastItem.subscriber_id, 'Type:', typeof lastItem.subscriber_id);
+      console.log('HANDLE_NEW_EVENT:   Are they equal? (==)', bookingItemBefore?.subscriber_id == lastItem.subscriber_id);
+      const isExistingBooking = bookingItemBefore && bookingItemBefore.subscriber_id == lastItem.subscriber_id;
       console.log('HANDLE_NEW_EVENT: Is existing booking?', isExistingBooking);
 
       // Show notification for both new and updated items
       if (isExistingBooking && bookingItem) {
         console.log('HANDLE_NEW_EVENT: ★ EXISTING BOOKING - Processing message update');
-        
+
         // UPDATED - existing booking received new message
         title = '[UPDATED] Waitlist';
         body = `Updated Booking #: ${bookingItem.booking_number}`;
         console.log('HANDLE_NEW_EVENT: Showing notification:', title, body);
         showNotification(title, body);
-        
+
         console.log('HANDLE_NEW_EVENT: Found updated item in refreshed waitlist:', bookingItem);
-        
+
         if (bookingItem && bookingItem.subscriber_id && bookingItem.booking_list_id) {
           console.log(`HANDLE_NEW_EVENT: Unhiding badge for booking_list_id: ${bookingItem.booking_list_id}`);
-          
+
           // Remove badge from hidden list to show it for new message
           const badgeKey = `${bookingItem.subscriber_id}_${bookingItem.booking_list_id}`;
           console.log('HANDLE_NEW_EVENT: Badge key:', badgeKey);
           console.log('HANDLE_NEW_EVENT: chatBadgeHidden BEFORE delete:', JSON.stringify(chatBadgeHidden));
-          
+
           delete chatBadgeHidden[badgeKey];
-          
+
           console.log('HANDLE_NEW_EVENT: chatBadgeHidden AFTER delete:', JSON.stringify(chatBadgeHidden));
-          
+
           const today = new Date().toISOString().split('T')[0];
           localStorage.setItem(`chatBadgeHidden_${today}`, JSON.stringify(chatBadgeHidden));
           console.log('HANDLE_NEW_EVENT: Saved to localStorage:', `chatBadgeHidden_${today}`);
-          
-          // Show badge via DOM immediately
+
+          // Show badge via DOM immediately with appropriate text
           requestAnimationFrame(() => {
             const chatBadgeSpan = document.getElementById(`chat-new-badge-${bookingItem.booking_list_id}`);
             console.log('HANDLE_NEW_EVENT: Looking for badge element with ID:', `chat-new-badge-${bookingItem.booking_list_id}`);
             console.log('HANDLE_NEW_EVENT: Badge element found:', chatBadgeSpan);
-            
+
             if (chatBadgeSpan) {
+              // Check if this is a pax update (booking_flow 2.2)
+              console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - Determining badge text');
+              console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - lastItem.booking_flow:', lastItem.booking_flow);
+              console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - Is pax update? (2.2):', lastItem.booking_flow === 2.2);
+              
+              const badgeText = (lastItem.booking_flow === 2.2) ? 'New Pax' : 'NEW';
+              console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - Selected badge text:', badgeText);
+              
+              chatBadgeSpan.textContent = badgeText;
               chatBadgeSpan.style.display = 'inline';
-              console.log('HANDLE_NEW_EVENT: ✓ Badge display set to inline for booking_list_id', bookingItem.booking_list_id);
+              console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - ✓ Badge display set to inline');
+              console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - ✓ Badge text:', chatBadgeSpan.textContent);
+              console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - ✓ Badge style.display:', chatBadgeSpan.style.display);
+              console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - ✓ For booking_list_id:', bookingItem.booking_list_id);
             } else {
-              console.log('HANDLE_NEW_EVENT: ✗ Badge element NOT FOUND in DOM');
+              console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - ✗ Badge element NOT FOUND in DOM');
             }
           });
         } else {
@@ -163,11 +188,11 @@ function handleNewEvent(obj) {
         }
       } else {
         console.log('HANDLE_NEW_EVENT: ★ NEW BOOKING - Processing new registration');
-        
+
         // New booking detected - find it in updated waitlist (use == for flexible type comparison)
         const newBookingItem = bookingItem; // Already found above after server update
         console.log('HANDLE_NEW_EVENT: Using booking item from refreshed waitlist:', newBookingItem);
-        
+
         if (newBookingItem && newBookingItem.subscriber_id) {
           console.log(`HANDLE_NEW_EVENT: Found new booking - subscriber_id: ${newBookingItem.subscriber_id}, booking_list_id: ${newBookingItem.booking_list_id}`);
 
@@ -177,7 +202,7 @@ function handleNewEvent(obj) {
               // Chat badge: Already showing by default, just ensure it's not in hidden list
               const badgeKey = `${newBookingItem.subscriber_id}_${newBookingItem.booking_list_id}`;
               console.log('HANDLE_NEW_EVENT: Ensuring badge is visible for key:', badgeKey);
-              
+
               delete chatBadgeHidden[badgeKey];
               const today = new Date().toISOString().split('T')[0];
               localStorage.setItem(`chatBadgeHidden_${today}`, JSON.stringify(chatBadgeHidden));
@@ -562,41 +587,52 @@ async function getServerSideUpdate() {
  * - Testing event handling
  * - Force UI update after external changes
  * 
+ * @param {number} subscriber_id - Optional subscriber_id to include in the webhook update
  * @returns {Promise<Object>} Response from PHP script
  */
-async function forceUpdateWebhook() {
+async function forceUpdateWebhook(subscriber_id = null) {
   const phpUrl = 'webhook/received_json/update_webhook.php';
-  
+
   console.log('🔄 FORCE_UPDATE: Calling update_webhook.php with session ID:', sessionId);
-  
+  if (subscriber_id) {
+    console.log('🔄 FORCE_UPDATE: Including subscriber_id:', subscriber_id);
+  }
+
   try {
+    const payload = {
+      session_id: sessionId,
+      store_id: store_id
+    };
+
+    // Add subscriber_id to payload if provided
+    if (subscriber_id !== null) {
+      payload.subscriber_id = subscriber_id;
+    }
+
     const response = await fetch(phpUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        session_id: sessionId,
-        store_id: store_id
-      }),
+      body: JSON.stringify(payload),
       cache: 'no-store'
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     const result = await response.json();
-    
+
     if (result.success) {
       console.log('✓ FORCE_UPDATE: Webhook file updated successfully', result);
       console.log('✓ FORCE_UPDATE: Timestamp:', result.datetime);
     } else {
       console.error('✗ FORCE_UPDATE: Update failed:', result.message);
     }
-    
+
     return result;
-    
+
   } catch (error) {
     console.error('✗ FORCE_UPDATE: Error calling update_webhook.php:', error);
     return {
@@ -1056,19 +1092,26 @@ function toggleMobileActions(booking_number, event) {
       // Check if row is already selected
       const isMobile = window.innerWidth <= 768;
       const isSelected = isMobile ? (expandedRowId == booking_number) : (selectedRowId == booking_number);
-      
+
       if (isSelected) {
         event.preventDefault();
         event.stopPropagation();
         if (typeof changePax === 'function') {
-            changePax(booking_number);
+          // Find booking_list_id from waitlist using booking_number
+          const item = waitlist.find(i => i.booking_number == booking_number);
+          const booking_list_id = item ? item.booking_list_id : null;
+          if (booking_list_id) {
+            changePax(booking_list_id);
+          } else {
+            console.error('Could not find booking_list_id for booking_number:', booking_number);
+          }
         }
         return; // Stop function here, do not toggle row
       }
       // Row not selected. Allow execution to proceed to toggle row selection
     }
   }
-  
+
   // Check if we're on mobile (screen width <= 768px)
   if (window.innerWidth > 768) {
     // Desktop: Toggle row highlight (persistent)
@@ -1123,7 +1166,7 @@ function toggleMobileActions(booking_number, event) {
       selectedRowId = booking_number;
       toggleRowSelection(booking_number, true);
       toggleChatHistoryDisplay(booking_number, true); // Show all messages
-      
+
       // Hide chat NEW badge for this booking
       const selectedItem = waitlist.find(item => item.booking_number == booking_number);
       if (selectedItem && selectedItem.subscriber_id && selectedItem.booking_list_id) {
@@ -1131,7 +1174,7 @@ function toggleMobileActions(booking_number, event) {
         chatBadgeHidden[badgeKey] = true;
         const today = new Date().toISOString().split('T')[0];
         localStorage.setItem(`chatBadgeHidden_${today}`, JSON.stringify(chatBadgeHidden));
-        
+
         // Hide chat badge via DOM
         const chatBadgeSpan = document.getElementById(`chat-new-badge-${selectedItem.booking_list_id}`);
         if (chatBadgeSpan) {
@@ -1139,7 +1182,7 @@ function toggleMobileActions(booking_number, event) {
           chatBadgeSpan.textContent = '';
         }
       }
-      
+
       console.log(`DESKTOP: Selected row #${booking_number}`);
     }
 
@@ -1297,7 +1340,7 @@ function toggleMobileActions(booking_number, event) {
     chatBadgeHidden[badgeKey] = true;
     const today = new Date().toISOString().split('T')[0];
     localStorage.setItem(`chatBadgeHidden_${today}`, JSON.stringify(chatBadgeHidden));
-    
+
     // Hide chat badge via DOM
     const chatBadgeSpan = document.getElementById(`chat-new-badge-${expandedItem.booking_list_id}`);
     if (chatBadgeSpan) {
@@ -1497,7 +1540,7 @@ function toggleDesktopRowSelection(booking_number) {
   if (selectedRowId !== null && selectedRowId !== booking_number) {
     toggleRowSelection(selectedRowId, false);
     toggleChatHistoryDisplay(selectedRowId, false);
-    
+
     // Stop auto-hide countdown for previous row if active
     stopUndoAutoHideCountdown(selectedRowId);
   }
@@ -1506,7 +1549,7 @@ function toggleDesktopRowSelection(booking_number) {
   selectedRowId = booking_number;
   toggleRowSelection(booking_number, true);
   toggleChatHistoryDisplay(booking_number, true); // Show all messages
-  
+
   // Hide chat NEW badge for this booking
   const selectedItem = waitlist.find(item => item.booking_number == booking_number);
   if (selectedItem && selectedItem.subscriber_id && selectedItem.booking_list_id) {
@@ -1514,7 +1557,7 @@ function toggleDesktopRowSelection(booking_number) {
     chatBadgeHidden[badgeKey] = true;
     const today = new Date().toISOString().split('T')[0];
     localStorage.setItem(`chatBadgeHidden_${today}`, JSON.stringify(chatBadgeHidden));
-    
+
     // Hide chat badge via DOM
     const chatBadgeSpan = document.getElementById(`chat-new-badge-${selectedItem.booking_list_id}`);
     if (chatBadgeSpan) {
@@ -1522,7 +1565,7 @@ function toggleDesktopRowSelection(booking_number) {
       chatBadgeSpan.textContent = '';
     }
   }
-  
+
   console.log(`DESKTOP: Selected row #${booking_number}`);
 }
 
@@ -1808,9 +1851,9 @@ async function handleReadyInternal(booking_number, customer_name, event, buttonI
   const readyQuestion = questionnaire.find(q => q.invokedWithBtn === 'Ready');
   if (readyQuestion) {
     handleQuestion(
-      parseInt(item.booking_list_id), 
-      readyQuestion.question, 
-      readyQuestion.q_level, 
+      parseInt(item.booking_list_id),
+      readyQuestion.question,
+      readyQuestion.q_level,
       buttonId, // Pass the Ready button ID
       readyQuestion.Id
     );
@@ -1846,7 +1889,7 @@ async function handleReadyInternal(booking_number, customer_name, event, buttonI
     console.log('Database updated successfully for booking #' + booking_number);
 
     // 2. Trigger webhook update to notify polling system
-    await forceUpdateWebhook();
+    await forceUpdateWebhook(item.subscriber_id);
 
     // 3. Update local data after successful database update
     item.status = 'Ready';
@@ -1905,7 +1948,7 @@ function handleAsk(booking_number, customer_name, event) {
   // Restore scroll position and chat history display after render completes
   requestAnimationFrame(() => {
     waitlistContainer.scrollTop = currentScrollTop;
-    
+
     // Restore chat history expansion for desktop selected row
     if (!isMobile && selectedRowId !== null) {
       toggleChatHistoryDisplay(selectedRowId, true);
@@ -2042,7 +2085,7 @@ function createManyChatPayload(booking_list_id, questionId) {
     case 'i:':
       // Get actualMsg text from questionnaire
       const informed_actualMsg = questionObj ? questionObj.actualMsg : null;
-      
+
       // Split actualMsg by '\n' to create array of WhatsApp text lines
       const whatsapp_text_arr = informed_actualMsg ? informed_actualMsg.split('LINEBREAK') : [];
       const whatsapp_text_count = whatsapp_text_arr.length;
@@ -2054,7 +2097,7 @@ function createManyChatPayload(booking_list_id, questionId) {
         ...getFieldIdValueSet(whatsapp_text_arr, 'WT') // Spread array of WhatsApp text fields (WT1, WT2, WT3, ...)
       ];
       break;
-      
+
 
     default:
       // Default case: no fields to send
@@ -2098,11 +2141,11 @@ async function handleQuestion(booking_list_id, question, q_level = null, buttonI
 
     if (manyChatResult && manyChatResult.status === 'success') {
       console.log('✓ ManyChat API call successful - Custom fields updated for subscriber:', manyChat_payload.subscriber_id);
-      
+
       // Get flow_ns from questionnaire using questionId
       const questionObj = questionnaire.find(q => q.Id == questionId);
       const flow_ns = questionObj && questionObj.flow_ns ? questionObj.flow_ns : null;
-      
+
       if (flow_ns) {
         executeFlow(
           buttonId,
@@ -2157,7 +2200,8 @@ async function handleQuestion(booking_list_id, question, q_level = null, buttonI
     }
 
     // Trigger webhook update to notify polling system
-    await forceUpdateWebhook();
+    const booking = waitlist.find(item => item.booking_list_id == booking_list_id);
+    await forceUpdateWebhook(booking ? booking.subscriber_id : null);
 
     // Update q_level in booking_list table if provided
     if (q_level !== null) {
@@ -2195,13 +2239,13 @@ async function handleQuestion(booking_list_id, question, q_level = null, buttonI
     // Exit Ask mode and close action buttons after question button click
     const item = waitlist.find(i => i.booking_list_id == booking_list_id);
     const isMobile = window.innerWidth <= 768;
-    
+
     if (item) {
       const bookingNumberStr = String(item.booking_number);
-      
+
       // Clear Ask mode
       askModeItems.delete(bookingNumberStr);
-      
+
       // Clear row selection states BEFORE rendering
       if (isMobile) {
         // Mobile: clear expanded row state
@@ -2318,7 +2362,7 @@ async function handleArrive(booking_number, customer_name) {
   console.log(`🟣 ACTION: handleArrive called for ${customer_name} (#${booking_number})`);
   console.log('🔍 DEBUG: Looking for item with booking_number:', booking_number, 'Type:', typeof booking_number);
   console.log('🔍 DEBUG: Waitlist booking_numbers:', waitlist.map(i => ({ num: i.booking_number, type: typeof i.booking_number })));
-  
+
   const item = waitlist.find(item => item.booking_number == booking_number);
   console.log('🔍 DEBUG: Item found?', item ? 'YES' : 'NO', item);
   let shouldScroll = false;
@@ -2366,7 +2410,7 @@ async function handleArrive(booking_number, customer_name) {
       console.log('Database updated successfully for booking #' + booking_number);
 
       // 2. Trigger webhook update to notify polling system
-      await forceUpdateWebhook();
+      await forceUpdateWebhook(item.subscriber_id);
 
       // 3. Update local data after successful database update
       item.status = 'Arrived';
@@ -2451,7 +2495,7 @@ async function handleCancel(booking_number, customer_name) {
   console.log(`🔴 ACTION: handleCancel called for ${customer_name} (#${booking_number})`);
   console.log('🔍 DEBUG: Looking for item with booking_number:', booking_number, 'Type:', typeof booking_number);
   console.log('🔍 DEBUG: Waitlist booking_numbers:', waitlist.map(i => ({ num: i.booking_number, type: typeof i.booking_number })));
-  
+
   const item = waitlist.find(item => item.booking_number == booking_number);
   console.log('🔍 DEBUG: Item found?', item ? 'YES' : 'NO', item);
   let shouldScroll = false;
@@ -2499,7 +2543,7 @@ async function handleCancel(booking_number, customer_name) {
       console.log('Database updated successfully for booking #' + booking_number);
 
       // 2. Trigger webhook update to notify polling system
-      await forceUpdateWebhook();
+      await forceUpdateWebhook(item.subscriber_id);
 
       // 3. Update local data after successful database update
       item.status = 'Cancelled';
@@ -2685,7 +2729,7 @@ async function handleUndo(booking_number, customer_name) {
       console.log('Database updated successfully for booking #' + booking_number);
 
       // 2. Trigger webhook update to notify polling system
-      await forceUpdateWebhook();
+      await forceUpdateWebhook(item.subscriber_id);
 
       // 3. Update local data after successful database update
       item.status = newStatus;
@@ -3113,7 +3157,7 @@ function renderWaitlist() {
 
       // Show "Reservation @ dine_dateTime" line with background highlight (similar to PAX >= 5 style but maintaining gray color)
       const reservationHighlight = statusPriority === 0 ? 'bg-slate-600 text-slate-200 px-1 py-0.5 rounded font-bold' : 'bg-slate-700 text-slate-300 px-1 py-0.5 rounded font-bold';
-      
+
       // Add NEW badge for Reservation (only for active items)
       let reservationBadge = '';
       if (item.status === 'Waiting' || item.status === 'Ready') {
@@ -3126,7 +3170,7 @@ function renderWaitlist() {
           reservationBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-white px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: inline;">NEW</span>`;
         }
       }
-      
+
       chatHistoryHTML = `<div class="text-xs ${chatClass} leading-relaxed">↳ <span class="${reservationHighlight}">Reservation @ ${timeString}</span>${reservationBadge}</div>`;
 
       // Add status message if item is Arrived or Cancelled with completion time (always show for WEB bookings)
@@ -3234,7 +3278,7 @@ function renderWaitlist() {
           shouldHide = !isRowSelected && !isLastMessage;
         }
         const hideStyle = shouldHide ? ' style="display: none;"' : '';
-        
+
         return `<div class="text-xs ${messageChatClass} leading-relaxed" ${dataAttr}${hideStyle}>↳ [${elapsedTime}] ${chat.qna}${chatBadge}</div>`; //arrow
       }).join('');
 
@@ -3303,20 +3347,20 @@ function renderWaitlist() {
     // PAX display with highlight styling (moved to No. column)
     // Base classes for Pax container (border will be added via pax-selected class)
     const paxContainerClass = 'px-0.5 py-0.5 rounded font-bold text-xs';
-    
+
     // Label styling (always same)
     const paxLabelClass = 'font-bold';
-    
+
     // Number styling - background highlight for big tables only
     const paxNumberClass = item.pax >= minPax_for_bigTable ?
       (statusPriority === 0 ? 'bg-white text-slate-800 px-1 py-0.5 rounded font-bold' : 'bg-yellow-400 text-slate-800 px-1 py-0.5 rounded font-bold') :
       'pr-1 font-bold';
-    
+
     // Initial background for big tables (will have border added when selected)
     const paxInitialBg = item.pax >= minPax_for_bigTable ?
       (statusPriority === 0 ? 'bg-white text-slate-800' : 'bg-yellow-400 text-slate-800') :
       '';
-    
+
     const paxHighlightClass = `${paxContainerClass} ${paxInitialBg}`;
 
     // Generate highlight tags for badge1, badge2, badge3 (same as Pax styling - all same color, only completed/active difference)
@@ -3367,7 +3411,7 @@ function renderWaitlist() {
   });
 
   waitlistBody.innerHTML = tableHTML;
-  console.log("RENDER: Table HTML injected into DOM.");
+  //console.log("RENDER: Table HTML injected into DOM.");
 
   // Add dummy row to ensure scrollability even with few items
   requestAnimationFrame(() => {
@@ -3411,10 +3455,10 @@ function renderWaitlist() {
         const buttonHeight = scrollButton?.offsetHeight || 36;
         const margins = 16; // Additional margins and spacing
         containerHeight = window.innerHeight - bodyPadding - headerHeight - buttonHeight - margins;
-        console.log(`MOBILE_DEBUG: Active items (${activeItemsHeight}px) don't fit in container, using viewport calculation: ${containerHeight}px`);
+        //console.log(`MOBILE_DEBUG: Active items (${activeItemsHeight}px) don't fit in container, using viewport calculation: ${containerHeight}px`);
       }
 
-      console.log(`MOBILE_DEBUG: renderWaitlist - Container offsetHeight: ${waitlistContainer.offsetHeight}px, Used height: ${containerHeight}px, Active: ${activeItemsHeight}px, window.innerHeight: ${window.innerHeight}px`);
+      //console.log(`MOBILE_DEBUG: renderWaitlist - Container offsetHeight: ${waitlistContainer.offsetHeight}px, Used height: ${containerHeight}px, Active: ${activeItemsHeight}px, window.innerHeight: ${window.innerHeight}px`);
 
       // Calculate remaining space in container after active items
       const remainingSpace = containerHeight - activeItemsHeight;
@@ -3427,10 +3471,12 @@ function renderWaitlist() {
       // dummy = clientHeight - active = remainingSpace
       const dummyRowHeight = Math.max(0, remainingSpace);
 
+      /*
       console.log(`DUMMY_ROW: Container height: ${containerHeight.toFixed(2)}px`);
       console.log(`DUMMY_ROW: Completed items height: ${completedItemsHeight.toFixed(2)}px`);
       console.log(`DUMMY_ROW: Active items height: ${activeItemsHeight.toFixed(2)}px`);
       console.log(`DUMMY_ROW: Calculated dummy height: ${dummyRowHeight.toFixed(2)}px`);
+      */
 
       if (dummyRowHeight > 0) {
         // Remove existing dummy row if present
@@ -3445,7 +3491,7 @@ function renderWaitlist() {
         dummyRow.innerHTML = `<td colspan="4" style="height: ${dummyRowHeight}px; padding: 0; border: none; background: transparent;"></td>`;
         waitlistBody.appendChild(dummyRow);
 
-        console.log(`DUMMY_ROW: Added dummy spacer row with height ${dummyRowHeight.toFixed(2)}px`);
+        //console.log(`DUMMY_ROW: Added dummy spacer row with height ${dummyRowHeight.toFixed(2)}px`);
 
         // Store the actual scroll target for later adjustment verification
         // We need to recalculate this after DOM is stable to get the real target
@@ -3470,6 +3516,7 @@ function renderWaitlist() {
           const clientHeight = waitlistContainer.clientHeight;
           const maxScrollTop = scrollHeight - clientHeight;
 
+          /*
           console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
           console.log(`SCROLL_MEASURE: Container Analysis`);
           console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
@@ -3483,32 +3530,35 @@ function renderWaitlist() {
           console.log(`\nScroll Capability:`);
           console.log(`  Max scrollTop possible: ${maxScrollTop.toFixed(2)}px`);
           console.log(`  Actual scroll target: ${actualScrollTarget.toFixed(2)}px`);
+          */
 
           // Check if we need to adjust dummy height to reach the ACTUAL scroll target
           const shortfall = actualScrollTarget - maxScrollTop;
           if (shortfall > 1) {
-            console.log(`\n⚠️  ADJUSTING: Need ${shortfall.toFixed(2)}px more scroll range`);
+            //console.log(`\n⚠️  ADJUSTING: Need ${shortfall.toFixed(2)}px more scroll range`);
             const adjustedDummyHeight = dummyRowHeight + shortfall;
             const dummyElement = waitlistBody.querySelector('.dummy-spacer-row td');
             if (dummyElement) {
               dummyElement.style.height = `${adjustedDummyHeight}px`;
-              console.log(`✓ Adjusted dummy row: ${dummyRowHeight.toFixed(2)}px → ${adjustedDummyHeight.toFixed(2)}px`);
+              //console.log(`✓ Adjusted dummy row: ${dummyRowHeight.toFixed(2)}px → ${adjustedDummyHeight.toFixed(2)}px`);
 
               // Verify the adjustment
               requestAnimationFrame(() => {
                 const newScrollHeight = waitlistContainer.scrollHeight;
                 const newMaxScrollTop = newScrollHeight - clientHeight;
                 const newDifference = actualScrollTarget - newMaxScrollTop;
+                /*
                 console.log(`✓ New scrollHeight: ${newScrollHeight.toFixed(2)}px`);
                 console.log(`✓ New maxScrollTop: ${newMaxScrollTop.toFixed(2)}px`);
                 console.log(`✓ Remaining difference: ${newDifference.toFixed(2)}px`);
+                */
               });
             }
           } else {
-            console.log(`✓ No adjustment needed (difference: ${shortfall.toFixed(2)}px)`);
+            //console.log(`✓ No adjustment needed (difference: ${shortfall.toFixed(2)}px)`);
           }
 
-          console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
+          //console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
         });
       }
     } else {
@@ -3516,7 +3566,7 @@ function renderWaitlist() {
       const existingDummy = waitlistBody.querySelector('.dummy-spacer-row');
       if (existingDummy) {
         existingDummy.remove();
-        console.log('DUMMY_ROW: Removed dummy row (no completed items)');
+        //console.log('DUMMY_ROW: Removed dummy row (no completed items)');
       }
     }
   });
@@ -3543,7 +3593,7 @@ function renderWaitlist() {
   requestAnimationFrame(() => {
     // Chat messages are already rendered correctly based on isRowSelected
     // No need to call toggleChatHistoryDisplay since it would hide divs with badges
-    
+
     // Restore countdown text for completed items that have active timers
     waitlist.forEach(item => {
       if ((item.status === 'Arrived' || item.status === 'Cancelled') && undoAutoHideTimers[item.booking_number]) {
@@ -3615,10 +3665,10 @@ function updateElapsedTimes() {
       const currentText = chatElement.textContent;
       const messageStart = currentText.indexOf(']') + 1;
       let messageText = currentText.substring(messageStart);
-      
-      // Remove 'NEW' from messageText if badge exists (it will be re-added as span)
+
+      // Remove badge text from messageText if badge exists (it will be re-added as span)
       if (badge) {
-        messageText = messageText.replace('NEW', '').trim();
+        messageText = messageText.replace('NEW', '').replace('New Pax', '').trim();
       }
 
       // Update the text content while preserving the badge
@@ -3664,7 +3714,7 @@ async function startInitialization() {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
     const storageKey = `chatBadgeHidden_${todayStr}`;
-    
+
     if (isResetLocalStorage) {
       // Reset localStorage on every load
       chatBadgeHidden = {};
@@ -3675,7 +3725,7 @@ async function startInitialization() {
       const savedChat = localStorage.getItem(storageKey);
       console.log('INIT: localStorage key:', storageKey);
       console.log('INIT: localStorage raw value:', savedChat);
-      
+
       if (savedChat) {
         try {
           chatBadgeHidden = JSON.parse(savedChat);
@@ -3690,7 +3740,7 @@ async function startInitialization() {
         chatBadgeHidden = {};
         console.log('INIT: No localStorage found for today - will initialize after data load');
       }
-      
+
       // Clean up old date entries (keep only today's data)
       Object.keys(localStorage).forEach(key => {
         if (key.startsWith('chatBadgeHidden_') && key !== storageKey) {
@@ -3717,7 +3767,7 @@ async function startInitialization() {
       // Save initial state to localStorage
       localStorage.setItem(storageKey, JSON.stringify(chatBadgeHidden));
       console.log('INIT: First load today - initialized', Object.keys(chatBadgeHidden).length, 'bookings as seen');
-      
+
       // Re-render to hide all badges
       renderWaitlist();
     }
@@ -3823,12 +3873,209 @@ async function startInitialization() {
 /**
  * Handles Pax click action.
  * This function is called when the Pax span is clicked on an already selected row.
+ * @param {number} booking_list_id - The booking list ID
  */
-function changePax(booking_number) {
-  console.log(`PAX_CHANGE: Triggered for booking #${booking_number}`);
-  // Add your logic here to change Pax count
-  // For example, open a modal or prompt
-  alert(`Change Pax for #${booking_number}`);
+function changePax(booking_list_id) {
+  console.log(`PAX_CHANGE: Triggered for booking_list_id: ${booking_list_id}`);
+
+  // Find the booking item to get current pax
+  const item = waitlist.find(i => i.booking_list_id == booking_list_id);
+  if (!item) {
+    console.error('PAX_CHANGE: Could not find booking with booking_list_id:', booking_list_id);
+    return;
+  }
+
+  const currentPax = item.pax;
+
+  // Check if dialog already exists, if so remove it
+  let dialog = document.getElementById('change-pax-dialog');
+  if (dialog) {
+    dialog.remove();
+  }
+
+  // Create new dialog
+  dialog = document.createElement('dialog');
+  dialog.id = 'change-pax-dialog';
+  dialog.className = 'rounded-xl shadow-2xl border border-slate-700 bg-slate-800 p-0 backdrop:bg-black backdrop:bg-opacity-70';
+  dialog.style.maxWidth = '90vw';
+  dialog.style.maxHeight = '95vh';
+
+  // Dialog content
+  dialog.innerHTML = `
+    <div class="flex flex-col h-full w-full min-w-[280px] max-w-[400px]">
+      <!-- Header -->
+      <div class="flex justify-between items-center p-6 border-b border-slate-700">
+        <h2 class="text-xl font-semibold text-slate-100">Change Pax</h2>
+      </div>
+      
+      <!-- Content -->
+      <div class="flex-1 p-6">
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Current Pax: ${currentPax}</label>
+          </div>
+          
+          <!-- Pax Counter -->
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">New Pax</label>
+            <div class="flex items-center justify-center gap-4">
+              <button onclick="decrementChangePax()" class="w-12 h-12 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 border border-slate-600 flex items-center justify-center transition">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </button>
+              <span id="change-pax-counter" class="text-3xl font-semibold text-slate-100 w-16 text-center">${currentPax}</span>
+              <button onclick="incrementChangePax()" class="w-12 h-12 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 border border-slate-600 flex items-center justify-center transition">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Footer -->
+      <div class="flex justify-end gap-3 p-6 border-t border-slate-700">
+        <button onclick="closeChangePaxDialog()" class="px-4 py-2 rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-700 transition">
+          Cancel
+        </button>
+        <button onclick="submitChangePax(${booking_list_id})" class="px-4 py-2 rounded-lg bg-amber-400 text-slate-900 hover:bg-amber-500 transition font-medium">
+          Update
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(dialog);
+
+  // Show dialog
+  dialog.showModal();
+
+  // Close on backdrop click
+  dialog.addEventListener('click', (e) => {
+    const rect = dialog.getBoundingClientRect();
+    if (
+      e.clientX < rect.left ||
+      e.clientX > rect.right ||
+      e.clientY < rect.top ||
+      e.clientY > rect.bottom
+    ) {
+      closeChangePaxDialog();
+    }
+  });
+}
+
+/**
+* Increment pax counter in change pax dialog
+*/
+function incrementChangePax() {
+  const counter = document.getElementById('change-pax-counter');
+  if (counter) {
+    let currentValue = parseInt(counter.textContent);
+    counter.textContent = currentValue + 1;
+  }
+}
+
+/**
+ * Decrement pax counter in change pax dialog (minimum 1)
+ */
+function decrementChangePax() {
+  const counter = document.getElementById('change-pax-counter');
+  if (counter) {
+    let currentValue = parseInt(counter.textContent);
+    if (currentValue > 1) {
+      counter.textContent = currentValue - 1;
+    }
+  }
+}
+
+/**
+ * Close change pax dialog
+ */
+function closeChangePaxDialog() {
+  const dialog = document.getElementById('change-pax-dialog');
+  if (dialog) {
+    dialog.close();
+    dialog.remove();
+  }
+}
+
+/**
+ * Submit change pax request
+ */
+function submitChangePax(booking_list_id) {
+  const counter = document.getElementById('change-pax-counter');
+  const newPax = parseInt(counter.textContent);
+
+  // Find the booking item to get current pax
+  const item = waitlist.find(i => i.booking_list_id == booking_list_id);
+  if (!item) {
+    console.error('PAX_CHANGE: Could not find booking with booking_list_id:', booking_list_id);
+    toastMsg('Error: Booking not found');
+    return;
+  }
+
+  const currentPax = item.pax;
+
+  // Check if pax value has changed
+  if (newPax === currentPax) {
+    console.log(`PAX_CHANGE: No change detected (current: ${currentPax}, new: ${newPax}). Closing dialog.`);
+    toastMsg('No change in pax');
+    closeChangePaxDialog();
+    return;
+  }
+
+  console.log(`PAX_CHANGE: Updating booking_list_id ${booking_list_id} from ${currentPax} to ${newPax}`);
+
+  const payload = {
+    store_id: store_id,
+    booking_flow: 2.2,
+    booking_list_id: booking_list_id,
+    subscriber_id: item.subscriber_id,
+    pax_new: newPax,
+    session_id: sessionId
+  };
+
+  console.log('PAX_CHANGE: Payload includes session_id:', sessionId);
+
+  // Send data to local_receiver.php
+  fetch('webhook/local_receiver.php', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Server response:', data);
+
+      if (data.success) {
+        // Update local data
+        item.pax = newPax;
+        console.log(`PAX_CHANGE: Local data updated for booking_list_id ${booking_list_id}`);
+
+        // Re-render waitlist to show updated pax
+        renderWaitlist();
+        console.log('PAX_CHANGE: Waitlist re-rendered');
+
+        toastMsg('Pax updated successfully');
+        closeChangePaxDialog();
+      } else {
+        toastMsg('Failed to update pax');
+      }
+    })
+    .catch((error) => {
+      console.error('Failed to update pax:', error);
+      toastMsg('Failed to update pax');
+    });
 }
 
 
