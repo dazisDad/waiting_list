@@ -1,4 +1,4 @@
-const version = '0.725';
+const version = '0.726';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 const isShowNewPaxBadge = false; // Set to true to show "New Pax" badge (false = only show Pax color change)
@@ -417,9 +417,9 @@ async function fetchBookingList(booking_from = null) {
           processedItem.time_cleared = new Date(processedItem.time_cleared).getTime();
         }
 
-        // dine_dateTime 변환 (null일 수 있음)
-        if (processedItem.dine_dateTime) {
-          processedItem.dine_dateTime = new Date(processedItem.dine_dateTime).getTime();
+        // time_created 변환 (null일 수 있음)
+        if (processedItem.time_created) {
+          processedItem.time_created = new Date(processedItem.time_created).getTime();
         }
 
         return processedItem;
@@ -3247,15 +3247,43 @@ function renderWaitlist() {
     if (item.booking_from === 'WEB') {
       const chatClass = statusPriority === 0 ? 'text-slate-400' : 'text-slate-400';
 
-      // Format dine_dateTime for display
-      const dineTime = new Date(item.dine_dateTime);
-      const timeString = dineTime.toLocaleTimeString('en-GB', {
-        hour12: false,
-        hour: '2-digit',
-        minute: '2-digit'
-      });
+      // Check if this is a "walk-in" (time_created === dine_dateTime) or scheduled reservation
+      // Use == for flexible type comparison (string vs number)
+      const isWalkIn = item.time_created == item.dine_dateTime;
 
-      // Show "Web booking @ dine_dateTime" line with background highlight (similar to PAX >= 5 style but maintaining gray color)
+      let bookingText = '';
+      let dataAttributes = '';
+      if (isWalkIn) {
+        // Walk-in booking: Show elapsed time format [hh:mm]
+        const elapsedMs = Date.now() - item.time_created;
+        const totalSeconds = Math.floor(elapsedMs / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = String(totalSeconds % 60).padStart(2, '0');
+
+        let elapsedTime;
+        if (minutes >= 60) {
+          const hours = Math.floor(minutes / 60);
+          const remainingMinutes = String(minutes % 60).padStart(2, '0');
+          elapsedTime = `${hours}:${remainingMinutes}:${seconds}`;
+        } else {
+          elapsedTime = `${minutes}:${seconds}`;
+        }
+
+        bookingText = `[${elapsedTime}] Web booking (Now)`;
+        // Add data attributes for live time updates
+        dataAttributes = `data-web-booking-time="${item.time_created}" data-booking-list-id="${item.booking_list_id}"`;
+      } else {
+        // Scheduled reservation: Show dine_dateTime
+        const dineTime = new Date(item.dine_dateTime);
+        const timeString = dineTime.toLocaleTimeString('en-GB', {
+          hour12: false,
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        bookingText = `Web booking @ ${timeString}`;
+      }
+
+      // Show booking line with background highlight (similar to PAX >= 5 style but maintaining gray color)
       const webBookingHighlight = statusPriority === 0 ? 'bg-slate-600 text-slate-200 px-1 py-0.5 rounded font-bold' : 'bg-slate-700 text-slate-300 px-1 py-0.5 rounded font-bold';
 
       // Add NEW badge for Web Booking (only for active items)
@@ -3271,7 +3299,7 @@ function renderWaitlist() {
         }
       }
 
-      chatHistoryHTML = `<div class="text-xs ${chatClass} leading-relaxed">↳ <span class="${webBookingHighlight}">Web booking @ ${timeString}</span>${webBookingBadge}</div>`;
+      chatHistoryHTML = `<div class="text-xs ${chatClass} leading-relaxed" ${dataAttributes}>↳ <span class="${webBookingHighlight}">${bookingText}</span>${webBookingBadge}</div>`;
 
       // Add status message if item is Arrived or Cancelled with completion time (always show for WEB bookings)
       if (item.status === 'Arrived' || item.status === 'Cancelled') {
@@ -3814,6 +3842,36 @@ function updateElapsedTimes() {
       } else {
         // No badge, just update text
         chatElement.textContent = `↳ [${elapsedTime}]${messageText}`; //arrow
+      }
+    }
+  });
+
+  // Update Web booking walk-in elapsed times (messages with data-web-booking-time attribute)
+  document.querySelectorAll('[data-web-booking-time]').forEach(webBookingElement => {
+    const bookingTime = parseInt(webBookingElement.getAttribute('data-web-booking-time'));
+    if (bookingTime) {
+      const elapsedMs = Date.now() - bookingTime;
+      const totalSeconds = Math.floor(elapsedMs / 1000);
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = String(totalSeconds % 60).padStart(2, '0');
+
+      let elapsedTime;
+      if (minutes >= 60) {
+        const hours = Math.floor(minutes / 60);
+        const remainingMinutes = String(minutes % 60).padStart(2, '0');
+        elapsedTime = `${hours}:${remainingMinutes}:${seconds}`;
+      } else {
+        elapsedTime = `${minutes}:${seconds}`;
+      }
+
+      // Extract the badge if it exists
+      const badge = webBookingElement.querySelector('[id^="chat-new-badge-"]');
+
+      // Find the span with highlight class
+      const highlightSpan = webBookingElement.querySelector('span[class*="bg-slate-"]');
+      if (highlightSpan) {
+        // Update the text inside the highlight span
+        highlightSpan.textContent = `[${elapsedTime}] Web booking (Now)`;
       }
     }
   });
