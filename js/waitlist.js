@@ -1,4 +1,4 @@
-const version = '0.710';
+const version = '0.711';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 
@@ -3302,7 +3302,7 @@ function renderWaitlist() {
 
     // PAX display with highlight styling (moved to No. column)
     // Base classes for Pax container (border will be added via pax-selected class)
-    const paxContainerClass = 'px-1 py-0.5 rounded font-bold text-xs';
+    const paxContainerClass = 'px-0.5 py-0.5 rounded font-bold text-xs';
     
     // Label styling (always same)
     const paxLabelClass = 'font-bold';
@@ -3310,7 +3310,7 @@ function renderWaitlist() {
     // Number styling - background highlight for big tables only
     const paxNumberClass = item.pax >= minPax_for_bigTable ?
       (statusPriority === 0 ? 'bg-white text-slate-800 px-1 py-0.5 rounded font-bold' : 'bg-yellow-400 text-slate-800 px-1 py-0.5 rounded font-bold') :
-      'font-bold';
+      'pr-1 font-bold';
     
     // Initial background for big tables (will have border added when selected)
     const paxInitialBg = item.pax >= minPax_for_bigTable ?

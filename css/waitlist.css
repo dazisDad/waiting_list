@@ -634,6 +634,10 @@ tbody tr.bg-slate-900.row-persistent-highlight:hover {
 /* Pax selected state - border highlight when row is selected */
 .pax-selected {
   border: 1px solid #fbbf24 !important;
+  /* Remove right, top, bottom padding when selected - keep only left padding */
+  padding-right: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
 }
 
 /* For big tables (5+ pax), when selected: keep background on number only, add border to whole container */
