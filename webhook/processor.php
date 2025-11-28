@@ -626,6 +626,9 @@ function get_booking_detail($key, $value, $isToday = null) {
             $sql .= ' AND DATE(time_created) = CURDATE()';
         }
 
+        // Order by booking_list_id DESC to get most recent first, limit to 1 row
+        $sql .= ' ORDER BY booking_list_id DESC LIMIT 1';
+
         $stmt = $mysqli->prepare($sql);
         if ($stmt === false) {
             $err = $mysqli->error;
@@ -688,6 +691,9 @@ function get_booking_detail($key, $value, $isToday = null) {
         if ($isToday) {
             $sql .= ' AND DATE(time_created) = CURDATE()';
         }
+
+        // Order by booking_list_id DESC to get most recent first, limit to 1 row
+        $sql .= ' ORDER BY booking_list_id DESC LIMIT 1';
 
         $result = $mysqli->query($sql);
         if ($result === false) {

@@ -1,4 +1,4 @@
-const version = '0.723';
+const version = '0.724';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 const isShowNewPaxBadge = false; // Set to true to show "New Pax" badge (false = only show Pax color change)
@@ -118,9 +118,9 @@ function handleNewEvent(obj) {
     console.log('HANDLE_NEW_EVENT: Valid lastItem with booking_list_id:', lastItem.booking_list_id);
     console.log('HANDLE_NEW_EVENT: Session ID from event:', lastItem._session_id || 'none');
 
-    // Find booking_number from waitlist using subscriber_id (before server update)
+    // Find booking_number from waitlist using booking_list_id (before server update)
     // Use == for flexible type comparison (string vs number)
-    const bookingItemBefore = waitlist.find(item => item.subscriber_id == lastItem.subscriber_id);
+    const bookingItemBefore = waitlist.find(item => item.booking_list_id == lastItem.booking_list_id);
     console.log('HANDLE_NEW_EVENT: Searched OLD waitlist for existing booking, found:', bookingItemBefore ? `#${bookingItemBefore.booking_number}` : 'NOT FOUND');
     if (bookingItemBefore) {
       console.log('HANDLE_NEW_EVENT: bookingItemBefore details:', {
@@ -142,16 +142,16 @@ function handleNewEvent(obj) {
       let title, body;
 
       // Find booking in REFRESHED waitlist (use == for flexible type comparison)
-      const bookingItem = waitlist.find(item => item.subscriber_id == lastItem.subscriber_id);
+      const bookingItem = waitlist.find(item => item.booking_list_id == lastItem.booking_list_id);
       console.log('HANDLE_NEW_EVENT: Searched REFRESHED waitlist for booking, found:', bookingItem);
 
       // Determine if this is a new booking or message update by checking if booking existed before
-      console.log('HANDLE_NEW_EVENT: 🔍 DEBUG - Comparing subscriber_id:');
+      console.log('HANDLE_NEW_EVENT: 🔍 DEBUG - Comparing booking_list_id:');
       console.log('HANDLE_NEW_EVENT:   bookingItemBefore exists?', !!bookingItemBefore);
-      console.log('HANDLE_NEW_EVENT:   bookingItemBefore.subscriber_id:', bookingItemBefore?.subscriber_id, 'Type:', typeof bookingItemBefore?.subscriber_id);
-      console.log('HANDLE_NEW_EVENT:   lastItem.subscriber_id:', lastItem.subscriber_id, 'Type:', typeof lastItem.subscriber_id);
-      console.log('HANDLE_NEW_EVENT:   Are they equal? (==)', bookingItemBefore?.subscriber_id == lastItem.subscriber_id);
-      const isExistingBooking = bookingItemBefore && bookingItemBefore.subscriber_id == lastItem.subscriber_id;
+      console.log('HANDLE_NEW_EVENT:   bookingItemBefore.booking_list_id:', bookingItemBefore?.booking_list_id, 'Type:', typeof bookingItemBefore?.booking_list_id);
+      console.log('HANDLE_NEW_EVENT:   lastItem.booking_list_id:', lastItem.booking_list_id, 'Type:', typeof lastItem.booking_list_id);
+      console.log('HANDLE_NEW_EVENT:   Are they equal? (==)', bookingItemBefore?.booking_list_id == lastItem.booking_list_id);
+      const isExistingBooking = bookingItemBefore && bookingItemBefore.booking_list_id == lastItem.booking_list_id;
       console.log('HANDLE_NEW_EVENT: Is existing booking?', isExistingBooking);
 
       // Show notification for both new and updated items
@@ -3255,7 +3255,7 @@ function renderWaitlist() {
         minute: '2-digit'
       });
 
-      // Show "Reservation @ dine_dateTime" line with background highlight (similar to PAX >= 5 style but maintaining gray color)
+      // Show "Web booking @ dine_dateTime" line with background highlight (similar to PAX >= 5 style but maintaining gray color)
       const reservationHighlight = statusPriority === 0 ? 'bg-slate-600 text-slate-200 px-1 py-0.5 rounded font-bold' : 'bg-slate-700 text-slate-300 px-1 py-0.5 rounded font-bold';
 
       // Add NEW badge for Reservation (only for active items)
@@ -3271,7 +3271,7 @@ function renderWaitlist() {
         }
       }
 
-      chatHistoryHTML = `<div class="text-xs ${chatClass} leading-relaxed">↳ <span class="${reservationHighlight}">Reservation @ ${timeString}</span>${reservationBadge}</div>`;
+      chatHistoryHTML = `<div class="text-xs ${chatClass} leading-relaxed">↳ <span class="${reservationHighlight}">Web booking @ ${timeString}</span>${reservationBadge}</div>`;
 
       // Add status message if item is Arrived or Cancelled with completion time (always show for WEB bookings)
       if (item.status === 'Arrived' || item.status === 'Cancelled') {
@@ -3854,20 +3854,20 @@ async function startInitialization() {
       chatBadgeType = {};
       localStorage.removeItem(storageKey);
       localStorage.removeItem(`chatBadgeType_${todayStr}`);
-      console.log('INIT: Reset mode enabled - cleared all badge states');
+      //console.log('INIT: Reset mode enabled - cleared all badge states');
     } else {
       // Load from localStorage for today's date only
       const savedChat = localStorage.getItem(storageKey);
       const savedType = localStorage.getItem(`chatBadgeType_${todayStr}`);
-      console.log('INIT: localStorage key:', storageKey);
-      console.log('INIT: localStorage raw value:', savedChat);
-      console.log('INIT: localStorage badge type value:', savedType);
+      //console.log('INIT: localStorage key:', storageKey);
+      //console.log('INIT: localStorage raw value:', savedChat);
+      //console.log('INIT: localStorage badge type value:', savedType);
 
       if (savedChat) {
         try {
           chatBadgeHidden = JSON.parse(savedChat);
-          console.log('INIT: Loaded badge state from localStorage:', Object.keys(chatBadgeHidden).length, 'items');
-          console.log('INIT: Badge state:', chatBadgeHidden);
+          //console.log('INIT: Loaded badge state from localStorage:', Object.keys(chatBadgeHidden).length, 'items');
+          //console.log('INIT: Badge state:', chatBadgeHidden);
         } catch (e) {
           console.error('Failed to parse chatBadgeHidden from localStorage:', e);
           chatBadgeHidden = {};
@@ -3875,21 +3875,21 @@ async function startInitialization() {
       } else {
         // First load of the day - will initialize after data is loaded
         chatBadgeHidden = {};
-        console.log('INIT: No localStorage found for today - will initialize after data load');
+        //console.log('INIT: No localStorage found for today - will initialize after data load');
       }
 
       if (savedType) {
         try {
           chatBadgeType = JSON.parse(savedType);
-          console.log('INIT: Loaded badge type from localStorage:', Object.keys(chatBadgeType).length, 'items');
-          console.log('INIT: Badge types:', chatBadgeType);
+          //console.log('INIT: Loaded badge type from localStorage:', Object.keys(chatBadgeType).length, 'items');
+          //console.log('INIT: Badge types:', chatBadgeType);
         } catch (e) {
           console.error('Failed to parse chatBadgeType from localStorage:', e);
           chatBadgeType = {};
         }
       } else {
         chatBadgeType = {};
-        console.log('INIT: No badge type found in localStorage');
+        //console.log('INIT: No badge type found in localStorage');
       }
 
       // Clean up old date entries (keep only today's data)
@@ -3897,7 +3897,7 @@ async function startInitialization() {
         if ((key.startsWith('chatBadgeHidden_') || key.startsWith('chatBadgeType_')) && 
             key !== storageKey && key !== `chatBadgeType_${todayStr}`) {
           localStorage.removeItem(key);
-          console.log('INIT: Cleaned up old localStorage key:', key);
+          //console.log('INIT: Cleaned up old localStorage key:', key);
         }
       });
     }
@@ -3918,7 +3918,7 @@ async function startInitialization() {
       });
       // Save initial state to localStorage
       localStorage.setItem(storageKey, JSON.stringify(chatBadgeHidden));
-      console.log('INIT: First load today - initialized', Object.keys(chatBadgeHidden).length, 'bookings as seen');
+      //console.log('INIT: First load today - initialized', Object.keys(chatBadgeHidden).length, 'bookings as seen');
 
       // Re-render to hide all badges
       renderWaitlist();
@@ -3927,11 +3927,11 @@ async function startInitialization() {
     // Initial scroll setup: Set position and initial button state after data is loaded and rendered
     // requestAnimationFrame을 사용하여 DOM이 렌더링된 후 정확한 위치로 이동합니다.
     requestAnimationFrame(() => {
-      console.log("INIT: DOM rendered. Waiting for dummy row to be added...");
+      //console.log("INIT: DOM rendered. Waiting for dummy row to be added...");
 
       // Wait for dummy row to be added (it's added in another requestAnimationFrame in renderWaitlist)
       requestAnimationFrame(() => {
-        console.log("INIT: Dummy row added. Starting initial scroll/state calculation.");
+        //console.log("INIT: Dummy row added. Starting initial scroll/state calculation.");
 
         // 1. 초기 스크롤 목표 위치를 계산하고 동적 높이 설정을 업데이트합니다.
         const scrollTarget = updateScrollAndButtonState();
@@ -3941,15 +3941,15 @@ async function startInitialization() {
         // NEW: Calculate row height based on a rendered row (must be done after render)
         if (rows.length > 0) {
           rowHeight = rows[0].offsetHeight;
-          console.log(`INIT: Measured single rowHeight for update: ${rowHeight.toFixed(2)}px`);
+          //console.log(`INIT: Measured single rowHeight for update: ${rowHeight.toFixed(2)}px`);
         }
 
-        console.log(`INIT: Calculated scrollTarget = ${scrollTarget.toFixed(2)}px. Completed items = ${completedItemsCount}`);
+        //console.log(`INIT: Calculated scrollTarget = ${scrollTarget.toFixed(2)}px. Completed items = ${completedItemsCount}`);
 
         // 2. Completed items가 있으면 항상 스크롤 실행 (더미 row로 인해 항상 스크롤 가능)
         const totalRows = waitlist.length;
         const shouldScrollToActive = completedItemsCount > 0;
-        console.log(`INIT: Total rows: ${totalRows}, Completed items: ${completedItemsCount}, shouldScrollToActive: ${shouldScrollToActive}`);
+        //console.log(`INIT: Total rows: ${totalRows}, Completed items: ${completedItemsCount}, shouldScrollToActive: ${shouldScrollToActive}`);
 
         if (shouldScrollToActive) {
           // Disable hover temporarily during scroll
@@ -3957,12 +3957,12 @@ async function startInitialization() {
 
           // 스크롤 위치를 즉시 설정합니다. (비헤이비어 'auto')
           waitlistContainer.scrollTop = scrollTarget;
-          console.log(`INIT: Forced scroll to position: ${scrollTarget.toFixed(2)}px`);
+          //console.log(`INIT: Forced scroll to position: ${scrollTarget.toFixed(2)}px`);
 
           // Re-enable hover only when the user actually interacts (mousemove or window focus)
           const reenableHover = () => {
             waitlistContainer.classList.remove('disable-hover');
-            console.log('INIT: Hover re-enabled after user interaction');
+            //console.log('INIT: Hover re-enabled after user interaction');
             document.removeEventListener('mousemove', reenableHover);
             window.removeEventListener('focus', reenableHover);
             clearTimeout(reenableFallback);
@@ -3975,7 +3975,7 @@ async function startInitialization() {
           // Fallback: if no interaction occurs within 8s, re-enable to avoid permanently disabling hover
           const reenableFallback = setTimeout(() => {
             waitlistContainer.classList.remove('disable-hover');
-            console.log('INIT: Hover re-enabled by fallback after 8s');
+            //console.log('INIT: Hover re-enabled by fallback after 8s');
             document.removeEventListener('mousemove', reenableHover);
             window.removeEventListener('focus', reenableHover);
           }, 8000);
@@ -3985,33 +3985,33 @@ async function startInitialization() {
             // 더 정확한 스크롤을 위해 한 번 더 시도
             const actualScrollTop = waitlistContainer.scrollTop;
             if (Math.abs(actualScrollTop - scrollTarget) > 2) {
-              console.log(`INIT: Adjusting scroll position. First attempt: ${actualScrollTop.toFixed(2)}px`);
+              //console.log(`INIT: Adjusting scroll position. First attempt: ${actualScrollTop.toFixed(2)}px`);
               waitlistContainer.scrollTop = scrollTarget;
 
               // 조정 후 다시 한번 확인
               requestAnimationFrame(() => {
                 initialScrollTop = waitlistContainer.scrollTop;
-                console.log(`INIT: InitialScrollTop value recorded (final): ${initialScrollTop.toFixed(2)}px`);
-                console.log(`INIT: Final difference: ${(scrollTarget - initialScrollTop).toFixed(2)}px`);
+                //console.log(`INIT: InitialScrollTop value recorded (final): ${initialScrollTop.toFixed(2)}px`);
+                //console.log(`INIT: Final difference: ${(scrollTarget - initialScrollTop).toFixed(2)}px`);
               });
             } else {
               initialScrollTop = actualScrollTop;
-              console.log(`INIT: InitialScrollTop value recorded (actual): ${initialScrollTop.toFixed(2)}px`);
-              console.log(`INIT: Difference between target and actual: ${(scrollTarget - initialScrollTop).toFixed(2)}px`);
+              //console.log(`INIT: InitialScrollTop value recorded (actual): ${initialScrollTop.toFixed(2)}px`);
+              //console.log(`INIT: Difference between target and actual: ${(scrollTarget - initialScrollTop).toFixed(2)}px`);
             }
           });
         } else {
           initialScrollTop = 0; // Ensure it's 0 if no initial scroll occurred
-          console.log("INIT: No completed items, skipping initial forced scroll.");
+          //console.log("INIT: No completed items, skipping initial forced scroll.");
         }
 
         // 3. 스크롤 위치 설정 직후 버튼 상태를 업데이트하여 즉시 비활성화하고 텍스트를 변경합니다.
         updateScrollAndButtonState();
-        console.log("INIT: Final button state check completed.");
+        //console.log("INIT: Final button state check completed.");
 
         // 4. 초기 설정이 완료되었음을 플래그로 표시합니다. 
         isInitialScrollDone = true;
-        console.log("INIT: isInitialScrollDone set to TRUE. Enabling dynamic button logic.");
+        //console.log("INIT: isInitialScrollDone set to TRUE. Enabling dynamic button logic.");
       });
     });
 

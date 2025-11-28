@@ -42,7 +42,7 @@ function handleAdd() {
       <div class="flex flex-col h-full w-full min-w-[280px] max-w-[90vw]">
         <!-- Header -->
         <div class="flex justify-between items-center p-6 border-b border-slate-700">
-          <h2 id="modal-title" class="text-xl font-semibold text-slate-100">Add Waitlist</h2>
+          <h2 id="modal-title" class="text-xl font-semibold text-slate-100">Add Web Booking</h2>
           <div onclick="toggleModalMode(event)" id="toggle-modal-mode" class="cursor-pointer flex items-center">
             <div class="toggle-switch-container w-12 h-6 bg-slate-600 rounded-full relative transition duration-200">
               <div class="toggle-switch absolute left-1 top-1 w-4 h-4 bg-slate-300 rounded-full transition-all duration-200" style="transform: translateX(0);"></div>
@@ -615,8 +615,8 @@ function toggleModalMode(event) {
   const timeSection = document.getElementById('reservation-time-section');
   
   if (modalIsReservation) {
-    title.textContent = 'Add Reservation';
-    submitButton.textContent = 'Add to Reservation';
+    title.textContent = 'Add Web Booking Ahead';
+    submitButton.textContent = 'Submit';
     switchContainer.classList.add('bg-amber-400');
     switchContainer.classList.remove('bg-slate-600');
     switchCircle.classList.add('bg-slate-900');
@@ -625,8 +625,8 @@ function toggleModalMode(event) {
     timeSection.style.display = 'block';
     populateReservationTimes();
   } else {
-    title.textContent = 'Add Waitlist';
-    submitButton.textContent = 'Add to Waitlist';
+    title.textContent = 'Add Web Booking Now';
+    submitButton.textContent = 'Submit';
     switchContainer.classList.add('bg-slate-600');
     switchContainer.classList.remove('bg-amber-400');
     switchCircle.classList.add('bg-slate-300');
