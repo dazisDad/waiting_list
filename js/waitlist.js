@@ -1,6 +1,7 @@
-const version = '0.720';
+const version = '0.721';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
+const isShowNewPaxBadge = false; // Set to true to show "New Pax" badge (false = only show Pax color change)
 
 const store_id = 'DL_Sunway_Geo';
 const theme = 'dark';
@@ -3241,9 +3242,9 @@ function renderWaitlist() {
         const badgeKey = `${item.subscriber_id}_${item.booking_list_id}`;
         const isChatHidden = chatBadgeHidden[badgeKey];
         if (isChatHidden) {
-          reservationBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-white px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: none;">NEW</span>`;
+          reservationBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-slate-800 px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: none;">NEW</span>`;
         } else {
-          reservationBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-white px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: inline;">NEW</span>`;
+          reservationBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-slate-800 px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: inline;">NEW</span>`;
         }
       }
 
@@ -3337,10 +3338,14 @@ function renderWaitlist() {
           const isChatHidden = chatBadgeHidden[badgeKey];
           // Get badge text from chatBadgeType, default to 'NEW'
           const badgeText = chatBadgeType[badgeKey] || 'NEW';
-          if (isChatHidden) {
-            chatBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-white px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: none;">${badgeText}</span>`;
+          
+          // Hide "New Pax" badge if isShowNewPaxBadge is false (keep NEW badges visible)
+          const shouldHideBadge = (badgeText === 'New Pax' && !isShowNewPaxBadge) || isChatHidden;
+          
+          if (shouldHideBadge) {
+            chatBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-slate-800 px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: none;">${badgeText}</span>`;
           } else {
-            chatBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-white px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: inline;">${badgeText}</span>`;
+            chatBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-slate-800 px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: inline;">${badgeText}</span>`;
           }
         }
 
