@@ -30,8 +30,9 @@
 // Expects these globals from index.html: appSelect
 
 let lastText = null;
+let lastEventArray = []; // Track previous event array to detect new items
 let pollTimer = null;
-const POLL_INTERVAL = 3000; // ms
+const POLL_INTERVAL = 60000; // ms
 
 async function pollOnce() {
   try {
@@ -52,9 +53,53 @@ async function pollOnce() {
     if (text !== lastText) {
       lastText = text;
       try {
-        const obj = JSON.parse(text);
-        //console.log('pollOnce: parsed JSON', obj);
-        if (typeof handleNewEvent === 'function') handleNewEvent(obj); // Initiate notification if available
+        const currentArray = JSON.parse(text);
+        
+        // Ensure it's an array
+        if (!Array.isArray(currentArray)) {
+          console.log('pollOnce: JSON is not an array, calling handleNewEvent with single object');
+          if (typeof handleNewEvent === 'function') handleNewEvent(currentArray);
+          return;
+        }
+
+        // Find new events by comparing arrays
+        // New events are those that exist in currentArray but not in lastEventArray
+        const newEvents = [];
+        
+        if (lastEventArray.length === 0) {
+          // First poll - consider only the last item to avoid processing old events
+          console.log('pollOnce: First poll detected, processing only last item');
+          if (currentArray.length > 0) {
+            newEvents.push(currentArray[currentArray.length - 1]);
+          }
+        } else {
+          // Compare arrays to find new events
+          // Strategy: Find events in currentArray that are NOT in lastEventArray
+          // Use stringified comparison for deep equality check
+          const lastEventStrings = new Set(lastEventArray.map(e => JSON.stringify(e)));
+          
+          for (const event of currentArray) {
+            const eventString = JSON.stringify(event);
+            if (!lastEventStrings.has(eventString)) {
+              newEvents.push(event);
+            }
+          }
+          
+          console.log(`pollOnce: Found ${newEvents.length} new event(s) out of ${currentArray.length} total events`);
+        }
+
+        // Update lastEventArray for next comparison
+        lastEventArray = [...currentArray];
+
+        // Call handleNewEvent for each new event
+        if (newEvents.length > 0 && typeof handleNewEvent === 'function') {
+          console.log(`pollOnce: Processing ${newEvents.length} new event(s)`);
+          for (const event of newEvents) {
+            console.log('pollOnce: Calling handleNewEvent with:', event);
+            handleNewEvent(event);
+          }
+        }
+
       } catch (e) {
         console.log('pollOnce: JSON parse error', e);
       }

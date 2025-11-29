@@ -1,4 +1,4 @@
-const version = '0.729';
+const version = '0.730';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 const isShowNewPaxBadge = false; // Set to true to show "New Pax" badge (false = only show Pax color change)
@@ -147,13 +147,15 @@ function handleNewEvent(obj) {
       console.log('HANDLE_NEW_EVENT: Searched REFRESHED waitlist for booking, found:', bookingItem);
 
       // Determine if this is a new booking or message update by checking if booking existed before
+      /*
       console.log('HANDLE_NEW_EVENT: 🔍 DEBUG - Comparing booking_list_id:');
       console.log('HANDLE_NEW_EVENT:   bookingItemBefore exists?', !!bookingItemBefore);
       console.log('HANDLE_NEW_EVENT:   bookingItemBefore.booking_list_id:', bookingItemBefore?.booking_list_id, 'Type:', typeof bookingItemBefore?.booking_list_id);
       console.log('HANDLE_NEW_EVENT:   lastItem.booking_list_id:', lastItem.booking_list_id, 'Type:', typeof lastItem.booking_list_id);
       console.log('HANDLE_NEW_EVENT:   Are they equal? (==)', bookingItemBefore?.booking_list_id == lastItem.booking_list_id);
+      */
       const isExistingBooking = bookingItemBefore && bookingItemBefore.booking_list_id == lastItem.booking_list_id;
-      console.log('HANDLE_NEW_EVENT: Is existing booking?', isExistingBooking);
+      //console.log('HANDLE_NEW_EVENT: Is existing booking?', isExistingBooking);
 
       // Show notification for both new and updated items
       if (isExistingBooking && bookingItem) {
@@ -186,8 +188,8 @@ function handleNewEvent(obj) {
           // Show badge via DOM immediately with appropriate text
           requestAnimationFrame(() => {
             const chatBadgeSpan = document.getElementById(`chat-new-badge-${bookingItem.booking_list_id}`);
-            console.log('HANDLE_NEW_EVENT: Looking for badge element with ID:', `chat-new-badge-${bookingItem.booking_list_id}`);
-            console.log('HANDLE_NEW_EVENT: Badge element found:', chatBadgeSpan);
+            //console.log('HANDLE_NEW_EVENT: Looking for badge element with ID:', `chat-new-badge-${bookingItem.booking_list_id}`);
+            //console.log('HANDLE_NEW_EVENT: Badge element found:', chatBadgeSpan);
 
             if (chatBadgeSpan) {
               // Check if this is a pax update (booking_flow 2.2)
