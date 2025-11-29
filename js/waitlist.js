@@ -1,4 +1,4 @@
-const version = '0.728';
+const version = '0.729';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 const isShowNewPaxBadge = false; // Set to true to show "New Pax" badge (false = only show Pax color change)
@@ -29,15 +29,15 @@ let lastProcessedTimestamp = null; // Track last processed _force_update timesta
 // polling_json.js 파일의 pollOnce() 함수에서 호출함
 function handleNewEvent(obj) {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('HANDLE_NEW_EVENT: Function called');
+  //console.log('HANDLE_NEW_EVENT: Function called');
   console.log('HANDLE_NEW_EVENT: updateCounter =', updateCounter);
-  console.log('HANDLE_NEW_EVENT: Received obj:', obj);
+  //console.log('HANDLE_NEW_EVENT: Received obj:', obj);
 
   // Check if obj is an array and get the last element
   let lastItem = null;
   if (Array.isArray(obj) && obj.length > 0) {
     lastItem = obj[obj.length - 1];
-    console.log('HANDLE_NEW_EVENT: Array detected, using last item:', lastItem);
+    //console.log('HANDLE_NEW_EVENT: Array detected, using last item:', lastItem);
   } else if (obj && !Array.isArray(obj)) {
     lastItem = obj;
     console.log('HANDLE_NEW_EVENT: Single object detected:', lastItem);
@@ -545,7 +545,7 @@ async function fetchConfiguration() {
 // 고정 데이터 로드 함수 - 페이지 로딩 시 한번만 실행 (questionnaire 등)
 async function loadStaticData() {
   try {
-    console.log('STATIC_DATA: Loading static data...');
+    //console.log('STATIC_DATA: Loading static data...');
 
     // 고정 데이터 병렬로 가져오기
     const [questionsData, answerData, configurationData] = await Promise.all([
@@ -553,21 +553,21 @@ async function loadStaticData() {
       fetchAnswerList(),
       fetchConfiguration()
     ]);
-
+    /*
     console.log('STATIC_DATA: Static data loaded successfully');
     console.log('- Questions:', questionsData?.length || 0);
     console.log('- Answers:', answerData?.length || 0);
     console.log('- Configuration:', configurationData?.length || 0);
-
+    */
     // 전역 변수 설정
     questionnaire = questionsData;
     answers = answerData;
     configuration = configurationData[0];
 
-    console.log(answers);
-    console.log(configuration);
+    //console.log(answers);
+    //console.log(configuration);
 
-    console.log('STATIC_DATA: Static data load completed');
+    //console.log('STATIC_DATA: Static data load completed');
 
   } catch (error) {
     console.error('STATIC_DATA: Error loading static data:', error);
@@ -594,9 +594,9 @@ async function getServerSideUpdate() {
     waitlist = waitlistData;
     chatlist = chatData;
 
-    console.log(waitlist);
+    //console.log(waitlist);
 
-    console.log('SERVER_UPDATE: Global variables updated, re-rendering waitlist...');
+    //console.log('SERVER_UPDATE: Global variables updated, re-rendering waitlist...');
 
     // Save current scroll position before re-rendering
     const currentScrollTop = waitlistContainer.scrollTop;
