@@ -32,7 +32,7 @@
 let lastText = null;
 let lastEventArray = []; // Track previous event array to detect new items
 let pollTimer = null;
-const POLL_INTERVAL = 60000; // ms
+const POLL_INTERVAL = 3000; // ms
 
 async function pollOnce() {
   try {
@@ -95,7 +95,7 @@ async function pollOnce() {
         if (newEvents.length > 0 && typeof handleNewEvent === 'function') {
           console.log(`pollOnce: Processing ${newEvents.length} new event(s)`);
           for (const event of newEvents) {
-            console.log('pollOnce: Calling handleNewEvent with:', event);
+            //console.log('pollOnce: Calling handleNewEvent with:', event);
             handleNewEvent(event);
           }
         }

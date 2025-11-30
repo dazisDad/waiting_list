@@ -47,7 +47,7 @@ async function httpsRequestAction(btnId, inputDataSet) {
 
     // Handle the response as needed
     if (result.success !== false) {
-      console.log('Request successful:', result);
+      //console.log('Request successful:', result);
     } else {
       console.error('Request failed:', result.error);
     }

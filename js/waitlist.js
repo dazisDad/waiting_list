@@ -1,4 +1,4 @@
-const version = '0.730';
+const version = '0.732';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 const isShowNewPaxBadge = false; // Set to true to show "New Pax" badge (false = only show Pax color change)
@@ -30,7 +30,16 @@ let lastProcessedTimestamp = null; // Track last processed _force_update timesta
 function handleNewEvent(obj) {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   //console.log('HANDLE_NEW_EVENT: Function called');
-  console.log('HANDLE_NEW_EVENT: updateCounter =', updateCounter);
+  
+  // Increment counter immediately to prevent race conditions with multiple events
+  const currentCounter = updateCounter++;
+  
+  if(currentCounter === 0) {
+    console.log('HANDLE_NEW_EVENT: updateCounter =', currentCounter);
+  } else if (currentCounter === 1) {
+    console.log(`HANDLE_NEW_EVENT: Incremented updateCounter to:`, currentCounter);
+    console.log('Future inccrements will not be logged and process events normally.');
+  }
   //console.log('HANDLE_NEW_EVENT: Received obj:', obj);
 
   // Check if obj is an array and get the last element
@@ -50,16 +59,16 @@ function handleNewEvent(obj) {
     );
 
     if (!flowMatches) {
-      console.log('HANDLE_NEW_EVENT: ⚠ booking_flow does not match trigger list, skipping');
-      console.log('HANDLE_NEW_EVENT: booking_flow:', lastItem.booking_flow);
-      console.log('HANDLE_NEW_EVENT: Allowed flows:', flow_arr_that_can_trigger_handleNewEvent);
+      console.log('HANDLE_NEW_EVENT: ⚠ booking_flow not in trigger list:', Number(lastItem.booking_flow).toFixed(1));
+      //console.log('HANDLE_NEW_EVENT: Allowed flows:', flow_arr_that_can_trigger_handleNewEvent);
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       return;
     }
 
-    console.log('HANDLE_NEW_EVENT: ✓ booking_flow matches trigger list:', lastItem.booking_flow);
+    console.log('HANDLE_NEW_EVENT: ✓ booking_flow matches trigger list:', Number(lastItem.booking_flow).toFixed(1));
     
     // Special debugging for flow 9.2 (chat response)
+    /*
     if (Math.abs(lastItem.booking_flow - 9.2) < 0.0001) {
       console.log('HANDLE_NEW_EVENT: 💬 FLOW 9.2 DETECTED - Chat Response Processing');
       console.log('HANDLE_NEW_EVENT: 💬 Full lastItem object:', JSON.stringify(lastItem, null, 2));
@@ -69,6 +78,7 @@ function handleNewEvent(obj) {
       console.log('HANDLE_NEW_EVENT: 💬 _session_id:', lastItem._session_id);
       console.log('HANDLE_NEW_EVENT: 💬 _force_update:', lastItem._force_update);
     }
+      */
   }
 
   // Check if this is a critical flow (Chat Response) that happened recently (within 10 seconds)
@@ -79,11 +89,11 @@ function handleNewEvent(obj) {
   // If _force_update is missing, we can't determine recency, so we skip to avoid duplicates on every refresh
   const isRecent = eventTime > 0 && (now - eventTime) < 10000; 
 
-  if (updateCounter > 0 || (isCriticalFlow && isRecent)) {
-    if (updateCounter === 0) {
+  if (currentCounter > 0 || (isCriticalFlow && isRecent)) {
+    if (currentCounter === 0) {
       console.log('HANDLE_NEW_EVENT: ⚡ Processing critical recent event on first poll!');
     } else {
-      console.log('HANDLE_NEW_EVENT: Counter > 0, processing event...');
+      //console.log('HANDLE_NEW_EVENT: Counter > 0, processing event...');
     }
 
     if (!lastItem || !lastItem.subscriber_id) {
@@ -104,46 +114,66 @@ function handleNewEvent(obj) {
     // Update last processed timestamp
     if (lastItem._force_update) {
       lastProcessedTimestamp = lastItem._force_update;
-      console.log('HANDLE_NEW_EVENT: Updated lastProcessedTimestamp to:', lastProcessedTimestamp);
+      //console.log('HANDLE_NEW_EVENT: Updated lastProcessedTimestamp to:', lastProcessedTimestamp);
     }
 
     // Check if this event was triggered by this client (same session ID)
     if (lastItem._session_id && lastItem._session_id === sessionId) {
+      
       console.log('HANDLE_NEW_EVENT: ⚠ Event triggered by THIS client (session match), skipping notification/badge');
-      console.log('HANDLE_NEW_EVENT: Session ID:', lastItem._session_id);
+      //console.log('HANDLE_NEW_EVENT: Session ID:', lastItem._session_id);
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      
       return;
     }
 
+    /*
     console.log('HANDLE_NEW_EVENT: Valid lastItem with subscriber_id:', lastItem.subscriber_id);
     console.log('HANDLE_NEW_EVENT: Valid lastItem with booking_list_id:', lastItem.booking_list_id);
     console.log('HANDLE_NEW_EVENT: Session ID from event:', lastItem._session_id || 'none');
+    */
 
     // Find booking_number from waitlist using booking_list_id (before server update)
     // Use == for flexible type comparison (string vs number)
-    const bookingItemBefore = waitlist.find(item => item.booking_list_id == lastItem.booking_list_id);
-    console.log('HANDLE_NEW_EVENT: Searched OLD waitlist for existing booking, found:', bookingItemBefore ? `#${bookingItemBefore.booking_number}` : 'NOT FOUND');
+    let bookingItemBefore = waitlist.find(item => item.booking_list_id == lastItem.booking_list_id);
+    
+    // Fallback: try finding by subscriber_id if not found by booking_list_id
+    if (!bookingItemBefore && lastItem.subscriber_id) {
+      //console.log('HANDLE_NEW_EVENT: booking_list_id lookup failed for OLD waitlist, trying subscriber_id:', lastItem.subscriber_id);
+      bookingItemBefore = waitlist.find(item => item.subscriber_id == lastItem.subscriber_id);
+    }
+
+    //console.log('HANDLE_NEW_EVENT: Searched OLD waitlist for existing booking, found:', bookingItemBefore ? `#${bookingItemBefore.booking_number}` : 'NOT FOUND');
     if (bookingItemBefore) {
+      /*
       console.log('HANDLE_NEW_EVENT: bookingItemBefore details:', {
         booking_list_id: bookingItemBefore.booking_list_id,
         booking_number: bookingItemBefore.booking_number,
         subscriber_id: bookingItemBefore.subscriber_id,
         customer_name: bookingItemBefore.customer_name
       });
+      */
     }
 
     // Delay notification and UI update by 300ms
     setTimeout(async () => {
-      console.log('HANDLE_NEW_EVENT: 300ms timeout elapsed, starting server update...');
+      //console.log('HANDLE_NEW_EVENT: 300ms timeout elapsed, starting server update...');
 
       // Refresh data from server first to get latest state
       await getServerSideUpdate();
-      console.log('HANDLE_NEW_EVENT: Server update completed');
+      //console.log('HANDLE_NEW_EVENT: Server update completed');
 
       let title, body;
 
       // Find booking in REFRESHED waitlist (use == for flexible type comparison)
-      const bookingItem = waitlist.find(item => item.booking_list_id == lastItem.booking_list_id);
+      let bookingItem = waitlist.find(item => item.booking_list_id == lastItem.booking_list_id);
+      
+      // Fallback: try finding by subscriber_id if not found by booking_list_id
+      if (!bookingItem && lastItem.subscriber_id) {
+        console.log('HANDLE_NEW_EVENT: booking_list_id lookup failed for REFRESHED waitlist, trying subscriber_id:', lastItem.subscriber_id);
+        bookingItem = waitlist.find(item => item.subscriber_id == lastItem.subscriber_id);
+      }
+
       console.log('HANDLE_NEW_EVENT: Searched REFRESHED waitlist for booking, found:', bookingItem);
 
       // Determine if this is a new booking or message update by checking if booking existed before
@@ -154,36 +184,31 @@ function handleNewEvent(obj) {
       console.log('HANDLE_NEW_EVENT:   lastItem.booking_list_id:', lastItem.booking_list_id, 'Type:', typeof lastItem.booking_list_id);
       console.log('HANDLE_NEW_EVENT:   Are they equal? (==)', bookingItemBefore?.booking_list_id == lastItem.booking_list_id);
       */
-      const isExistingBooking = bookingItemBefore && bookingItemBefore.booking_list_id == lastItem.booking_list_id;
+      const isExistingBooking = !!bookingItemBefore;
       //console.log('HANDLE_NEW_EVENT: Is existing booking?', isExistingBooking);
 
       // Show notification for both new and updated items
       if (isExistingBooking && bookingItem) {
-        console.log('HANDLE_NEW_EVENT: ★ EXISTING BOOKING - Processing message update');
+        //console.log('HANDLE_NEW_EVENT: ★ EXISTING BOOKING - Processing update');
 
         // UPDATED - existing booking received new message
         title = '[UPDATED] Waitlist';
         body = `Updated Booking #: ${bookingItem.booking_number}`;
-        console.log('HANDLE_NEW_EVENT: Showing notification:', title, body);
+        //console.log('HANDLE_NEW_EVENT: Showing notification:', title, body);
         showNotification(title, body);
 
-        console.log('HANDLE_NEW_EVENT: Found updated item in refreshed waitlist:', bookingItem);
+        //console.log('HANDLE_NEW_EVENT: Found updated item in refreshed waitlist:', bookingItem);
 
         if (bookingItem && bookingItem.subscriber_id && bookingItem.booking_list_id) {
-          console.log(`HANDLE_NEW_EVENT: Unhiding badge for booking_list_id: ${bookingItem.booking_list_id}`);
+          //console.log(`HANDLE_NEW_EVENT: Unhiding badge for booking_list_id: ${bookingItem.booking_list_id}`);
 
-          // Remove badge from hidden list to show it for new message
+          // Remove badge from hidden list to show it for new message (always unhide to trigger state change)
           const badgeKey = `${bookingItem.subscriber_id}_${bookingItem.booking_list_id}`;
-          console.log('HANDLE_NEW_EVENT: Badge key:', badgeKey);
-          console.log('HANDLE_NEW_EVENT: chatBadgeHidden BEFORE delete:', JSON.stringify(chatBadgeHidden));
-
           delete chatBadgeHidden[badgeKey];
-
-          console.log('HANDLE_NEW_EVENT: chatBadgeHidden AFTER delete:', JSON.stringify(chatBadgeHidden));
 
           const today = new Date().toISOString().split('T')[0];
           localStorage.setItem(`chatBadgeHidden_${today}`, JSON.stringify(chatBadgeHidden));
-          console.log('HANDLE_NEW_EVENT: Saved to localStorage:', `chatBadgeHidden_${today}`);
+          //console.log('HANDLE_NEW_EVENT: Saved to localStorage:', `chatBadgeHidden_${today}`);
 
           // Show badge via DOM immediately with appropriate text
           requestAnimationFrame(() => {
@@ -193,38 +218,40 @@ function handleNewEvent(obj) {
 
             if (chatBadgeSpan) {
               // Check if this is a pax update (booking_flow 2.2)
-              console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - Determining badge text');
-              console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - lastItem.booking_flow:', lastItem.booking_flow);
-              console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - Is pax update? (2.2):', lastItem.booking_flow === 2.2);
+              const isPaxUpdate = Math.abs(lastItem.booking_flow - 2.2) < 0.0001;
+              const badgeText = isPaxUpdate ? 'New Pax' : 'NEW';
               
-              const badgeText = (lastItem.booking_flow === 2.2) ? 'New Pax' : 'NEW';
-              console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - Selected badge text:', badgeText);
-              
-              // Save badge type to chatBadgeType for persistence across refreshes
-              const badgeKey = `${bookingItem.subscriber_id}_${bookingItem.booking_list_id}`;
+              console.log(`HANDLE_NEW_EVENT: 🏷️ BADGE - Flow: ${lastItem.booking_flow}, isPaxUpdate: ${isPaxUpdate}, badgeText: ${badgeText}`);
+
+              // Save badge type to chatBadgeType for persistence across refreshes (Always save type)
               chatBadgeType[badgeKey] = badgeText;
-              const today = new Date().toISOString().split('T')[0];
               localStorage.setItem(`chatBadgeType_${today}`, JSON.stringify(chatBadgeType));
-              console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - Saved badge type to localStorage:', badgeText);
+
+              // Only show badge DOM element if it's NOT a pax update OR if isShowNewPaxBadge is true
+              if (!isPaxUpdate || isShowNewPaxBadge) {
+                chatBadgeSpan.textContent = badgeText;
+                chatBadgeSpan.style.display = 'inline';
+                console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - ✓ Badge set to visible:', badgeText);
+              } else {
+                console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - ✗ New Pax badge suppressed by configuration (isShowNewPaxBadge=false)');
+              }
               
-              chatBadgeSpan.textContent = badgeText;
-              chatBadgeSpan.style.display = 'inline';
-              console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - ✓ Badge display set to inline');
-              console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - ✓ Badge text:', chatBadgeSpan.textContent);
-              console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - ✓ Badge style.display:', chatBadgeSpan.style.display);
-              console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - ✓ For booking_list_id:', bookingItem.booking_list_id);
-              
-              // Update Pax colors if this is a "New Pax" badge
-              if (badgeText === 'New Pax') {
+              // Update Pax colors if this is a "New Pax" badge (even if badge is hidden)
+              if (isPaxUpdate) {
                 console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - Updating Pax colors for booking_number:', bookingItem.booking_number);
                 updatePaxColors(bookingItem.booking_number);
               }
             } else {
-              console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - ✗ Badge element NOT FOUND in DOM');
+              console.log(`HANDLE_NEW_EVENT: 🏷️ BADGE - ✗ Badge element NOT FOUND in DOM (ID: chat-new-badge-${bookingItem.booking_list_id})`);
             }
+
+            console.log('HANDLE_NEW_EVENT: Event processing completed');
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
           });
         } else {
           console.log('HANDLE_NEW_EVENT: ✗ Could not find updated item with required fields');
+          console.log('HANDLE_NEW_EVENT: Event processing completed');
+          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         }
       } else {
         console.log('HANDLE_NEW_EVENT: ★ NEW BOOKING - Processing new registration');
@@ -260,6 +287,8 @@ function handleNewEvent(obj) {
                 } else {
                   console.log('HANDLE_NEW_EVENT: Scroll button is disabled, cannot scroll');
                 }
+                console.log('HANDLE_NEW_EVENT: Event processing completed');
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
               });
             });
           });
@@ -270,24 +299,22 @@ function handleNewEvent(obj) {
           showNotification(title, body);
         } else {
           console.log('HANDLE_NEW_EVENT: ✗ Could not find new booking item in refreshed waitlist');
+          console.log('HANDLE_NEW_EVENT: Event processing completed');
+          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         }
       }
-
-      console.log('HANDLE_NEW_EVENT: Event processing completed');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     }, 300);
   } else {
     console.log('HANDLE_NEW_EVENT: Counter = 0, skipping (first poll)');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   }
-  updateCounter++;
-  console.log(`HANDLE_NEW_EVENT: Incremented updateCounter to: ${updateCounter}`);
+  // updateCounter increment moved to top of function
 }
 
 // Generate unique session ID for this client
 const sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
-console.log('SESSION_ID: Generated unique session ID:', sessionId);
+//console.log('SESSION_ID: Generated unique session ID:', sessionId);
 
 let waitlist = [];
 let chatlist = [];
@@ -576,46 +603,65 @@ async function loadStaticData() {
   }
 }
 
+// Shared promise to prevent multiple simultaneous server updates
+let serverUpdatePromise = null;
+
 // 서버 사이드 업데이트 함수 - 데이터베이스에서 실시간 변화하는 데이터를 가져와서 전역 변수를 업데이트하고 렌더링
 // 페이지 로딩 시 초기화와 수동 데이터 새로고침 모두에 사용됨
 async function getServerSideUpdate() {
-  try {
-    console.log('SERVER_UPDATE: Starting server-side data update...');
-
-    // 실시간 변화하는 데이터만 병렬로 가져오기
-    const [waitlistData, chatData] = await Promise.all([
-      fetchBookingList(),
-      fetchChatHistory()
-    ]);
-
-    console.log('SERVER_UPDATE: All data loaded successfully');
-    console.log('- Waitlist items:', waitlistData?.length || 0);
-    console.log('- Chat records:', chatData?.length || 0);
-
-    // 전역 변수 오버라이드 (실시간 데이터만)
-    waitlist = waitlistData;
-    chatlist = chatData;
-
-    //console.log(waitlist);
-
-    //console.log('SERVER_UPDATE: Global variables updated, re-rendering waitlist...');
-
-    // Save current scroll position before re-rendering
-    const currentScrollTop = waitlistContainer.scrollTop;
-
-    // 새 데이터로 렌더링
-    renderWaitlist();
-
-    // Restore scroll position after render completes
-    requestAnimationFrame(() => {
-      waitlistContainer.scrollTop = currentScrollTop;
-    });
-
-    console.log('SERVER_UPDATE: Update completed successfully');
-
-  } catch (error) {
-    console.error('SERVER_UPDATE: Error during server-side update:', error);
+  // If an update is already in progress, return the existing promise
+  if (serverUpdatePromise) {
+    console.log('SERVER_UPDATE: Update already in progress, joining existing request...');
+    return serverUpdatePromise;
   }
+
+  // Create a new promise for the update
+  serverUpdatePromise = (async () => {
+    try {
+      console.log('SERVER_UPDATE: Getting server-side data, will render table once loaded...');
+
+      // 실시간 변화하는 데이터만 병렬로 가져오기
+      const [waitlistData, chatData] = await Promise.all([
+        fetchBookingList(),
+        fetchChatHistory()
+      ]);
+
+      /*
+      console.log('SERVER_UPDATE: All data loaded successfully');
+      console.log('- Waitlist items:', waitlistData?.length || 0);
+      console.log('- Chat records:', chatData?.length || 0);
+      */
+
+      // 전역 변수 오버라이드 (실시간 데이터만)
+      waitlist = waitlistData;
+      chatlist = chatData;
+
+      //console.log(waitlist);
+
+      //console.log('SERVER_UPDATE: Global variables updated, re-rendering waitlist...');
+
+      // Save current scroll position before re-rendering
+      const currentScrollTop = waitlistContainer.scrollTop;
+
+      // 새 데이터로 렌더링
+      renderWaitlist();
+
+      // Restore scroll position after render completes
+      requestAnimationFrame(() => {
+        waitlistContainer.scrollTop = currentScrollTop;
+      });
+
+      //console.log('SERVER_UPDATE: Update completed successfully');
+
+    } catch (error) {
+      console.error('SERVER_UPDATE: Error during server-side update:', error);
+    } finally {
+      // Clear the promise when done so future calls can start a new update
+      serverUpdatePromise = null;
+    }
+  })();
+
+  return serverUpdatePromise;
 }
 
 /**
@@ -666,8 +712,8 @@ async function forceUpdateWebhook(subscriber_id = null) {
     const result = await response.json();
 
     if (result.success) {
-      console.log('✓ FORCE_UPDATE: Webhook file updated successfully', result);
-      console.log('✓ FORCE_UPDATE: Timestamp:', result.datetime);
+      //console.log('✓ FORCE_UPDATE: Webhook file updated successfully', result);
+      //console.log('✓ FORCE_UPDATE: Timestamp:', result.datetime);
     } else {
       console.error('✗ FORCE_UPDATE: Update failed:', result.message);
     }
@@ -1345,7 +1391,7 @@ function toggleMobileActions(booking_number, event) {
       }
     });
 
-    console.log(`MOBILE: Collapsed row for item #${booking_number}`);
+    //console.log(`MOBILE: Collapsed row for item #${booking_number}`);
     return;
   }
 
@@ -1396,7 +1442,7 @@ function toggleMobileActions(booking_number, event) {
     updatePaxColors(booking_number);
   }
 
-  console.log(`MOBILE: Expanded row for item #${booking_number}`);
+  //console.log(`MOBILE: Expanded row for item #${booking_number}`);
 }
 
 /**
@@ -2016,8 +2062,8 @@ async function handleReadyInternal(booking_number, customer_name, event, buttonI
 }
 
 function handleAsk(booking_number, customer_name, event) {
-  console.log(`ACTION: Asking customer ${customer_name} (#${booking_number}).`);
-  console.log(`INFO: [${customer_name}, #${booking_number}]에게 메시지/문의 창을 엽니다.`);
+  //console.log(`ACTION: Asking customer ${customer_name} (#${booking_number}).`);
+  //console.log(`INFO: [${customer_name}, #${booking_number}]에게 메시지/문의 창을 엽니다.`);
 
   // Check if mobile - on desktop, highlight the row (no flash button to avoid interference)
   const isMobile = window.innerWidth <= 768;
@@ -2108,7 +2154,7 @@ function handleAsk(booking_number, customer_name, event) {
         // Insert after the main row
         mainRow.insertAdjacentElement('afterend', mobileRow);
         mainRow.classList.add('row-selected');
-        console.log(`MOBILE: Re-opened action row for #${booking_number} after Ask mode toggle`);
+        //console.log(`MOBILE: Re-opened action row for #${booking_number} after Ask mode toggle`);
       }
     });
   }
@@ -2217,7 +2263,7 @@ function createManyChatPayload(booking_list_id, questionId) {
     field.field_value !== undefined
   );
 
-  console.log('createManyChatPayload: validFields count:', validFields.length, 'of', fields.length);
+  //console.log('createManyChatPayload: validFields count:', validFields.length, 'of', fields.length);
 
   return {
     subscriber_id,
@@ -2229,6 +2275,7 @@ function createManyChatPayload(booking_list_id, questionId) {
  * Handles question button click - logs the question and inserts into database
  */
 async function handleQuestion(booking_list_id, question, q_level = null, buttonId = null, questionId = null) {
+  /*
   console.log('handleQuestion called with:', {
     booking_list_id,
     question,
@@ -2236,10 +2283,11 @@ async function handleQuestion(booking_list_id, question, q_level = null, buttonI
     buttonId,
     questionId
   });
+  */
 
   try {
     const manyChat_payload = createManyChatPayload(booking_list_id, questionId);
-    console.log('ManyChat payload prepared:', manyChat_payload);
+    //console.log('ManyChat payload prepared:', manyChat_payload);
     const manyChatResult = await updateManyChatCustomFields(buttonId, manyChat_payload);
 
     if (manyChatResult && manyChatResult.status === 'success') {
@@ -3175,7 +3223,7 @@ function handleScrollToActive(isAutoTrigger = false, keepRowSelection = false) {
  * Renders the table based on the waitlist data. Called on initial load and on status change.
  */
 function renderWaitlist() {
-  console.log("RENDER: Starting table render.");
+  //console.log("RENDER: Starting table render.");
 
   // Reset name NEW badges only (not chat badges) - they will be re-shown by handleNewEvent if still new
   document.querySelectorAll('[id^="new-badge-"]').forEach(badge => {
@@ -3185,7 +3233,7 @@ function renderWaitlist() {
       badge.style.display = 'none';
     }
   });
-  console.log("RENDER: Reset name NEW badges (preserved chat badges)");
+  //console.log("RENDER: Reset name NEW badges (preserved chat badges)");
 
   // Clean up mobile state on desktop
   if (window.innerWidth > 768) {
@@ -3218,7 +3266,7 @@ function renderWaitlist() {
   });
 
   const completedItemsCount = waitlist.filter(item => getSortPriority(item.status) === 0).length;
-  console.log(`RENDER: Sorted list. Total items: ${waitlist.length}, Completed items count: ${completedItemsCount}`);
+  //console.log(`RENDER: Sorted list. Total items: ${waitlist.length}, Completed items count: ${completedItemsCount}`);
 
   waitlistBody.innerHTML = ''; // Clear table content
 

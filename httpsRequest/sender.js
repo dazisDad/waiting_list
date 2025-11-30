@@ -29,7 +29,7 @@ async function sendHttpsRequest(inputDataSet, method = 'POST') {
     const text = await resp.text();
     try {
       const data = JSON.parse(text);
-      console.log(`sendHttpsRequest (${method}): response`, data);
+      //console.log(`sendHttpsRequest (${method}): response`, data);
       return data;
     } catch (e) {
       console.log(`sendHttpsRequest (${method}): non-json response`, text);

@@ -28,11 +28,11 @@
 let swRegistration = null;
 
 async function registerSW() {
-  console.log('registerSW: start');
+  //console.log('registerSW: start');
   if ('serviceWorker' in navigator) {
     try {
       swRegistration = await navigator.serviceWorker.register('js/sw.js');
-      console.log('ServiceWorker registered', swRegistration);
+      //console.log('ServiceWorker registered', swRegistration);
     } catch (e) {
       console.log('registerSW: failed', e);
     }
@@ -46,7 +46,7 @@ async function ensureNotificationPermission() {
     console.log('ensureNotificationPermission: Notification API not supported');
     return false;
   }
-  console.log('ensureNotificationPermission: current permission=', Notification.permission);
+  //console.log('ensureNotificationPermission: current permission=', Notification.permission);
   if (Notification.permission === 'granted') return true;
   const p = await Notification.requestPermission();
   console.log('ensureNotificationPermission: new permission=', p);
@@ -96,4 +96,4 @@ function showNotification(title, body, url = null) {
   }
 }
 
-console.log('notification.js loaded');
+//console.log('notification.js loaded');

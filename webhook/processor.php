@@ -1134,7 +1134,14 @@ function processChatResponse($response) {
 
     // Step 6: Get selected values based on booking_response index
     $selected_answer_id = $answer_ids_array[$booking_response] ?? null;
-    $selected_answer = $answer_texts[$booking_response] ?? null;
+    
+    // Special handling for booking_response == 99 (No Response timeout)
+    if ($booking_response == 99) {
+        $selected_answer = 'No Response for 10 min';
+    } else {
+        $selected_answer = $answer_texts[$booking_response] ?? null;
+    }
+    
     $selected_badge = $badge_arr[$booking_response] ?? null;
     $selected_q_level = $q_level_arr[$booking_response] ?? null;
 
