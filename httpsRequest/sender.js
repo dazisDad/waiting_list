@@ -14,17 +14,24 @@ async function sendHttpsRequest(inputDataSet, method = 'POST') {
   console.log(`sendHttpsRequest (${method}): preparing request`, inputDataSet);
 
   try {
+    let url = 'httpsRequest/sender.php';
     const fetchOptions = {
       method: method,
       headers: { 'Content-Type': 'application/json' },
     };
     
-    // Only add body for POST requests
     if (method === 'POST') {
+      // POST: send inputDataSet in body
       fetchOptions.body = JSON.stringify(inputDataSet);
+    } else if (method === 'GET') {
+      // GET: send inputDataSet as URL-encoded query parameters
+      const params = new URLSearchParams({
+        data: JSON.stringify(inputDataSet)
+      });
+      url = `${url}?${params.toString()}`;
     }
 
-    const resp = await fetch('httpsRequest/sender.php', fetchOptions);
+    const resp = await fetch(url, fetchOptions);
 
     const text = await resp.text();
     try {

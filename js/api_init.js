@@ -43,7 +43,9 @@ async function httpsRequestAction(btnId, inputDataSet) {
   if (btn) btn.disabled = true;
 
   try {
-    const result = await sendHttpsRequest(inputDataSet);
+    // Extract method from inputDataSet if provided (defaults to POST in sendHttpsRequest)
+    const method = inputDataSet.method || 'POST';
+    const result = await sendHttpsRequest(inputDataSet, method);
 
     // Handle the response as needed
     if (result.success !== false) {
@@ -88,6 +90,33 @@ async function createSubscriber(btnId, payload) {
     requestTo: 'manychat', // This will be used to lookup bearer token from .env
     url: 'https://api.manychat.com/fb/subscriber/createSubscriber', // Target API URL
     payload: payload
+  };
+
+  return await httpsRequestAction(btnId, inputDataSet);
+}
+
+
+async function getInfoByPhoneNumber(btnId, phoneNumber) {
+  
+  // field_id=13974135 is for "Phone Number" custom field
+  const inputDataSet = {
+    requestTo: 'manychat', // This will be used to lookup bearer token from .env
+    url: `https://api.manychat.com/fb/subscriber/findByCustomField?field_id=13974135&field_value=${phoneNumber}`, // Target API URL
+    method: 'GET', // Use GET method for subscriber info retrieval
+    payload: {}
+  };
+
+  return await httpsRequestAction(btnId, inputDataSet);
+}
+
+async function getInfoBySubscriberId(btnId, subscriber_id) {
+  
+  // field_id=13974135 is for "Phone Number" custom field
+  const inputDataSet = {
+    requestTo: 'manychat', // This will be used to lookup bearer token from .env
+    url: `https://api.manychat.com/fb/subscriber/getInfo?subscriber_id=${subscriber_id}`, // Target API URL
+    method: 'GET', // Use GET method for subscriber info retrieval
+    payload: {}
   };
 
   return await httpsRequestAction(btnId, inputDataSet);

@@ -27,8 +27,16 @@ function loadEnv($filePath) {
     return $env;
 }
 
-$raw = file_get_contents('php://input');
-$input = json_decode($raw, true);
+// Handle both POST (body) and GET (query parameter) requests
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['data'])) {
+    // GET request: read from query parameter
+    $input = json_decode($_GET['data'], true);
+} else {
+    // POST request: read from body
+    $raw = file_get_contents('php://input');
+    $input = json_decode($raw, true);
+}
+
 if (!is_array($input)) {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid JSON input']);
@@ -39,6 +47,7 @@ if (!is_array($input)) {
 $requestTo = $input['requestTo'] ?? null;
 $url = $input['url'] ?? null;
 $payload = $input['payload'] ?? [];
+$method = strtoupper($input['method'] ?? 'POST'); // Default to POST if not specified
 
 if (!$requestTo || !$url) {
     http_response_code(400);
@@ -67,12 +76,22 @@ $payloadJson = json_encode($payload);
 
 $ch = curl_init($url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, $payloadJson);
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'Content-Type: application/json',
-    'Authorization: Bearer ' . $bearer,
-]);
+
+if ($method === 'GET') {
+    // GET request - no body needed
+    curl_setopt($ch, CURLOPT_HTTPGET, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Authorization: Bearer ' . $bearer,
+    ]);
+} else {
+    // POST request (default)
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $payloadJson);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'Authorization: Bearer ' . $bearer,
+    ]);
+}
 
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);

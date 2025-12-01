@@ -449,9 +449,58 @@ async function submitAddModal(btnId) {
     consent_phrase: `I agree to receive messages from ${trading_name} on WhatsApp.`
   };
   
-  console.log('TEST: Calling createSubscriber with payload:', createSubscriberPayload);
+  //console.log('TEST: Calling createSubscriber with payload:', createSubscriberPayload);
   
   try {
+    const getInfoByPhoneNumberResponse = await getInfoByPhoneNumber(btnId, phoneNumber);
+    console.log('TEST: getInfoByPhoneNumber response:', getInfoByPhoneNumberResponse);
+    //console.log('TEST: Extracted subscriber_id:', getInfoByPhoneNumberResponse.data[0].id);
+
+    const subscriber_id = getInfoByPhoneNumberResponse.data[0].id;
+    const retrieved_custom_fields = getInfoByPhoneNumberResponse.data[0].custom_fields;
+    console.log('TEST: Retrieved custom fields:', retrieved_custom_fields);
+
+    // Find last_interaction field and calculate time difference
+    const lastInteractionField = retrieved_custom_fields.find(field => field.name === 'last_interaction');
+    let isWithin24H = false;
+    
+    if (lastInteractionField && lastInteractionField.value) {
+      // Parse UTC timestamp
+      const lastInteractionDate = new Date(lastInteractionField.value.replace(' ', 'T') + 'Z');
+      const now = new Date();
+      
+      // Calculate difference in milliseconds
+      const diffMs = now - lastInteractionDate;
+      const diffSeconds = Math.floor(diffMs / 1000);
+      const diffMinutes = Math.floor(diffSeconds / 60);
+      const diffHours = Math.floor(diffMinutes / 60);
+      const diffDays = Math.floor(diffHours / 24);
+      
+      // Check if within 24 hours
+      isWithin24H = diffHours < 24;
+      
+      // Format time difference
+      let timeDiffString = '';
+      if (diffDays > 0) {
+        timeDiffString = `${diffDays} day(s) ${diffHours % 24} hour(s) ago`;
+      } else if (diffHours > 0) {
+        timeDiffString = `${diffHours} hour(s) ${diffMinutes % 60} minute(s) ago`;
+      } else if (diffMinutes > 0) {
+        timeDiffString = `${diffMinutes} minute(s) ${diffSeconds % 60} second(s) ago`;
+      } else {
+        timeDiffString = `${diffSeconds} second(s) ago`;
+      }
+      
+      console.log('TEST: Last interaction (UTC):', lastInteractionField.value);
+      console.log('TEST: Current time (UTC):', now.toISOString());
+      console.log('TEST: Time difference:', timeDiffString);
+      console.log('TEST: Total minutes ago:', diffMinutes);
+      console.log('TEST: isWithin24H:', isWithin24H);
+    } else {
+      console.log('TEST: last_interaction field not found');
+    }
+
+    /*
     const subscriberResponse = await createSubscriber(btnId, createSubscriberPayload);
     console.log('TEST: createSubscriber response:', subscriberResponse);
     
@@ -463,6 +512,7 @@ async function submitAddModal(btnId) {
       console.error('TEST: Failed to extract subscriber_id from response');
       return;
     }
+      */
     
   } catch (error) {
     console.error('TEST: createSubscriber error:', error);
