@@ -883,9 +883,9 @@ function flow_execution ($inputDataSet) {
               $retrieved_booking_detail = get_booking_detail('subscriber_id', $inputDataSet['subscriber_id'], true);
               $return_json = [
                   'success' => true,
-                  'booking_number' => count($retrieved_booking_detail) > 0 ? $retrieved_booking_detail[0]['booking_number'] : null,
-                  'booking_pax' => count($retrieved_booking_detail) > 0 ? $retrieved_booking_detail[0]['pax'] : null,
-                  'booking_list_id' => count($retrieved_booking_detail) > 0 ? $retrieved_booking_detail[0]['booking_list_id'] : null
+                  'booking_number' => count($retrieved_booking_detail) > 0 ? intval($retrieved_booking_detail[0]['booking_number']) : null,
+                  'booking_pax' => count($retrieved_booking_detail) > 0 ? intval($retrieved_booking_detail[0]['pax']) : null,
+                  'booking_list_id' => count($retrieved_booking_detail) > 0 ? intval($retrieved_booking_detail[0]['booking_list_id']) : null
               ];
               return $return_json;
           case 1.1:
@@ -894,8 +894,8 @@ function flow_execution ($inputDataSet) {
               $return_json = [
                   'success' => true,
                   'is_booking_duplicate' => count($retrieved_booking_detail) > 0 ? 1 : 0,
-                  'booking_number' => count($retrieved_booking_detail) > 0 ? $retrieved_booking_detail[0]['booking_number'] : null,
-                  'booking_pax' => count($retrieved_booking_detail) > 0 ? $retrieved_booking_detail[0]['pax'] : null
+                  'booking_number' => count($retrieved_booking_detail) > 0 ? intval($retrieved_booking_detail[0]['booking_number']) : null,
+                  'booking_pax' => count($retrieved_booking_detail) > 0 ? intval($retrieved_booking_detail[0]['pax']) : null
               ];
               return $return_json;
           case 1.2:
@@ -916,11 +916,12 @@ function flow_execution ($inputDataSet) {
 
               $return_json = [
                   'success' => $success,
-                  'booking_list_id' => $booking_list_id,
+                  'booking_list_id' => intval($booking_list_id),
                   'booking_ahead' => $booking_ahead,
                   'estimate_waiting_time' => estimate_waiting_time($booking_ahead),
                   'is_booking_loop' => $isBookingLoop,
-                  'booking_number' => $booking_number
+                  'booking_number' => $booking_number,
+                  'false_reason' => NULL
               ];
               return $return_json;
           case 1.9: // 로컬(WEB)에서 새 레코드 입력 시
@@ -941,7 +942,7 @@ function flow_execution ($inputDataSet) {
               $success = true;
               $return_json = [
                   'success' => $success,
-                  'booking_list_id' => $booking_list_id,
+                  'booking_list_id' => intval($booking_list_id),
                   'booking_number' => $booking_number
               ];
               return $return_json;
