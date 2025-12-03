@@ -355,9 +355,12 @@ function insert_to_booking_list_from_local(array $inputDataSet) {
     $badge1 = isset($inputDataSet['badge1']) && $inputDataSet['badge1'] !== '' ? strval($inputDataSet['badge1']) : null;
     $badge2 = isset($inputDataSet['badge2']) && $inputDataSet['badge2'] !== '' ? strval($inputDataSet['badge2']) : null;
     $badge3 = isset($inputDataSet['badge3']) && $inputDataSet['badge3'] !== '' ? strval($inputDataSet['badge3']) : null;
+    
+    // ws_last_interaction field - optional, default to NULL
+    $ws_last_interaction = isset($inputDataSet['ws_last_interaction']) && $inputDataSet['ws_last_interaction'] !== '' ? strval($inputDataSet['ws_last_interaction']) : null;
 
     if ($isPreparedStmt) {
-        $sql = 'INSERT INTO booking_list (store_id, booking_from, subscriber_id, customer_name, customer_phone, pax, time_created, dine_dateTime, status, q_level, badge1, badge2, badge3) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)';
+        $sql = 'INSERT INTO booking_list (store_id, booking_from, subscriber_id, customer_name, customer_phone, pax, time_created, dine_dateTime, status, q_level, badge1, badge2, badge3, ws_last_interaction) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
         $stmt = $mysqli->prepare($sql);
         if ($stmt === false) {
             $err = $mysqli->error;
@@ -365,7 +368,7 @@ function insert_to_booking_list_from_local(array $inputDataSet) {
             throw new Exception('Prepare failed: ' . $err);
         }
 
-        if (!$stmt->bind_param('ssississsisss', $store_id, $booking_from, $subscriber_id, $customer_name, $customer_phone, $pax, $time_created, $dine_dateTime, $status, $q_level, $badge1, $badge2, $badge3)) {
+        if (!$stmt->bind_param('ssississsissss', $store_id, $booking_from, $subscriber_id, $customer_name, $customer_phone, $pax, $time_created, $dine_dateTime, $status, $q_level, $badge1, $badge2, $badge3, $ws_last_interaction)) {
             $err = $stmt->error;
             $stmt->close();
             $mysqli->close();
@@ -395,7 +398,10 @@ function insert_to_booking_list_from_local(array $inputDataSet) {
         $badge2_sql = $badge2 !== null ? "'" . $mysqli->real_escape_string($badge2) . "'" : 'NULL';
         $badge3_sql = $badge3 !== null ? "'" . $mysqli->real_escape_string($badge3) . "'" : 'NULL';
         
-        $sql = "INSERT INTO booking_list (store_id, booking_from, subscriber_id, customer_name, customer_phone, pax, time_created, dine_dateTime, status, q_level, badge1, badge2, badge3) VALUES ('{$store_id_esc}','{$booking_from_esc}',{$subscriber_id},'{$customer_name_esc}','{$customer_phone_esc}',{$pax},'{$time_created_esc}','{$dine_dateTime_esc}','{$status_esc}',{$q_level},{$badge1_sql},{$badge2_sql},{$badge3_sql})";
+        // Handle ws_last_interaction value - NULL if not set
+        $ws_last_interaction_sql = $ws_last_interaction !== null ? "'" . $mysqli->real_escape_string($ws_last_interaction) . "'" : 'NULL';
+        
+        $sql = "INSERT INTO booking_list (store_id, booking_from, subscriber_id, customer_name, customer_phone, pax, time_created, dine_dateTime, status, q_level, badge1, badge2, badge3, ws_last_interaction) VALUES ('{$store_id_esc}','{$booking_from_esc}',{$subscriber_id},'{$customer_name_esc}','{$customer_phone_esc}',{$pax},'{$time_created_esc}','{$dine_dateTime_esc}','{$status_esc}',{$q_level},{$badge1_sql},{$badge2_sql},{$badge3_sql},{$ws_last_interaction_sql})";
         
         if (!$mysqli->query($sql)) {
             $err = $mysqli->error;
@@ -472,7 +478,7 @@ function update_booking_list($booking_list_id, $key, $value) {
     // Whitelist of allowed updatable columns to avoid SQL injection via column name
     $allowed = [
         'booking_from','subscriber_id','customer_name','customer_phone','pax',
-        'time_cleared','booking_number','booking_status'
+        'time_cleared','booking_number','booking_status','ws_last_interaction'
     ];
     if (!in_array($key, $allowed, true)) {
         throw new Exception('Invalid or disallowed column: ' . $key);
@@ -967,12 +973,68 @@ function flow_execution ($inputDataSet) {
               // Cancel Booking — delegate to cancel_booking()
               $booking_list_id = isset($inputDataSet['booking_list_id']) ? intval($inputDataSet['booking_list_id']) : 0;
               return cancel_booking($booking_list_id);
+          case 2.4:
+              // Update last interaction time
+              return update_last_interaction($inputDataSet);
           case 9.2:
               // Question response processing
               $booking_list_id = isset($inputDataSet['booking_list_id']) ? intval($inputDataSet['booking_list_id']) : 0;
               return processChatResponse($inputDataSet);
           default:
               throw new Exception('Unknown flow: ' . $flow);
+    }
+}
+
+/**
+ * update_last_interaction
+ * Update ws_last_interaction field for a booking identified by subscriber_id
+ * 
+ * @param array $inputDataSet - Contains 'subscriber_id' and 'last_interaction'
+ * @return array - Response with success status
+ * @throws Exception on database errors
+ */
+function update_last_interaction($inputDataSet) {
+    // Find booking by subscriber_id (today only)
+    $retrieved_booking_detail = get_booking_detail('subscriber_id', $inputDataSet['subscriber_id'], true);
+    
+    if (count($retrieved_booking_detail) === 0) {
+        return [
+            'success' => false,
+            'false_reason' => 'No active booking found for subscriber_id: ' . $inputDataSet['subscriber_id']
+        ];
+    }
+    
+    $booking_list_id = intval($retrieved_booking_detail[0]['booking_list_id']);
+    $last_interaction = isset($inputDataSet['last_interaction']) ? strval($inputDataSet['last_interaction']) : null;
+    
+    if ($last_interaction === null) {
+        return [
+            'success' => false,
+            'false_reason' => 'last_interaction value is missing'
+        ];
+    }
+    
+    try {
+        // Convert UTC timestamp to local time
+        // Expected format: '2025-12-01 05:54:23.51575' or '2025-12-01 05:54:23'
+        $utc_datetime = new DateTime($last_interaction, new DateTimeZone('UTC'));
+        $utc_datetime->setTimezone(new DateTimeZone(date_default_timezone_get()));
+        $local_time = $utc_datetime->format('Y-m-d H:i:s');
+        
+        // Update ws_last_interaction field with local time
+        $affected = update_booking_list($booking_list_id, 'ws_last_interaction', $local_time);
+        
+        return [
+            'success' => true,
+            'booking_list_id' => $booking_list_id,
+            'rows_affected' => $affected,
+            'local_time' => $local_time
+        ];
+    } catch (Exception $e) {
+        return [
+            'success' => false,
+            'false_reason' => 'Database update error: ' . $e->getMessage()
+        ];
     }
 }
 

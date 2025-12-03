@@ -1,4 +1,4 @@
-const version = '0.734';
+const version = '0.735';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 const isShowNewPaxBadge = false; // Set to true to show "New Pax" badge (false = only show Pax color change)
@@ -15,6 +15,21 @@ const scrollPositionTolerance = 5; // Tolerance (px) for determining if scrolled
  * Flow 9.2: Chat response
  */
 const flow_arr_that_can_trigger_handleNewEvent = [1.2, 1.9, 2.2, 9.2];
+
+/**
+ * Check if WhatsApp messaging is enabled (within 24 hours of ws_last_interaction)
+ * @param {string} ws_last_interaction - Timestamp string in format "YYYY-MM-DD HH:MM:SS"
+ * @returns {boolean} True if current time is within 24 hours of ws_last_interaction, false otherwise
+ */
+function checkLastInteraction(ws_last_interaction) {
+  if (!ws_last_interaction) return false;
+  
+  const wsEnabledDate = new Date(ws_last_interaction.replace(' ', 'T'));
+  const wsEnabled24HoursLater = wsEnabledDate.getTime() + (24 * 60 * 60 * 1000);
+  const now = Date.now();
+  
+  return now < wsEnabled24HoursLater;
+}
 
 // Display version in header
 document.addEventListener('DOMContentLoaded', () => {
@@ -626,17 +641,17 @@ async function getServerSideUpdate() {
         fetchChatHistory()
       ]);
 
-      /*
-      console.log('SERVER_UPDATE: All data loaded successfully');
-      console.log('- Waitlist items:', waitlistData?.length || 0);
-      console.log('- Chat records:', chatData?.length || 0);
-      */
+      
+      //console.log('SERVER_UPDATE: All data loaded successfully');
+      //console.log('- Waitlist items:', waitlistData?.length || 0);
+      //console.log('- Chat records:', chatData?.length || 0);
+      
 
       // 전역 변수 오버라이드 (실시간 데이터만)
       waitlist = waitlistData;
       chatlist = chatData;
 
-      //console.log(waitlist);
+      console.log(waitlist);
 
       //console.log('SERVER_UPDATE: Global variables updated, re-rendering waitlist...');
 
@@ -1100,8 +1115,11 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
 
   if (buttonDef.functionName === 'handleAsk') {
     if (item) {
-      // Disable Ask button for WEB bookings (based on isEnableReadyAskBtn_for_webBooking setting) or when no questions available
-      if (item.booking_from === 'WEB' && !isEnableReadyAskBtn_for_webBooking) {
+      // Check if ws_last_interaction is within 24 hours
+      const isWithin24Hours = checkLastInteraction(item.ws_last_interaction);
+
+      // Disable Ask button for WEB bookings if outside 24-hour window or when no questions available
+      if (!isWithin24Hours) {
         isDisabled = true;
         const disabledBtnClass = isMobile ? 'mobile-btn-disabled' : 'btn-disabled';
         classes = `${baseClasses} ${disabledBtnClass} ${flexClass}`;
@@ -1117,8 +1135,11 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
     }
   } else if (buttonDef.functionName === 'handleReady') {
     if (item) {
-      // Disable Ready button for WEB bookings (based on isEnableReadyAskBtn_for_webBooking setting) or when already ready
-      if ((item.booking_from === 'WEB' && !isEnableReadyAskBtn_for_webBooking) || item.q_level >= 300) {
+      // Check if ws_last_interaction is within 24 hours
+      const isWithin24Hours = checkLastInteraction(item.ws_last_interaction);
+
+      // Disable Ready button for bookings if outside 24-hour window or when already ready
+      if ((!isWithin24Hours) || item.q_level >= 300) {
         isDisabled = true;
         const disabledBtnClass = isMobile ? 'mobile-btn-disabled' : 'btn-disabled';
         classes = `${baseClasses} ${disabledBtnClass} ${flexClass}`;

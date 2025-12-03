@@ -395,7 +395,6 @@ async function submitAddModal(btnId) {
   const phoneNumberInput = document.getElementById('phone-number-input');
   const phoneNumberRaw = phoneNumberInput.value.trim();
 
-  /* commented out for testing - uncomment after test
   const pax = parseInt(document.getElementById('pax-counter').textContent);
   const customerNameRaw = document.getElementById('customer-name-input').value.trim();
   const customerName = customerNameRaw || 'Web User'; // Default to 'Web User' if empty
@@ -403,7 +402,9 @@ async function submitAddModal(btnId) {
   const isSplitTableAllowed = modalSplitTable;
   const isSharingTableAllowed = modalSharingTable;
   const isWebBooking = modalIsWebBooking;
-  */
+
+  let subscriber_id;
+  let last_interaction_time = null;
 
   // Validate phone number
   let digits = phoneNumberRaw.replace(/\D/g, '');
@@ -442,101 +443,133 @@ async function submitAddModal(btnId) {
     phoneNumber = '60' + phoneNumber;
   }
 
-  // Create subscriber first via ManyChat API
-  const createSubscriberPayload = {
-    whatsapp_phone: phoneNumber,
-    opt_in_whatsapp: true,
-    consent_phrase: `I agree to receive messages from ${trading_name} on WhatsApp.`
-  };
+
 
   //console.log('GET_INFO: Calling createSubscriber with payload:', createSubscriberPayload);
 
   try {
     const getInfoByPhoneNumberResponse = await getInfoByPhoneNumber(btnId, phoneNumber);
     console.log('GET_INFO: getInfoByPhoneNumber response:', getInfoByPhoneNumberResponse);
-    //console.log('GET_INFO: Extracted subscriber_id:', getInfoByPhoneNumberResponse.data[0].id);
 
-    let subscriber_id;
-
+    // Subscriber does not exist, create new subscriber
     if (getInfoByPhoneNumberResponse.data.length === 0) {
-      // Subscriber does not exist, create new subscriber
-      //const subscriberResponse = await createSubscriber(btnId, createSubscriberPayload);
-      //console.log('GET_INFO: createSubscriber response:', subscriberResponse);
+
+      const createSubscriberPayload = {
+        whatsapp_phone: phoneNumber,
+        opt_in_whatsapp: true,
+        consent_phrase: `I agree to receive messages from ${trading_name} on WhatsApp.`,
+      };
+
+      const subscriberResponse = await createSubscriber(btnId, createSubscriberPayload);
+      console.log('CREATE_SUBSCRIBER: createSubscriber response:', subscriberResponse);
+
+      // Extract subscriber_id from response
+      subscriber_id = subscriberResponse?.data?.id;
+      console.log('CREATE_SUBSCRIBER: Created with subscriber_id:', subscriber_id);
+
+      if (!subscriber_id) {
+        console.error('CREATE_SUBSCRIBER: Failed to extract subscriber_id from response');
+        return;
+      }
+
+      // Update whatsapp number in custom fields for new subscriber
+      const updatePhoneNumber = await updateManyChatCustomFields(btnId, {
+        subscriber_id,
+        fields: [
+          { field_id: 13974135, field_value: phoneNumber }
+        ]
+      });
+
+      if (updatePhoneNumber && updatePhoneNumber.status === 'success') {
+        console.log('✓ ManyChat API call successful - Phone in Custom fields updated for subscriber:', subscriber_id);
+      }
+
+
+
+      // Subscriber exists, retrieve subscriber info
     } else {
       subscriber_id = getInfoByPhoneNumberResponse.data[0].id;
+      console.log('GET_INFO: Retrieved subscriber_id:', subscriber_id);
+
       const retrieved_custom_fields = getInfoByPhoneNumberResponse.data[0].custom_fields;
       //console.log('GET_INFO: Retrieved custom fields:', retrieved_custom_fields);
 
-      // Check if last interaction is within 24 hours
-      const isWithin24H = getInfoFromCustomFields(retrieved_custom_fields, 'last_interaction');
-      console.log('GET_INFO: isWithin24H:', isWithin24H);
+      const last_interaction = retrieved_custom_fields.find(field => field.name === 'last_interaction');
+      last_interaction_time = last_interaction ? last_interaction.value : null;
+
+      // Convert UTC time to local time and remove fractional seconds
+      if (last_interaction_time) {
+        // Remove fractional seconds (e.g., '2025-12-03 04:10:56.604861' -> '2025-12-03 04:10:56')
+        last_interaction_time = last_interaction_time.split('.')[0];
+
+        // Parse as UTC and convert to local time
+        const utcDate = new Date(last_interaction_time + 'Z'); // Add 'Z' to indicate UTC
+
+        // Format to 'YYYY-MM-DD HH:MM:SS' in local timezone
+        const year = utcDate.getFullYear();
+        const month = String(utcDate.getMonth() + 1).padStart(2, '0');
+        const day = String(utcDate.getDate()).padStart(2, '0');
+        const hours = String(utcDate.getHours()).padStart(2, '0');
+        const minutes = String(utcDate.getMinutes()).padStart(2, '0');
+        const seconds = String(utcDate.getSeconds()).padStart(2, '0');
+
+        last_interaction_time = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      }
+
+      console.log('GET_INFO: Retrieved last_interaction_time (local):', last_interaction_time);
 
     }
-
-    /*
-    const subscriberResponse = await createSubscriber(btnId, createSubscriberPayload);
-    console.log('GET_INFO: createSubscriber response:', subscriberResponse);
-    
-    // Extract subscriber_id from response
-    const subscriber_id = subscriberResponse?.data?.id;
-    console.log('GET_INFO: Extracted subscriber_id:', subscriber_id);
-    
-    if (!subscriber_id) {
-      console.error('GET_INFO: Failed to extract subscriber_id from response');
-      return;
-    }
-      */
 
   } catch (error) {
     console.error('GET_INFO: createSubscriber error:', error);
     return;
   }
 
-  /* COMMENTED OUT FOR TESTING - UNCOMMENT AFTER TEST
   // Format current time as yyyy-mm-dd hh:mm:ss
   const now = new Date();
   const timeCreated = formatDateTime(now);
-  
+
   // Create badge array
   const badge = [];
-  
+
   // Add seating preference badge
   if (seating === 'inside') {
     badge.push('IN');
   } else if (seating === 'outside') {
     badge.push('OUT');
   }
-  
+
   // Add split table badge
   if (isSplitTableAllowed) {
     badge.push('SPLIT');
   }
-  
+
   // Add sharing table badge
   if (isSharingTableAllowed) {
     badge.push('SHARE');
   }
-  
+
   // Create form data object
   // formData structure 수정 시 local_receiver.php도 함께 수정 필요
   const formData = {
     booking_flow: 1.9,
     store_id: store_id,
     booking_from: 'WEB',
-    subscriber_id: phoneNumber,
+    subscriber_id: subscriber_id,
     customer_name: customerName,
     customer_phone: phoneNumber,
     pax: pax,
     time_created: timeCreated,
     status: 'Waiting',
     q_level: 100,
+    ws_last_interaction: last_interaction_time,
   };
-  
+
   // Add badges as badge1, badge2, badge3, etc.
   badge.forEach((badgeText, index) => {
     formData[`badge${index + 1}`] = badgeText;
   });
-  
+
   // Add dine_dateTime
   if (isWebBooking && modalWebBookingTime) {
     const dineDate = new Date(modalWebBookingTime);
@@ -545,7 +578,7 @@ async function submitAddModal(btnId) {
     // For waitlist, dine_dateTime is same as time_created
     formData.dine_dateTime = timeCreated;
   }
-  
+
   console.log('Form data:', formData);
 
   // Send data to local_receiver.php
@@ -556,60 +589,60 @@ async function submitAddModal(btnId) {
     },
     body: JSON.stringify(formData)
   })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  })
-  .then(data => {
-    console.log('Server response:', data);
-    
-    if (data.success) {
-      toastMsg('New record successfully inserted');
-      closeAddModal();
-    } else {
-      // Handle failure case
-      const phoneInput = document.getElementById('phone-number-input');
-      
-      // Reset phone number input
-      phoneInput.value = '';
-      
-      // Highlight with error state
-      phoneInput.classList.remove('border-slate-600', 'focus:ring-amber-400');
-      phoneInput.classList.add('border-red-500', 'focus:ring-red-500');
-      
-      // Show error message in toast
-      const errorMsg = data.false_reason || 'Failed to insert record';
-      
-      const originalPlaceholder = phoneInput.placeholder;
-      // Show error state
-      phoneInput.classList.remove('border-slate-600', 'focus:ring-amber-400');
-      phoneInput.classList.add('border-red-500', 'focus:ring-red-500');
-      phoneInput.placeholder = errorMsg;
-      
-      // Restore after 2 seconds
-      setTimeout(() => {
-        phoneInput.classList.remove('border-red-500', 'focus:ring-red-500');
-        phoneInput.classList.add('border-slate-600', 'focus:ring-amber-400');
-        phoneInput.placeholder = originalPlaceholder;
-      }, 2000);
-      
-      // Focus the input
-      phoneInput.focus();
-      
-      // Add animation
-      phoneInput.classList.add('animate-pulse');
-      setTimeout(() => {
-        phoneInput.classList.remove('animate-pulse');
-      }, 1000);
-    }
-  })
-  .catch((error) => {
-    console.error('Failed to insert record:', error);
-    toastMsg('Failed to insert record');
-  });
-  END OF COMMENTED OUT FOR TESTING */
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Server response:', data);
+
+      if (data.success) {
+        toastMsg('New record successfully inserted');
+        closeAddModal();
+      } else {
+        // Handle failure case
+        const phoneInput = document.getElementById('phone-number-input');
+
+        // Reset phone number input
+        phoneInput.value = '';
+
+        // Highlight with error state
+        phoneInput.classList.remove('border-slate-600', 'focus:ring-amber-400');
+        phoneInput.classList.add('border-red-500', 'focus:ring-red-500');
+
+        // Show error message in toast
+        const errorMsg = data.false_reason || 'Failed to insert record';
+
+        const originalPlaceholder = phoneInput.placeholder;
+        // Show error state
+        phoneInput.classList.remove('border-slate-600', 'focus:ring-amber-400');
+        phoneInput.classList.add('border-red-500', 'focus:ring-red-500');
+        phoneInput.placeholder = errorMsg;
+
+        // Restore after 2 seconds
+        setTimeout(() => {
+          phoneInput.classList.remove('border-red-500', 'focus:ring-red-500');
+          phoneInput.classList.add('border-slate-600', 'focus:ring-amber-400');
+          phoneInput.placeholder = originalPlaceholder;
+        }, 2000);
+
+        // Focus the input
+        phoneInput.focus();
+
+        // Add animation
+        phoneInput.classList.add('animate-pulse');
+        setTimeout(() => {
+          phoneInput.classList.remove('animate-pulse');
+        }, 1000);
+      }
+    })
+    .catch((error) => {
+      console.error('Failed to insert record:', error);
+      toastMsg('Failed to insert record');
+    });
+
 }
 
 /**
@@ -1016,59 +1049,3 @@ function toggleCanSplit() {
   }
 }
 
-/**
- * Check if last interaction is within 24 hours
- * @param {Array} custom_fields - Array of custom field objects from ManyChat API
- * @returns {boolean} - True if last interaction is within 24 hours, false otherwise
- */
-function getInfoFromCustomFields(custom_fields, field_name = 'last_interaction') {
-  // Find last_interaction field
-  const selectedField = custom_fields.find(field => field.name === field_name);
-
-  if (!selectedField || !selectedField.value) {
-    console.log(`GET_INFO: ${field_name} field not found`);
-    return false;
-  }
-
-  switch (field_name) {
-    case 'last_interaction':
-      // Parse UTC timestamp
-      const lastInteractionDate = new Date(selectedField.value.replace(' ', 'T') + 'Z');
-      const now = new Date();
-
-      // Calculate difference in milliseconds
-      const diffMs = now - lastInteractionDate;
-      const diffSeconds = Math.floor(diffMs / 1000);
-      const diffMinutes = Math.floor(diffSeconds / 60);
-      const diffHours = Math.floor(diffMinutes / 60);
-      const diffDays = Math.floor(diffHours / 24);
-
-      // Check if within 24 hours
-      const isWithin24H = diffHours < 24;
-
-      // Format time difference
-      let timeDiffString = '';
-      if (diffDays > 0) {
-        timeDiffString = `${diffDays} day(s) ${diffHours % 24} hour(s) ago`;
-      } else if (diffHours > 0) {
-        timeDiffString = `${diffHours} hour(s) ${diffMinutes % 60} minute(s) ago`;
-      } else if (diffMinutes > 0) {
-        timeDiffString = `${diffMinutes} minute(s) ${diffSeconds % 60} second(s) ago`;
-      } else {
-        timeDiffString = `${diffSeconds} second(s) ago`;
-      }
-
-      //console.log('GET_INFO: Last interaction (UTC):', selectedField.value);
-      //console.log('GET_INFO: Current time (UTC):', now.toISOString());
-      //console.log('GET_INFO: Time difference:', timeDiffString);
-      //console.log('GET_INFO: Total minutes ago:', diffMinutes);
-      //console.log('GET_INFO: isWithin24H:', isWithin24H);
-
-      return isWithin24H;
-
-    default:
-      console.log(`GET_INFO: No handler for field ${field_name}`);
-      return false;
-  }
-
-}

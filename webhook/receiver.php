@@ -176,6 +176,12 @@ if ($method !== 'POST' || $body === false || $body === '') {
         'booking_flow' => 2.3,
         'booking_list_id' => 56,
     ];
+    $inputDataSet_2_4 = [
+        'store_id' => 'DL_Sunway_Geo',
+        'booking_flow' => 2.4,
+        'subscriber_id' => 289484200,
+        'last_interaction' => '2025-12-01 05:54:23.51575'
+    ];
     $inputDataSet_9_2 = [
         'store_id' => 'DL_Sunway_Geo',
         'booking_flow' => 9.2,
