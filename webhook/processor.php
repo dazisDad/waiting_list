@@ -77,7 +77,74 @@ function get_booking_list($store_id, $isToday = true, $dateSearch = null) {
     return $rows;
 }
 
+/**
+ * add_to_history_chat
+ * Insert a new record into the history_chat table with current datetime.
+ * 
+ * @param int $booking_list_id - The booking list ID to associate the chat with
+ * @param string $qna - The question/answer text
+ * @param int $qna_id - The ID of the question/answer from ask_question_list
+ * @return bool - Returns true on success
+ * @throws Exception on database errors
+ */
+function add_to_history_chat($booking_list_id, $qna, $qna_id) {
+    global $isPreparedStmt;
+    
+    $cfg = get_db_config();
+    if ($cfg['user'] === '' || $cfg['name'] === '') {
+        throw new Exception('Database configuration incomplete: DB_USERNAME and DB_NAME are required');
+    }
 
+    $mysqli = new mysqli($cfg['host'], $cfg['user'], $cfg['pass'], $cfg['name']);
+    if ($mysqli->connect_errno) {
+        throw new Exception('DB connect error: ' . $mysqli->connect_error);
+    }
+
+    // Get current datetime in MySQL format
+    $current_datetime = date('Y-m-d H:i:s');
+
+    if ($isPreparedStmt) {
+        $sql = 'INSERT INTO history_chat (booking_list_id, dateTime, qna, qna_id) VALUES (?, ?, ?, ?)';
+        $stmt = $mysqli->prepare($sql);
+        if ($stmt === false) {
+            $err = $mysqli->error;
+            $mysqli->close();
+            throw new Exception('Prepare failed for history_chat: ' . $err);
+        }
+
+        if (!$stmt->bind_param('issi', $booking_list_id, $current_datetime, $qna, $qna_id)) {
+            $err = $stmt->error;
+            $stmt->close();
+            $mysqli->close();
+            throw new Exception('Bind failed for history_chat: ' . $err);
+        }
+
+        if (!$stmt->execute()) {
+            $err = $stmt->error;
+            $stmt->close();
+            $mysqli->close();
+            throw new Exception('Execute failed for history_chat: ' . $err);
+        }
+
+        $stmt->close();
+    } else {
+        $booking_list_id_safe = intval($booking_list_id);
+        $current_datetime_esc = $mysqli->real_escape_string($current_datetime);
+        $qna_esc = $mysqli->real_escape_string($qna);
+        $qna_id_safe = intval($qna_id);
+        
+        $sql = "INSERT INTO history_chat (booking_list_id, dateTime, qna, qna_id) VALUES ({$booking_list_id_safe}, '{$current_datetime_esc}', '{$qna_esc}', {$qna_id_safe})";
+        
+        if (!$mysqli->query($sql)) {
+            $err = $mysqli->error;
+            $mysqli->close();
+            throw new Exception('Query failed for history_chat: ' . $err);
+        }
+    }
+
+    $mysqli->close();
+    return true;
+}
 
 /**
  * validatePax
@@ -412,6 +479,7 @@ function insert_to_booking_list_from_local(array $inputDataSet) {
         $insertId = $mysqli->insert_id;
     }
 
+    /* // WEB 예약의 경우 history_chat 테이블에 Waiting 삽입하지 않음
     // Insert into history_chat table
     $qna = 'Waiting';
     $qna_id = 8; // Default id for 'Waiting'
@@ -452,6 +520,7 @@ function insert_to_booking_list_from_local(array $inputDataSet) {
             throw new Exception('Query failed for history_chat: ' . $err);
         }
     }
+    */
 
     $mysqli->close();
     return intval($insertId);
@@ -478,7 +547,7 @@ function update_booking_list($booking_list_id, $key, $value) {
     // Whitelist of allowed updatable columns to avoid SQL injection via column name
     $allowed = [
         'booking_from','subscriber_id','customer_name','customer_phone','pax',
-        'time_cleared','booking_number','booking_status','ws_last_interaction'
+        'time_cleared','booking_number','booking_status','ws_last_interaction','status'
     ];
     if (!in_array($key, $allowed, true)) {
         throw new Exception('Invalid or disallowed column: ' . $key);
@@ -977,6 +1046,28 @@ function flow_execution ($inputDataSet) {
           case 2.4:
               // Update last interaction time
               return update_last_interaction($inputDataSet);
+          case 2.5:
+              // Booking confirmation
+              $retrieved_booking_detail = get_booking_detail('subscriber_id', $inputDataSet['subscriber_id'], true);
+              $booking_list_id = count($retrieved_booking_detail) > 0 ? intval($retrieved_booking_detail[0]['booking_list_id']) : 0;
+              $is_booking_confirmed = $inputDataSet['is_booking_confirmed'];
+              update_booking_list($booking_list_id, 'status', 'Waiting');
+              if ($is_booking_confirmed) {
+                  // Update booking_status to 'Confirmed'
+                  $qna = 'Customer Confirmed';
+                  $qna_id = 9; // Default id for 'Customer Confirmed'
+                  add_to_history_chat($booking_list_id, $qna, $qna_id);
+              } else {
+                  // Update booking_status to 'Confirmed'
+                  $qna = 'Cancel Requested';
+                  $qna_id = 9; // Default id for 'Customer Confirmed'
+                  add_to_history_chat($booking_list_id, $qna, $qna_id);
+              }
+              return [
+                      'success' => $is_booking_confirmed,
+                      'booking_list_id' => $booking_list_id
+                  ];
+              
           case 9.2:
               // Question response processing
               $booking_list_id = isset($inputDataSet['booking_list_id']) ? intval($inputDataSet['booking_list_id']) : 0;
@@ -985,6 +1076,8 @@ function flow_execution ($inputDataSet) {
               throw new Exception('Unknown flow: ' . $flow);
     }
 }
+
+
 
 /**
  * update_last_interaction

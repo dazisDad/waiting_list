@@ -246,10 +246,12 @@ if (json_last_error() !== JSON_ERROR_NONE) {
     exit;
 }
 
+
 // Add timestamp for duplicate detection in frontend
 if (!isset($json['_force_update'])) {
     $json['_force_update'] = round(microtime(true) * 1000);
 }
+
 
 // Ensure destination directory exists
 $destDir = dirname($dest);

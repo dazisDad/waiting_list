@@ -560,7 +560,7 @@ async function submitAddModal(btnId) {
     customer_phone: phoneNumber,
     pax: pax,
     time_created: timeCreated,
-    status: 'Waiting',
+    status: checkLastInteraction(last_interaction_time) ? 'Waiting' : 'Booked',
     q_level: 100,
     ws_last_interaction: last_interaction_time,
   };

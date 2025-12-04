@@ -14,7 +14,7 @@ const scrollPositionTolerance = 5; // Tolerance (px) for determining if scrolled
  * Flow 1.2: New booking created via waitlist form
  * Flow 9.2: Chat response
  */
-const flow_arr_that_can_trigger_handleNewEvent = [1.2, 1.9, 2.2, 9.2];
+const flow_arr_that_can_trigger_handleNewEvent = [1.2, 1.9, 2.2, 2.5, 9.2];
 
 /**
  * Check if WhatsApp messaging is enabled (within 24 hours of ws_last_interaction)
@@ -225,44 +225,24 @@ function handleNewEvent(obj) {
           localStorage.setItem(`chatBadgeHidden_${today}`, JSON.stringify(chatBadgeHidden));
           //console.log('HANDLE_NEW_EVENT: Saved to localStorage:', `chatBadgeHidden_${today}`);
 
-          // Show badge via DOM immediately with appropriate text
-          requestAnimationFrame(() => {
-            const chatBadgeSpan = document.getElementById(`chat-new-badge-${bookingItem.booking_list_id}`);
-            //console.log('HANDLE_NEW_EVENT: Looking for badge element with ID:', `chat-new-badge-${bookingItem.booking_list_id}`);
-            //console.log('HANDLE_NEW_EVENT: Badge element found:', chatBadgeSpan);
+          // Check if this is a pax update (booking_flow 2.2)
+          const isPaxUpdate = Math.abs(lastItem.booking_flow - 2.2) < 0.0001;
+          const badgeText = isPaxUpdate ? 'New Pax' : 'NEW';
 
-            if (chatBadgeSpan) {
-              // Check if this is a pax update (booking_flow 2.2)
-              const isPaxUpdate = Math.abs(lastItem.booking_flow - 2.2) < 0.0001;
-              const badgeText = isPaxUpdate ? 'New Pax' : 'NEW';
+          console.log(`HANDLE_NEW_EVENT: 🏷️ BADGE - Flow: ${lastItem.booking_flow}, isPaxUpdate: ${isPaxUpdate}, badgeText: ${badgeText}`);
 
-              console.log(`HANDLE_NEW_EVENT: 🏷️ BADGE - Flow: ${lastItem.booking_flow}, isPaxUpdate: ${isPaxUpdate}, badgeText: ${badgeText}`);
+          // Save badge type to chatBadgeType for persistence across refreshes (Always save type)
+          chatBadgeType[badgeKey] = badgeText;
+          localStorage.setItem(`chatBadgeType_${today}`, JSON.stringify(chatBadgeType));
 
-              // Save badge type to chatBadgeType for persistence across refreshes (Always save type)
-              chatBadgeType[badgeKey] = badgeText;
-              localStorage.setItem(`chatBadgeType_${today}`, JSON.stringify(chatBadgeType));
+          // Update Pax colors if this is a "New Pax" badge (even if badge is hidden)
+          if (isPaxUpdate) {
+            console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - Updating Pax colors for booking_number:', bookingItem.booking_number);
+            updatePaxColors(bookingItem.booking_number);
+          }
 
-              // Only show badge DOM element if it's NOT a pax update OR if isShowNewPaxBadge is true
-              if (!isPaxUpdate || isShowNewPaxBadge) {
-                chatBadgeSpan.textContent = badgeText;
-                chatBadgeSpan.style.display = 'inline';
-                console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - ✓ Badge set to visible:', badgeText);
-              } else {
-                console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - ✗ New Pax badge suppressed by configuration (isShowNewPaxBadge=false)');
-              }
-
-              // Update Pax colors if this is a "New Pax" badge (even if badge is hidden)
-              if (isPaxUpdate) {
-                console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - Updating Pax colors for booking_number:', bookingItem.booking_number);
-                updatePaxColors(bookingItem.booking_number);
-              }
-            } else {
-              console.log(`HANDLE_NEW_EVENT: 🏷️ BADGE - ✗ Badge element NOT FOUND in DOM (ID: chat-new-badge-${bookingItem.booking_list_id})`);
-            }
-
-            console.log('HANDLE_NEW_EVENT: Event processing completed');
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-          });
+          console.log('HANDLE_NEW_EVENT: Event processing completed');
+          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         } else {
           console.log('HANDLE_NEW_EVENT: ✗ Could not find updated item with required fields');
           console.log('HANDLE_NEW_EVENT: Event processing completed');
@@ -1020,7 +1000,7 @@ const actionButtonDefinitions = [
     textColor: '#34d399',
     isBackgroundFill: false,
     functionName: 'handleCall',
-    showForStatus: ['Waiting', 'Ready', 'Awaiting Confirmation'], // Show for these statuses
+    showForStatus: ['Booked', 'Waiting', 'Ready', 'Awaiting Confirmation'], // Show for these statuses
     mobileBtnClass: 'mobile-btn-call',
     desktopBtnClass: 'btn-call',
     isMobileOnly: true // Only show on mobile
@@ -1054,7 +1034,7 @@ const actionButtonDefinitions = [
     textColor: '#34d399',
     isBackgroundFill: false,
     functionName: 'handleInitiateWhatsapp',
-    showForStatus: ['Waiting', 'Ready', 'Awaiting Confirmation'],
+    showForStatus: ['Booked', 'Awaiting Confirmation'],
     mobileBtnClass: 'mobile-btn-initiate-whatsapp',
     desktopBtnClass: 'btn-initiate-whatsapp',
     isReplacementButton: true // Special flag to indicate this replaces disabled buttons
@@ -1066,7 +1046,7 @@ const actionButtonDefinitions = [
     textColor: '#8b5cf6', // purple text for outline style
     isBackgroundFill: false,
     functionName: 'handleArrive',
-    showForStatus: ['Waiting', 'Ready', 'Awaiting Confirmation'],
+    showForStatus: ['Booked', 'Waiting', 'Ready', 'Awaiting Confirmation'],
     mobileBtnClass: 'mobile-btn-arrive',
     desktopBtnClass: 'btn-arrive'
   },
@@ -1077,7 +1057,7 @@ const actionButtonDefinitions = [
     textColor: '#f87171',
     isBackgroundFill: false,
     functionName: 'handleCancel',
-    showForStatus: ['Waiting', 'Ready', 'Awaiting Confirmation'],
+    showForStatus: ['Booked', 'Waiting', 'Ready', 'Awaiting Confirmation'],
     mobileBtnClass: 'mobile-btn-cancel',
     desktopBtnClass: 'btn-cancel'
   },
@@ -1176,10 +1156,9 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
     }
   } else if (buttonDef.functionName === 'handleInitiateWhatsapp') {
     // Special handling for Initiate Whatsapp button - spans width of Ready + Ask + gap
-    // Show as disabled if ws_last_interaction is within 24 hours
+    // Show as disabled if status is 'Awaiting Confirmation'
     if (item) {
-      const isWithin24Hours = checkLastInteraction(item.ws_last_interaction);
-      if (isWithin24Hours) {
+      if (item.status === 'Awaiting Confirmation') {
         isDisabled = true;
         const disabledBtnClass = isMobile ? 'mobile-btn-disabled' : 'btn-disabled';
         classes = `${baseClasses} ${disabledBtnClass} ${flexClass}`;
@@ -3591,7 +3570,7 @@ function renderWaitlist() {
     // Check if this row is actually selected (for showing all messages vs last one)
     const isRowSelected = (selectedRowId === item.booking_number) || (expandedRowId === item.booking_number);
 
-    // Check if this is a WEB booking - show simple webBooking info instead of chat history
+    // Check if this is a WEB booking - show webBooking header line first, then chat history
     if (item.booking_from === 'WEB') {
       const chatClass = statusPriority === 0 ? 'text-slate-400' : 'text-slate-400';
 
@@ -3636,21 +3615,25 @@ function renderWaitlist() {
 
       // Add NEW badge for Web Booking (only for active items)
       let webBookingBadge = '';
-      if (item.status === 'Waiting' || item.status === 'Ready') {
+      if (item.status === 'Waiting' || item.status === 'Ready' || item.status === 'Booked' || item.status === 'Awaiting Confirmation') {
         const chatBadgeId = `chat-new-badge-${item.booking_list_id}`;
         const badgeKey = `${item.subscriber_id}_${item.booking_list_id}`;
         const isChatHidden = chatBadgeHidden[badgeKey];
+        const badgeText = chatBadgeType[badgeKey] || 'NEW';
         if (isChatHidden) {
-          webBookingBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-slate-800 px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: none;">NEW</span>`;
+          webBookingBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-slate-800 px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: none;">${badgeText}</span>`;
         } else {
-          webBookingBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-slate-800 px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: inline;">NEW</span>`;
+          webBookingBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-slate-800 px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: inline;">${badgeText}</span>`;
         }
       }
 
-      chatHistoryHTML = `<div class="text-xs ${chatClass} leading-relaxed" ${dataAttributes}>↳ <span class="${webBookingHighlight}">${bookingText}</span>${webBookingBadge}</div>`;
+      // Start with Web booking header line - hide when not selected if there are chat messages
+      const hasStatusMessage = item.status === 'Arrived' || item.status === 'Cancelled';
+      const webHeaderHideStyle = (!isRowSelected && chatHistory.length > 0) ? ' style="display: none;"' : '';
+      chatHistoryHTML = `<div class="text-xs ${chatClass} leading-relaxed" ${dataAttributes}${webHeaderHideStyle}>↳ <span class="${webBookingHighlight}">${bookingText}</span>${webBookingBadge}</div>`;
 
       // Add status message if item is Arrived or Cancelled with completion time (always show for WEB bookings)
-      if (item.status === 'Arrived' || item.status === 'Cancelled') {
+      if (hasStatusMessage) {
         // Apply color based on status: purple for Arrived (#8b5cf6), red for Cancelled (#f87171)
         const statusColor = item.status === 'Arrived' ? 'text-purple-500' : 'text-red-400';
         const completionTime = new Date(item.time_cleared);
@@ -3662,14 +3645,17 @@ function renderWaitlist() {
         });
         chatHistoryHTML += `<div class="text-xs ${statusColor} leading-relaxed">↳ ${item.status} @ ${timeString}</div>`;
       }
-    } else if (chatHistory.length > 0) {
-      // Regular chat history for non-WEB bookings
+    }
+
+    // Show chat history for all bookings (including WEB) if chatHistory exists
+    if (chatHistory.length > 0) {
+      // Chat history for all bookings (WEB and non-WEB)
       const chatClass = statusPriority === 0 ? 'text-slate-400' : 'text-slate-400';
       const hasStatusMessage = item.status === 'Arrived' || item.status === 'Cancelled';
 
       // Always render ALL messages in DOM, but hide non-selected ones with display:none
       // This allows toggleChatHistoryDisplay to work without re-rendering
-      chatHistoryHTML = chatHistory.map((chat, index) => {
+      const chatHistoryMessagesHTML = chatHistory.map((chat, index) => {
         const originalIndex = index;
         let elapsedTime;
         const isLastMessage = originalIndex === chatHistory.length - 1;
@@ -3728,9 +3714,9 @@ function renderWaitlist() {
         }
 
         // Add NEW badge span for last message only - render with correct state immediately
-        // Only show chat badge for active items (Waiting/Ready), not for completed items (Arrived/Cancelled)
+        // Only show chat badge for active items (Waiting/Ready/Booked/Awaiting Confirmation), not for completed items (Arrived/Cancelled)
         let chatBadge = '';
-        if (isLastMessage && (item.status === 'Waiting' || item.status === 'Ready')) {
+        if (isLastMessage && (item.status === 'Waiting' || item.status === 'Ready' || item.status === 'Booked' || item.status === 'Awaiting Confirmation')) {
           const chatBadgeId = `chat-new-badge-${item.booking_list_id}`;
           // Chat badge: shown by default, hidden if user clicked row (tracked in chatBadgeHidden)
           const badgeKey = `${item.subscriber_id}_${item.booking_list_id}`;
@@ -3763,6 +3749,14 @@ function renderWaitlist() {
 
         return `<div class="text-xs ${messageChatClass} leading-relaxed" ${dataAttr}${hideStyle}>↳ [${elapsedTime}] ${chat.qna}${chatBadge}</div>`; //arrow
       }).join('');
+
+      // For WEB bookings, append chat history after the Web booking header line
+      // For non-WEB bookings, this is the entire chatHistoryHTML
+      if (item.booking_from === 'WEB') {
+        chatHistoryHTML += chatHistoryMessagesHTML;
+      } else {
+        chatHistoryHTML = chatHistoryMessagesHTML;
+      }
 
       // Add status message if item is Arrived or Cancelled with completion time
       if (hasStatusMessage) {
