@@ -1,4 +1,4 @@
-const version = '0.738';
+const version = '0.739';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 const isShowNewPaxBadge = false; // Set to true to show "New Pax" badge (false = only show Pax color change)
@@ -234,6 +234,14 @@ function handleNewEvent(obj) {
           // Save badge type to chatBadgeType for persistence across refreshes (Always save type)
           chatBadgeType[badgeKey] = badgeText;
           localStorage.setItem(`chatBadgeType_${today}`, JSON.stringify(chatBadgeType));
+
+          // Immediately update the badge display in the DOM
+          const chatBadgeSpan = document.getElementById(`chat-new-badge-${bookingItem.booking_list_id}`);
+          if (chatBadgeSpan) {
+            chatBadgeSpan.textContent = badgeText;
+            chatBadgeSpan.style.display = 'inline';
+            console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - Updated DOM display for badge:', badgeKey);
+          }
 
           // Update Pax colors if this is a "New Pax" badge (even if badge is hidden)
           if (isPaxUpdate) {
@@ -1317,12 +1325,17 @@ function toggleMobileActions(booking_number, event) {
         const today = new Date().toISOString().split('T')[0];
         localStorage.setItem(`chatBadgeHidden_${today}`, JSON.stringify(chatBadgeHidden));
 
-        // Hide chat badge via DOM
-        const chatBadgeSpan = document.getElementById(`chat-new-badge-${selectedItem.booking_list_id}`);
-        if (chatBadgeSpan) {
-          chatBadgeSpan.style.display = 'none';
-          chatBadgeSpan.textContent = '';
-        }
+        // Hide chat badge via DOM (with requestAnimationFrame to ensure DOM is ready)
+        requestAnimationFrame(() => {
+          const chatBadgeSpan = document.getElementById(`chat-new-badge-${selectedItem.booking_list_id}`);
+          if (chatBadgeSpan) {
+            chatBadgeSpan.style.display = 'none';
+            chatBadgeSpan.textContent = '';
+            console.log(`DESKTOP: Hidden chat badge for booking_list_id: ${selectedItem.booking_list_id}`);
+          } else {
+            console.log(`DESKTOP: Chat badge element not found for booking_list_id: ${selectedItem.booking_list_id}`);
+          }
+        });
 
         // Update Pax colors after hiding badge
         updatePaxColors(booking_number);
@@ -1486,12 +1499,17 @@ function toggleMobileActions(booking_number, event) {
     const today = new Date().toISOString().split('T')[0];
     localStorage.setItem(`chatBadgeHidden_${today}`, JSON.stringify(chatBadgeHidden));
 
-    // Hide chat badge via DOM
-    const chatBadgeSpan = document.getElementById(`chat-new-badge-${expandedItem.booking_list_id}`);
-    if (chatBadgeSpan) {
-      chatBadgeSpan.style.display = 'none';
-      chatBadgeSpan.textContent = '';
-    }
+    // Hide chat badge via DOM (with requestAnimationFrame to ensure DOM is ready)
+    requestAnimationFrame(() => {
+      const chatBadgeSpan = document.getElementById(`chat-new-badge-${expandedItem.booking_list_id}`);
+      if (chatBadgeSpan) {
+        chatBadgeSpan.style.display = 'none';
+        chatBadgeSpan.textContent = '';
+        console.log(`MOBILE: Hidden chat badge for booking_list_id: ${expandedItem.booking_list_id}`);
+      } else {
+        console.log(`MOBILE: Chat badge element not found for booking_list_id: ${expandedItem.booking_list_id}`);
+      }
+    });
 
     // Update Pax colors after hiding badge
     updatePaxColors(booking_number);
