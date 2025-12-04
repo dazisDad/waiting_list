@@ -108,6 +108,25 @@ th:first-child {
   color: #fbbf24;
 }
 
+/* Outline button styles - Initiate Whatsapp (green) */
+.btn-initiate-whatsapp {
+  background-color: transparent;
+  border-color: #34d399;
+  color: #34d399;
+}
+
+.mobile-btn-initiate-whatsapp {
+  background-color: transparent;
+  border-color: #34d399;
+  color: #34d399;
+}
+
+.mobile-btn-initiate-whatsapp:active {
+  background-color: #34d399;
+  color: #ffffff;
+  transition: none !important;
+}
+
 /* Disabled button state */
 .action-button:disabled {
   background-color: #475569;

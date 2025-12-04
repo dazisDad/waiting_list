@@ -36,11 +36,14 @@ async function sendHttpsRequest(inputDataSet, method = 'POST') {
     const text = await resp.text();
     try {
       const data = JSON.parse(text);
+      if (!resp.ok) {
+        console.error(`sendHttpsRequest (${method}): HTTP ${resp.status} error response:`, data);
+      }
       //console.log(`sendHttpsRequest (${method}): response`, data);
       return data;
     } catch (e) {
-      console.log(`sendHttpsRequest (${method}): non-json response`, text);
-      return { success: false, error: 'Invalid JSON response', rawResponse: text };
+      console.error(`sendHttpsRequest (${method}): non-json response (HTTP ${resp.status}):`, text);
+      return { success: false, error: 'Invalid JSON response', rawResponse: text, status: resp.status };
     }
   } catch (e) {
     console.error(`sendHttpsRequest (${method}): error`, e);

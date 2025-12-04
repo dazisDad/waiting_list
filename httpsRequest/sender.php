@@ -39,7 +39,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['data'])) {
 
 if (!is_array($input)) {
     http_response_code(400);
-    echo json_encode(['error' => 'Invalid JSON input']);
+    echo json_encode([
+        'error' => 'Invalid JSON input',
+        'received_raw' => $raw ?? 'No raw data',
+        'json_error' => json_last_error_msg()
+    ]);
     exit;
 }
 
@@ -51,7 +55,12 @@ $method = strtoupper($input['method'] ?? 'POST'); // Default to POST if not spec
 
 if (!$requestTo || !$url) {
     http_response_code(400);
-    echo json_encode(['error' => 'Missing required fields: requestTo, url']);
+    echo json_encode([
+        'error' => 'Missing required fields: requestTo, url',
+        'received_input' => $input,
+        'requestTo' => $requestTo,
+        'url' => $url
+    ]);
     exit;
 }
 

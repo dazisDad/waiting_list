@@ -1,4 +1,4 @@
-const version = '0.736';
+const version = '0.738';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 const isShowNewPaxBadge = false; // Set to true to show "New Pax" badge (false = only show Pax color change)
@@ -23,11 +23,11 @@ const flow_arr_that_can_trigger_handleNewEvent = [1.2, 1.9, 2.2, 9.2];
  */
 function checkLastInteraction(ws_last_interaction) {
   if (!ws_last_interaction) return false;
-  
+
   const wsEnabledDate = new Date(ws_last_interaction.replace(' ', 'T'));
   const wsEnabled24HoursLater = wsEnabledDate.getTime() + (24 * 60 * 60 * 1000);
   const now = Date.now();
-  
+
   return now < wsEnabled24HoursLater;
 }
 
@@ -45,11 +45,11 @@ let lastProcessedTimestamp = null; // Track last processed _force_update timesta
 function handleNewEvent(obj) {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   //console.log('HANDLE_NEW_EVENT: Function called');
-  
+
   // Increment counter immediately to prevent race conditions with multiple events
   const currentCounter = updateCounter++;
-  
-  if(currentCounter === 0) {
+
+  if (currentCounter === 0) {
     console.log('HANDLE_NEW_EVENT: updateCounter =', currentCounter);
   } else if (currentCounter === 1) {
     console.log(`HANDLE_NEW_EVENT: Incremented updateCounter to:`, currentCounter);
@@ -81,7 +81,7 @@ function handleNewEvent(obj) {
     }
 
     console.log('HANDLE_NEW_EVENT: ✓ booking_flow matches trigger list:', Number(lastItem.booking_flow).toFixed(1));
-    
+
     // Special debugging for flow 9.2 (chat response)
     /*
     if (Math.abs(lastItem.booking_flow - 9.2) < 0.0001) {
@@ -102,7 +102,7 @@ function handleNewEvent(obj) {
   const eventTime = lastItem ? (lastItem._force_update || 0) : 0;
   const now = Date.now();
   // If _force_update is missing, we can't determine recency, so we skip to avoid duplicates on every refresh
-  const isRecent = eventTime > 0 && (now - eventTime) < 10000; 
+  const isRecent = eventTime > 0 && (now - eventTime) < 10000;
 
   if (currentCounter > 0 || (isCriticalFlow && isRecent)) {
     if (currentCounter === 0) {
@@ -134,11 +134,11 @@ function handleNewEvent(obj) {
 
     // Check if this event was triggered by this client (same session ID)
     if (lastItem._session_id && lastItem._session_id === sessionId) {
-      
+
       console.log('HANDLE_NEW_EVENT: ⚠ Event triggered by THIS client (session match), skipping notification/badge');
       //console.log('HANDLE_NEW_EVENT: Session ID:', lastItem._session_id);
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      
+
       return;
     }
 
@@ -151,7 +151,7 @@ function handleNewEvent(obj) {
     // Find booking_number from waitlist using booking_list_id (before server update)
     // Use == for flexible type comparison (string vs number)
     let bookingItemBefore = waitlist.find(item => item.booking_list_id == lastItem.booking_list_id);
-    
+
     // Fallback: try finding by subscriber_id if not found by booking_list_id
     if (!bookingItemBefore && lastItem.subscriber_id) {
       //console.log('HANDLE_NEW_EVENT: booking_list_id lookup failed for OLD waitlist, trying subscriber_id:', lastItem.subscriber_id);
@@ -182,7 +182,7 @@ function handleNewEvent(obj) {
 
       // Find booking in REFRESHED waitlist (use == for flexible type comparison)
       let bookingItem = waitlist.find(item => item.booking_list_id == lastItem.booking_list_id);
-      
+
       // Fallback: try finding by subscriber_id if not found by booking_list_id
       if (!bookingItem && lastItem.subscriber_id) {
         console.log('HANDLE_NEW_EVENT: booking_list_id lookup failed for REFRESHED waitlist, trying subscriber_id:', lastItem.subscriber_id);
@@ -235,7 +235,7 @@ function handleNewEvent(obj) {
               // Check if this is a pax update (booking_flow 2.2)
               const isPaxUpdate = Math.abs(lastItem.booking_flow - 2.2) < 0.0001;
               const badgeText = isPaxUpdate ? 'New Pax' : 'NEW';
-              
+
               console.log(`HANDLE_NEW_EVENT: 🏷️ BADGE - Flow: ${lastItem.booking_flow}, isPaxUpdate: ${isPaxUpdate}, badgeText: ${badgeText}`);
 
               // Save badge type to chatBadgeType for persistence across refreshes (Always save type)
@@ -250,7 +250,7 @@ function handleNewEvent(obj) {
               } else {
                 console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - ✗ New Pax badge suppressed by configuration (isShowNewPaxBadge=false)');
               }
-              
+
               // Update Pax colors if this is a "New Pax" badge (even if badge is hidden)
               if (isPaxUpdate) {
                 console.log('HANDLE_NEW_EVENT: 🏷️ BADGE - Updating Pax colors for booking_number:', bookingItem.booking_number);
@@ -641,11 +641,11 @@ async function getServerSideUpdate() {
         fetchChatHistory()
       ]);
 
-      
+
       //console.log('SERVER_UPDATE: All data loaded successfully');
       //console.log('- Waitlist items:', waitlistData?.length || 0);
       //console.log('- Chat records:', chatData?.length || 0);
-      
+
 
       // 전역 변수 오버라이드 (실시간 데이터만)
       waitlist = waitlistData;
@@ -1020,7 +1020,7 @@ const actionButtonDefinitions = [
     textColor: '#34d399',
     isBackgroundFill: false,
     functionName: 'handleCall',
-    showForStatus: ['Waiting', 'Ready'], // Show for these statuses
+    showForStatus: ['Waiting', 'Ready', 'Awaiting Confirmation'], // Show for these statuses
     mobileBtnClass: 'mobile-btn-call',
     desktopBtnClass: 'btn-call',
     isMobileOnly: true // Only show on mobile
@@ -1048,13 +1048,25 @@ const actionButtonDefinitions = [
     desktopBtnClass: 'btn-ask'
   },
   {
+    id: 'initiate-whatsapp',
+    label: 'Initiate Whatsapp',
+    color: '#34d399', // green
+    textColor: '#34d399',
+    isBackgroundFill: false,
+    functionName: 'handleInitiateWhatsapp',
+    showForStatus: ['Waiting', 'Ready', 'Awaiting Confirmation'],
+    mobileBtnClass: 'mobile-btn-initiate-whatsapp',
+    desktopBtnClass: 'btn-initiate-whatsapp',
+    isReplacementButton: true // Special flag to indicate this replaces disabled buttons
+  },
+  {
     id: 'arrive',
     label: 'Arrive',
     color: '#8b5cf6', // purple
     textColor: '#8b5cf6', // purple text for outline style
     isBackgroundFill: false,
     functionName: 'handleArrive',
-    showForStatus: ['Waiting', 'Ready'],
+    showForStatus: ['Waiting', 'Ready', 'Awaiting Confirmation'],
     mobileBtnClass: 'mobile-btn-arrive',
     desktopBtnClass: 'btn-arrive'
   },
@@ -1065,7 +1077,7 @@ const actionButtonDefinitions = [
     textColor: '#f87171',
     isBackgroundFill: false,
     functionName: 'handleCancel',
-    showForStatus: ['Waiting', 'Ready'],
+    showForStatus: ['Waiting', 'Ready', 'Awaiting Confirmation'],
     mobileBtnClass: 'mobile-btn-cancel',
     desktopBtnClass: 'btn-cancel'
   },
@@ -1087,7 +1099,7 @@ const actionButtonDefinitions = [
  * Filters by isMobileOnly flag based on current platform
  */
 function getButtonsForStatus(status, isMobile) {
-  return actionButtonDefinitions.filter(btn => {
+  const buttons = actionButtonDefinitions.filter(btn => {
     // Check if button should be shown for this status
     if (!btn.showForStatus.includes(status)) return false;
 
@@ -1096,6 +1108,8 @@ function getButtonsForStatus(status, isMobile) {
 
     return true;
   });
+
+  return buttons;
 }
 
 /**
@@ -1105,8 +1119,20 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
   const baseClasses = 'action-button px-3 py-1.5 rounded-md border font-medium text-sm';
   const btnClass = isMobile ? buttonDef.mobileBtnClass : buttonDef.desktopBtnClass;
 
-  // Call button gets fixed small width with centered content, other buttons get equal flex distribution
-  const flexClass = buttonDef.functionName === 'handleCall' ? 'flex-none w-12 flex items-center justify-center' : 'flex-1';
+  // Call button gets fixed small width with centered content
+  // Initiate Whatsapp gets 2x flex (50% of remaining space)
+  // Arrive and Cancel get 1x flex (25% each of remaining space)
+  // Other buttons get 1x flex
+  let flexClass;
+  if (buttonDef.functionName === 'handleCall') {
+    flexClass = 'flex-none w-12 flex items-center justify-center';
+  } else if (buttonDef.functionName === 'handleInitiateWhatsapp') {
+    flexClass = 'flex-1' + ' ' + 'flex-grow-[2]'; // 2/4 of remaining space
+  } else if (buttonDef.functionName === 'handleArrive' || buttonDef.functionName === 'handleCancel') {
+    flexClass = 'flex-1'; // 1/4 of remaining space each
+  } else {
+    flexClass = 'flex-1'; // Default
+  }
   let classes = `${baseClasses} ${btnClass} ${flexClass}`;
 
   // Special handling for Ask and Ready buttons
@@ -1118,19 +1144,17 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
       // Check if ws_last_interaction is within 24 hours
       const isWithin24Hours = checkLastInteraction(item.ws_last_interaction);
 
-      // Disable Ask button for WEB bookings if outside 24-hour window or when no questions available
+      // Hide Ask button if outside 24-hour window (will be replaced by Initiate Whatsapp)
       if (!isWithin24Hours) {
+        return ''; // Return empty string to hide this button
+      }
+
+      // Disable Ask button when no questions available
+      const filteredQuestions = getFilteredQuestions(item.pax, booking_number);
+      if (filteredQuestions.length === 0) {
         isDisabled = true;
         const disabledBtnClass = isMobile ? 'mobile-btn-disabled' : 'btn-disabled';
         classes = `${baseClasses} ${disabledBtnClass} ${flexClass}`;
-      } else {
-        const filteredQuestions = getFilteredQuestions(item.pax, booking_number);
-        if (filteredQuestions.length === 0) {
-          // No questions available - make button grey and disabled
-          isDisabled = true;
-          const disabledBtnClass = isMobile ? 'mobile-btn-disabled' : 'btn-disabled';
-          classes = `${baseClasses} ${disabledBtnClass} ${flexClass}`;
-        }
       }
     }
   } else if (buttonDef.functionName === 'handleReady') {
@@ -1138,8 +1162,24 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
       // Check if ws_last_interaction is within 24 hours
       const isWithin24Hours = checkLastInteraction(item.ws_last_interaction);
 
-      // Disable Ready button for bookings if outside 24-hour window or when already ready
-      if ((!isWithin24Hours) || item.q_level >= 300) {
+      // Hide Ready button if outside 24-hour window (will be replaced by Initiate Whatsapp)
+      if (!isWithin24Hours) {
+        return ''; // Return empty string to hide this button
+      }
+
+      // Disable Ready button when already ready
+      if (item.q_level >= 300) {
+        isDisabled = true;
+        const disabledBtnClass = isMobile ? 'mobile-btn-disabled' : 'btn-disabled';
+        classes = `${baseClasses} ${disabledBtnClass} ${flexClass}`;
+      }
+    }
+  } else if (buttonDef.functionName === 'handleInitiateWhatsapp') {
+    // Special handling for Initiate Whatsapp button - spans width of Ready + Ask + gap
+    // Show as disabled if ws_last_interaction is within 24 hours
+    if (item) {
+      const isWithin24Hours = checkLastInteraction(item.ws_last_interaction);
+      if (isWithin24Hours) {
         isDisabled = true;
         const disabledBtnClass = isMobile ? 'mobile-btn-disabled' : 'btn-disabled';
         classes = `${baseClasses} ${disabledBtnClass} ${flexClass}`;
@@ -1161,6 +1201,21 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
       : `onclick="event.preventDefault(); setTimeout(() => this.blur(), 100); return false;"`;
 
     return `<button id="${buttonId}" ${onTouchStart} ${onMouseDown} ${preventClick} class="${classes}">${buttonDef.label}</button>`;
+  }
+
+  // Special handling for Initiate Whatsapp button - assign unique ID
+  if (buttonDef.functionName === 'handleInitiateWhatsapp') {
+    const buttonId = `initiate-whatsapp-btn-${booking_number}`;
+    const fnCall = `${buttonDef.functionName}(${booking_number}, '${customer_name}', event)`;
+    const onclickHandler = isMobile
+      ? `event.stopPropagation(); ${fnCall}`
+      : `event.stopPropagation(); ${fnCall}; setTimeout(() => this.blur(), 100);`;
+
+    // If disabled, prevent onclick
+    const finalOnclickHandler = isDisabled ? '' : `onclick="${onclickHandler}"`;
+    const disabledAttr = isDisabled ? 'disabled' : '';
+
+    return `<button id="${buttonId}" ${finalOnclickHandler} ${disabledAttr} class="${classes}">${buttonDef.label}</button>`;
   }
 
   // Standard button handling for all other buttons
@@ -1289,7 +1344,7 @@ function toggleMobileActions(booking_number, event) {
           chatBadgeSpan.style.display = 'none';
           chatBadgeSpan.textContent = '';
         }
-        
+
         // Update Pax colors after hiding badge
         updatePaxColors(booking_number);
       }
@@ -1458,7 +1513,7 @@ function toggleMobileActions(booking_number, event) {
       chatBadgeSpan.style.display = 'none';
       chatBadgeSpan.textContent = '';
     }
-    
+
     // Update Pax colors after hiding badge
     updatePaxColors(booking_number);
   }
@@ -1678,7 +1733,7 @@ function toggleDesktopRowSelection(booking_number) {
       chatBadgeSpan.style.display = 'none';
       chatBadgeSpan.textContent = '';
     }
-    
+
     // Update Pax colors after hiding badge
     updatePaxColors(booking_number);
   }
@@ -1698,7 +1753,7 @@ function updatePaxColors(booking_number) {
   const hasNewPaxBadge = chatBadgeType[badgeKey] === 'New Pax' && !chatBadgeHidden[badgeKey];
   const statusPriority = getSortPriority(item.status);
   const paxElement = document.getElementById(`pax-${booking_number}`);
-  
+
   if (!paxElement) return;
 
   const paxLabel = paxElement.querySelector('span:first-child');
@@ -1984,6 +2039,227 @@ async function handleReadyWithLongPress(booking_number, customer_name, event, bu
 
   // Call the actual Ready handler
   await handleReadyInternal(booking_number, customer_name, event, buttonId);
+}
+
+/**
+ * Handles Initiate Whatsapp button click
+ * Sends confirmation request to customer via WhatsApp
+ */
+async function handleInitiateWhatsapp(booking_number, customer_name, event) {
+  console.log(`ACTION: Initiating WhatsApp confirmation for ${customer_name} (#${booking_number})`);
+  console.log(`INFO: [${customer_name}, #${booking_number}] 고객님께 확인 요청을 보냅니다.`);
+
+  // Check if mobile - on desktop, highlight the row and flash button
+  const isMobile = window.innerWidth <= 768;
+
+  if (!isMobile) {
+    // Desktop: Flash row (temporary) and flash button
+    highlightRow(booking_number, true);
+    flashButton(event);
+  }
+
+  const item = waitlist.find(item => item.booking_number == booking_number);
+
+  if (!item) {
+    console.error('Item not found for booking_number:', booking_number);
+    return;
+  }
+
+  // Call askForConfirmation to send WhatsApp message
+  await askForConfirmation(item.booking_list_id, item.booking_number, item.customer_name);
+
+  // Update database and local data
+  try {
+    // 1. Update database first
+    const updateResult = await connector.updateDataArr(
+      'waitlist', // dbKey
+      'booking_list', // tableName
+      [{
+        booking_list_id: item.booking_list_id, // Include the ID for WHERE condition
+        status: 'Awaiting Confirmation',
+        time_cleared: null,
+        q_level: 0
+      }], // dataSetArr
+      ['booking_list_id'], // whereSet - will match against booking_list_id
+      'booking_list_id' // primaryKey - use booking_list_id as primary key
+    );
+
+    console.log('Database update result:', updateResult);
+
+    if (!updateResult || !updateResult.success) {
+      console.error('Database update failed:', updateResult);
+      return; // Exit if database update failed
+    }
+
+    console.log('Database updated successfully for booking #' + booking_number);
+
+    // 2. Trigger webhook update to notify polling system
+    // await forceUpdateWebhook(item.subscriber_id);
+
+    // 3. Update local data after successful database update
+    item.status = 'Awaiting Confirmation';
+    item.q_level = 0; // Update q_level to match database
+
+    // 4. Save current scroll position before re-rendering
+    const currentScrollTop = waitlistContainer.scrollTop;
+
+    // 5. Re-render to immediately update button state
+    renderWaitlist();
+
+    // 6. Restore scroll position after render completes
+    requestAnimationFrame(() => {
+      waitlistContainer.scrollTop = currentScrollTop;
+    });
+
+  } catch (error) {
+    console.error('Error updating database:', error);
+    return; // Exit if there's an error
+  }
+}
+
+/**
+ * Sends confirmation request via WhatsApp
+ * Similar to handleQuestion but for initial contact confirmation
+ */
+async function askForConfirmation(booking_list_id, booking_number, customer_name) {
+  console.log('askForConfirmation called with:', {
+    booking_list_id,
+    booking_number,
+    customer_name
+  });
+
+  const item = waitlist.find(item => item.booking_list_id == booking_list_id);
+  const pax = item ? item.pax : null;
+
+  // Convert dine_dateTime to yyyy-mm-dd hh:mm:ss format
+  let dine_dateTime = null;
+  let customer_info_time = null;
+  if (item && item.dine_dateTime) {
+    const date = new Date(item.dine_dateTime);
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const hh = String(date.getHours()).padStart(2, '0');
+    const min = String(date.getMinutes()).padStart(2, '0');
+    const ss = String(date.getSeconds()).padStart(2, '0');
+    dine_dateTime = `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+
+    // Format as dd MMM YYYY hh:mm (e.g., "04 Dec 2025 14:30")
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthStr = monthNames[date.getMonth()];
+    customer_info_time = `${hh}:${min}`;
+  }
+
+  /*
+  console.log('Pax:', pax);
+  console.log('Found item for confirmation:', dine_dateTime);
+  console.log('Customer info time:', customer_info_time);
+  */
+
+  try {
+    // Generate button ID for Initiate Whatsapp button
+    const buttonId = `initiate-whatsapp-btn-${booking_number}`;
+
+    const manyChat_payload = {
+      subscriber_id: item.subscriber_id,
+      fields: [
+        {
+          "field_id": 13807911, // booking_number
+          "field_value": parseInt(booking_number, 10)
+        },
+        {
+          "field_id": 13844052, // booking_pax
+          "field_value": parseInt(pax, 10)
+        },
+        {
+          "field_id": 13967524, // booking_time
+          "field_value": customer_info_time
+        }
+      ]
+    };
+
+    const manyChatResult = await updateManyChatCustomFields(buttonId, manyChat_payload);
+
+
+    if (manyChatResult && manyChatResult.status === 'success') {
+      console.log('✓ ManyChat API call successful - Confirmation request sent');
+
+      // Flow 실행 (필요시)
+      const flowResult = await executeFlow(buttonId, { subscriber_id: item.subscriber_id, flow_ns: 'content20251104022229_625213' });
+      console.log('🔄 executeFlow result:', flowResult);
+
+      if (flowResult && flowResult.status === 'success') {
+        console.log('✓ Flow execution successful');
+        // history_chat 테이블 INSERT - 나중에 구현
+
+        const currentTime = new Date();
+        const formattedTime = currentTime.getFullYear() + '-' +
+          String(currentTime.getMonth() + 1).padStart(2, '0') + '-' +
+          String(currentTime.getDate()).padStart(2, '0') + ' ' +
+          String(currentTime.getHours()).padStart(2, '0') + ':' +
+          String(currentTime.getMinutes()).padStart(2, '0') + ':' +
+          String(currentTime.getSeconds()).padStart(2, '0');
+
+        const qnaText = 'Asked for confirmation';
+        const qna_id = 9; // Assuming 9 is the ID for confirmation questions
+        const updateResult = await connector.updateDataArr(
+          'waitlist',
+          'history_chat',
+          [{
+            booking_list_id: booking_list_id,
+            dateTime: formattedTime,
+            qna: qnaText,
+            qna_id: qna_id
+          }]
+        );
+
+        if (!updateResult.success) {
+          console.error('✗ Database insert failed:', updateResult.error);
+          return;
+        }
+
+      } else {
+        console.error('✗ Flow execution failed:', flowResult);
+      }
+    }
+
+
+
+
+
+    // TODO: Webhook 트리거 - 나중에 구현
+    /*
+    const booking = waitlist.find(item => item.booking_list_id == booking_list_id);
+    await forceUpdateWebhook(booking ? booking.subscriber_id : null);
+    */
+
+    // TODO: chatlist 로컬 추가 - 나중에 구현
+    /*
+    const newChatRecord = {
+      booking_list_id: booking_list_id,
+      dateTime: Date.now(),
+      qna: 'i: Please confirm your booking',
+      Id: Date.now()
+    };
+    chatlist.push(newChatRecord);
+    */
+
+    // Save current scroll position before re-rendering
+    const currentScrollTop = waitlistContainer.scrollTop;
+
+    // Re-render to show any updates
+    renderWaitlist();
+
+    // Restore scroll position after render completes
+    requestAnimationFrame(() => {
+      waitlistContainer.scrollTop = currentScrollTop;
+    });
+
+    console.log('✓ Confirmation request completed for booking_list_id:', booking_list_id);
+
+  } catch (error) {
+    console.error('askForConfirmation error:', error);
+  }
 }
 
 /**
@@ -3461,10 +3737,10 @@ function renderWaitlist() {
           const isChatHidden = chatBadgeHidden[badgeKey];
           // Get badge text from chatBadgeType, default to 'NEW'
           const badgeText = chatBadgeType[badgeKey] || 'NEW';
-          
+
           // Hide "New Pax" badge if isShowNewPaxBadge is false (keep NEW badges visible)
           const shouldHideBadge = (badgeText === 'New Pax' && !isShowNewPaxBadge) || isChatHidden;
-          
+
           if (shouldHideBadge) {
             chatBadge = `<span id="${chatBadgeId}" class="bg-red-500 text-slate-800 px-1 py-0.5 rounded font-bold ml-1" style="font-size: 8px; display: none;">${badgeText}</span>`;
           } else {
@@ -3554,7 +3830,7 @@ function renderWaitlist() {
     // Check if this item has "New Pax" badge
     const badgeKey = `${item.subscriber_id}_${item.booking_list_id}`;
     const hasNewPaxBadge = chatBadgeType[badgeKey] === 'New Pax' && !chatBadgeHidden[badgeKey];
-    
+
     // Base classes for Pax container (border will be added via pax-selected class)
     const paxContainerClass = 'px-0.5 py-0.5 rounded font-bold text-xs';
 
@@ -4024,8 +4300,8 @@ async function startInitialization() {
 
       // Clean up old date entries (keep only today's data)
       Object.keys(localStorage).forEach(key => {
-        if ((key.startsWith('chatBadgeHidden_') || key.startsWith('chatBadgeType_')) && 
-            key !== storageKey && key !== `chatBadgeType_${todayStr}`) {
+        if ((key.startsWith('chatBadgeHidden_') || key.startsWith('chatBadgeType_')) &&
+          key !== storageKey && key !== `chatBadgeType_${todayStr}`) {
           localStorage.removeItem(key);
           //console.log('INIT: Cleaned up old localStorage key:', key);
         }
