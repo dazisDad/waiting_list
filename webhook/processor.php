@@ -960,11 +960,15 @@ function flow_execution ($inputDataSet) {
           case 1.1:
               // Check for duplicate booking
               $retrieved_booking_detail = get_booking_detail('subscriber_id', $inputDataSet['subscriber_id'], true);
+              $received_msg = $inputDataSet['code_text'] ?? '';
+              $decodingResult = decodeMsg($received_msg); // 메시지 디코딩
+
               $return_json = [
-                  'success' => true,
+                  'success' => 1, // flow 1.1 true 대신 1 사용
                   'is_booking_duplicate' => count($retrieved_booking_detail) > 0 ? 1 : 0,
                   'booking_number' => count($retrieved_booking_detail) > 0 ? intval($retrieved_booking_detail[0]['booking_number']) : null,
-                  'booking_pax' => count($retrieved_booking_detail) > 0 ? intval($retrieved_booking_detail[0]['pax']) : null
+                  'booking_pax' => count($retrieved_booking_detail) > 0 ? intval($retrieved_booking_detail[0]['pax']) : null,
+                  'is_code_valid' => ($decodingResult['success'] ?? false) ? (($decodingResult['is_code_valid'] ?? false) ? 1 : 0) : 0
               ];
               return $return_json;
           case 1.2:
@@ -984,7 +988,7 @@ function flow_execution ($inputDataSet) {
               }
 
               $return_json = [
-                  'success' => $success,
+                  'success' => 1, // flow 1.2 true 대신 1 사용
                   'booking_list_id' => intval($booking_list_id),
                   'booking_ahead' => $booking_ahead,
                   'estimate_waiting_time' => estimate_waiting_time($booking_ahead),
@@ -1020,7 +1024,7 @@ function flow_execution ($inputDataSet) {
               $booking_list = get_booking_list($store_id);
               $booking_ahead = calculate_booking_ahead($booking_list, $inputDataSet['booking_list_id']);
                $return_json = [
-                  'success' => true,
+                  'success' => 1, // flow 2.1 true 대신 1 사용
                   'booking_ahead' => $booking_ahead,
                   'estimate_waiting_time' => estimate_waiting_time($booking_ahead),
                   'is_booking_loop' => is_booking_loop($booking_ahead)
@@ -1402,6 +1406,13 @@ function processChatResponse($response) {
         }
 
         if ($badge_row) {
+            // Collect existing badge values (non-empty)
+            $existing_badges = array_filter([
+                $badge_row['badge1'],
+                $badge_row['badge2'],
+                $badge_row['badge3']
+            ]);
+            
             // Get available badge columns in order
             $available_columns = [];
             if (empty($badge_row['badge1'])) {
@@ -1414,20 +1425,25 @@ function processChatResponse($response) {
                 $available_columns[] = 'badge3';
             }
 
-            // Update badge columns with available space
+            // Update badge columns with available space (skip duplicates)
             $updates_made = 0;
-            foreach ($badge_values as $index => $badge_value) {
+            foreach ($badge_values as $badge_value) {
                 // Skip empty badge values
                 if (empty($badge_value)) {
                     continue;
                 }
                 
+                // Skip if this badge already exists
+                if (in_array($badge_value, $existing_badges)) {
+                    continue;
+                }
+                
                 // Stop if no more available columns
-                if ($index >= count($available_columns)) {
+                if (empty($available_columns)) {
                     break;
                 }
                 
-                $badge_column = $available_columns[$index];
+                $badge_column = array_shift($available_columns);
                 
                 if ($isPreparedStmt) {
                     $sql_update_badge = "UPDATE booking_list SET `$badge_column` = ? WHERE booking_list_id = ?";
@@ -1456,6 +1472,8 @@ function processChatResponse($response) {
                     }
                 }
                 
+                // Add to existing badges to prevent duplicate in same iteration
+                $existing_badges[] = $badge_value;
                 $updates_made++;
             }
         }
@@ -1464,9 +1482,105 @@ function processChatResponse($response) {
     $mysqli->close();
     
     // Return [selected_answer_id, selected_answer, selected_badge, selected_q_level]
-    return [$selected_answer_id, $selected_answer, $selected_badge, $selected_q_level];
+    //return [$selected_answer_id, $selected_answer, $selected_badge, $selected_q_level];
+    
+    return [
+            'success' => 1
+        ];
 }
 
 
+
+// Function to extract code from WhatsApp message and check if expired
+function decodeMsg($whatsappMsg) {
+    // Remove extra whitespace and normalize line breaks
+    $msg = trim($whatsappMsg);
+    
+    // Pattern to match code in parentheses after colon: (Send without changes: XXXXXX-YYYYYY)
+    // Example: "Hey, Donkas Lab, put me in the waitlist queue (Send without changes: T6W6SO-5S8MJ8)"
+    $pattern = '/\([^:]+:\s*([A-Z0-9]+-[A-Z0-9]+)\)/i';
+    
+    if (preg_match($pattern, $msg, $matches)) {
+        $code = strtoupper(trim($matches[1]));
+        
+        // Decode the timestamp to check expiration
+        $decodeResult = decodeTimestamp($code);
+        
+        if (!$decodeResult['success']) {
+            return [
+                'success' => false,
+                'error' => $decodeResult['error'],
+                'original_message' => $msg
+            ];
+        }
+        
+        // Return is_code_valid (inverse of is_expired)
+        return [
+            'success' => true,
+            'is_code_valid' => !$decodeResult['is_expired']
+        ];
+    }
+    
+    return [
+        'success' => false,
+        'error' => 'Could not extract code from message. Expected format: "(XXXXX-XXXXX)"',
+        'original_message' => $msg
+    ];
+}
+
+// Function to decode the encrypted timestamp
+function decodeTimestamp($encryptedTimestamp) {
+    // Remove any whitespace and convert to uppercase for consistency
+    $code = strtoupper(trim($encryptedTimestamp));
+    
+    // Split by dash to separate timestamp and random string
+    $parts = explode('-', $code);
+    
+    if (count($parts) !== 2) {
+        return [
+            'success' => false,
+            'error' => 'Invalid code format. Expected format: TIMESTAMP-RANDOM',
+            'code' => $code
+        ];
+    }
+    
+    $base36Timestamp = $parts[0];
+    $randomString = $parts[1];
+    
+    // Convert base36 timestamp back to decimal (seconds)
+    $timestampSeconds = base_convert(strtolower($base36Timestamp), 36, 10);
+    
+    // Validate timestamp (should be a reasonable Unix timestamp in seconds)
+    if (!is_numeric($timestampSeconds) || $timestampSeconds < 1000000000) {
+        return [
+            'success' => false,
+            'error' => 'Invalid timestamp value',
+            'code' => $code,
+            'parsed_timestamp' => $timestampSeconds
+        ];
+    }
+    
+    // Calculate age of the code
+    $currentTime = time();
+    $ageSeconds = $currentTime - $timestampSeconds;
+    
+    // Convert to readable datetime
+    $datetime = new DateTime("@$timestampSeconds");
+    $datetime->setTimezone(new DateTimeZone('Asia/Kuala_Lumpur')); // Malaysia timezone
+    
+    return [
+        'success' => true,
+        'code' => $code,
+        'timestamp_seconds' => (int)$timestampSeconds,
+        'timestamp_milliseconds' => (int)$timestampSeconds * 1000,
+        'datetime' => $datetime->format('Y-m-d H:i:s'),
+        'datetime_iso' => $datetime->format('c'),
+        'age_seconds' => $ageSeconds,
+        'age_minutes' => round($ageSeconds / 60, 1),
+        'random_string' => $randomString,
+        'is_expired' => $ageSeconds > 180, // Consider expired after 180 seconds
+        'decoded_at' => date('Y-m-d H:i:s')
+    ];
+}
 
 ?>

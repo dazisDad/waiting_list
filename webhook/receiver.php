@@ -149,7 +149,8 @@ if ($method !== 'POST' || $body === false || $body === '') {
         'store_id' => 'DL_Sunway_Geo',
         'booking_flow' => 1.1,
         'booking_from' => 'QR',
-        'subscriber_id' => 306159212
+        'subscriber_id' => 306159212,
+        'code_text' => 'Hey, Donkas Lab, put me in the waitlist queue (T6W780-22JG8Q)'
     ];
     $inputDataSet_1_2 = [
         'store_id' => 'DL_Sunway_Geo',
@@ -191,7 +192,7 @@ if ($method !== 'POST' || $body === false || $body === '') {
     //$return_json = get_booking_detail('subscriber_id', $inputDataSet_1_1['subscriber_id'], true);
     
     //$return_json = get_booking_detail('booking_list_id',39);
-    $return_json = flow_execution($inputDataSet_9_2);
+    $return_json = flow_execution($inputDataSet_1_1);
     //$return_json = processChatResponse($inputDataSet_9_2);
     echo json_encode($return_json);
 

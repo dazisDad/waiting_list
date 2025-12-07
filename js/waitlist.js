@@ -1,17 +1,26 @@
-const version = '0.739';
+const version = '0.740';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 const isShowNewPaxBadge = false; // Set to true to show "New Pax" badge (false = only show Pax color change)
 
+const store_name = 'DL';
+const store_name_font = 'css/fonts/PORNSA__.woff'; // Font file path for store name
+const store_name_letter_spacing = '0.1em'; // Letter spacing for store name (e.g., '0.05em', '2px', 'normal')
 const trading_name = 'Donkas Lab';
 const store_id = 'DL_Sunway_Geo';
-const theme = 'dark';
+
+const theme = 'dark'; // 현재 지원되는 테마: 'dark' (향후 'light' 추가 예정)
+
 const minPax_for_bigTable = 5;    // Minimum pax for big table highlight
 const maxPax_for_smallTable = 0;  // Maximum pax for small table highlight
+
 const scrollPositionTolerance = 5; // Tolerance (px) for determining if scrolled to Active Queue position
 
 /**Flow types that can trigger handleNewEvent
- * Flow 1.2: New booking created via waitlist form
+ * Flow 1.2: New booking created via waitlist QR
+ * Flow 1.9: New booking created via web booking widget
+ * Flow 2.2: Pax update
+ * Flow 2.5: Confirmation after Initiate WhatsApp chat
  * Flow 9.2: Chat response
  */
 const flow_arr_that_can_trigger_handleNewEvent = [1.2, 1.9, 2.2, 2.5, 9.2];
@@ -31,11 +40,39 @@ function checkLastInteraction(ws_last_interaction) {
   return now < wsEnabled24HoursLater;
 }
 
-// Display version in header
+// Display version and store name in header
 document.addEventListener('DOMContentLoaded', () => {
+  // Dynamically inject @font-face for store name font
+  if (store_name_font) {
+    const style = document.createElement('style');
+    style.textContent = `
+      @font-face {
+        font-family: 'STORE_NAME_FONT';
+        src: url('${store_name_font}') format('woff');
+        font-weight: normal;
+        font-style: normal;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
   const versionDisplay = document.getElementById('version-display');
   if (versionDisplay) {
     versionDisplay.textContent = `(Ver. ${version})`;
+  }
+  
+  const waitlistTitle = document.getElementById('waitlist-title');
+  if (waitlistTitle) {
+    // Create span for store_name with custom font
+    const storeNameSpan = document.createElement('span');
+    storeNameSpan.style.fontFamily = "'STORE_NAME_FONT', 'Inter', sans-serif";
+    storeNameSpan.style.letterSpacing = store_name_letter_spacing;
+    storeNameSpan.textContent = store_name;
+    
+    // Clear and rebuild title with styled store name
+    waitlistTitle.textContent = '';
+    waitlistTitle.appendChild(storeNameSpan);
+    waitlistTitle.appendChild(document.createTextNode(' Waitlist'));
   }
 });
 

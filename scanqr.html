@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DL Family Check-In</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Inter Font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+  <!-- QRious library for QR code generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+  <style>
+
+    @font-face {
+        font-family: 'Porn Star Academy';
+        font-style: normal;
+        src: local('Porn Star Academy'), url('css/fonts/PORNSA__.woff') format('woff');
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      /*@apply bg-gray-100;*/
+      overscroll-behavior-y: contain; /* Prevent pull-to-refresh on mobile */
+
+      background-color: #18b067; /* 기존 배경색 */
+            background-image: 
+                linear-gradient(135deg, rgba(255, 255, 255, 0.2) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.2) 75%, transparent 75%, transparent);
+            background-size: 20px 20px; /* 빗금의 간격과 크기 조정 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* 가로 중앙 정렬 */
+            align-items: center; /* 세로 중앙 정렬 */
+
+    }
+
+    @keyframes countdown {
+      from {
+        width: 0%;
+      }
+
+      to {
+        width: 100%;
+      }
+    }
+
+    .countdown-bar {
+      animation: countdown 5s linear;
+    }
+  </style>
+</head>
+
+<body class="p-6 md:p-12 flex items-center justify-center min-h-screen">
+
+  <!-- QR Code Display Section -->
+  <div id="qr-code-section"
+    class="flex flex-col items-center justify-center p-8 bg-white rounded-xl shadow-lg w-full max-w-lg transition-all duration-300">
+    <h1 class="text-3xl font-bold text-center text-gray-800 mb-4">
+      <span class="tracking-wide" style="font-family: 'Porn Star Academy', sans-serif; color: #18b067; font-size: 1.3em;">
+        D<span style="font-size: 0.1em;">&nbsp;</span>L
+      </span> Waitlist QR
+    </h1>
+    <p class="text-gray-600 text-center mb-6">Scan below QR for registration</p>
+
+    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+      <canvas id="qr-code-canvas" class="w-64 h-64 md:w-80 md:h-80 mx-auto rounded-lg shadow-inner"></canvas>
+    </div>
+
+    <!-- Countdown Bar -->
+    <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden mt-6">
+      <div id="countdown-bar" class="h-full bg-[--tw-color-primary] countdown-bar"></div>
+    </div>
+
+    <p id="last-updated" class="text-sm text-gray-500 mt-4"></p>
+    <p class="text-xs text-gray-400 mt-4">The QR code refreshes automatically every 30s.</p>
+
+  </div>
+  <script src="js/scanqr.js?t=8"></script>
+</body>
+
+</html>
