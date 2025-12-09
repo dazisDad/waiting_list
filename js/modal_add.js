@@ -162,24 +162,27 @@ function handleAdd() {
               </div>
             </div>
             
-            <!-- Is Split Table Allowed Toggle -->
-            <div>
-              <label class="block text-sm font-medium text-slate-300 mb-2">Is Split Table Allowed?</label>
-              <div onclick="toggleSplitTable()" id="toggle-split-table" class="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-600 cursor-pointer flex items-center justify-between">
-                <span class="toggle-state-text text-slate-300 font-medium">No</span>
-                <div class="toggle-switch-container w-12 h-6 bg-slate-600 rounded-full relative transition duration-200">
-                  <div class="toggle-switch absolute left-1 top-1 w-4 h-4 bg-slate-300 rounded-full transition-all duration-200" style="transform: translateX(0);"></div>
+            <!-- Split Table and Sharing Table Toggles (Side by Side) -->
+            <div class="flex gap-3">
+              <!-- Is Split Table Allowed Toggle -->
+              <div class="flex-1">
+                <label class="block text-sm font-medium text-slate-300 mb-2">Split Table?</label>
+                <div onclick="toggleSplitTable()" id="toggle-split-table" class="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-600 cursor-pointer flex items-center justify-between">
+                  <span class="toggle-state-text text-slate-300 font-medium">No</span>
+                  <div class="toggle-switch-container w-12 h-6 bg-slate-600 rounded-full relative transition duration-200">
+                    <div class="toggle-switch absolute left-1 top-1 w-4 h-4 bg-slate-300 rounded-full transition-all duration-200" style="transform: translateX(0);"></div>
+                  </div>
                 </div>
               </div>
-            </div>
-            
-            <!-- Is Sharing Table Allowed Toggle -->
-            <div>
-              <label class="block text-sm font-medium text-slate-300 mb-2">Is Sharing Table Allowed?</label>
-              <div onclick="toggleSharingTable()" id="toggle-sharing-table" class="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-600 cursor-pointer flex items-center justify-between">
-                <span class="toggle-state-text text-slate-300 font-medium">No</span>
-                <div class="toggle-switch-container w-12 h-6 bg-slate-600 rounded-full relative transition duration-200">
-                  <div class="toggle-switch absolute left-1 top-1 w-4 h-4 bg-slate-300 rounded-full transition-all duration-200" style="transform: translateX(0);"></div>
+              
+              <!-- Is Sharing Table Allowed Toggle -->
+              <div class="flex-1">
+                <label class="block text-sm font-medium text-slate-300 mb-2">Share Table?</label>
+                <div onclick="toggleSharingTable()" id="toggle-sharing-table" class="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-600 cursor-pointer flex items-center justify-between">
+                  <span class="toggle-state-text text-slate-300 font-medium">No</span>
+                  <div class="toggle-switch-container w-12 h-6 bg-slate-600 rounded-full relative transition duration-200">
+                    <div class="toggle-switch absolute left-1 top-1 w-4 h-4 bg-slate-300 rounded-full transition-all duration-200" style="transform: translateX(0);"></div>
+                  </div>
                 </div>
               </div>
             </div>

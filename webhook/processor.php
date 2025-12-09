@@ -862,7 +862,8 @@ function change_pax($booking_list_id, $new_pax, $is_booking_loop, $store_id) {
         ];
     }
     if (!$isChangePaxAllowed) {
-        $reason = ($pax_current === $pax_new) ? 'You have entered the same pax number, we will keep the same pax for your booking' : 'The number of pax exceeds our seating capacity, one of our staff will call for confirmation';
+        $reason = ($pax_current === $pax_new) ? 'You have entered the same pax number, we will keep the same pax for your booking' : 'The number of pax exceeds our seating capacity, one of our staff will contact you for confirmation';
+        $affected = update_booking_list($id, 'pax', $pax_new);
         return [
             'success' => 1,
             'reply_msg' => $reason,
@@ -1312,7 +1313,7 @@ function processChatResponse($response) {
 
     // Step 5: Add "Cancel" option at the beginning
     array_unshift($answer_ids_array, 0);
-    array_unshift($answer_texts, 'Cancel');
+    array_unshift($answer_texts, 'Cancel Requested');
     array_unshift($badge_arr, 'Cancel Requested');
     array_unshift($q_level_arr, 0);
 

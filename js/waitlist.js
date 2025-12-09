@@ -1,4 +1,4 @@
-const version = '0.741';
+const version = '0.742';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 const isShowNewPaxBadge = false; // Set to true to show "New Pax" badge (false = only show Pax color change)
@@ -1074,7 +1074,7 @@ const actionButtonDefinitions = [
   },
   {
     id: 'initiate-whatsapp',
-    label: 'Initiate Whatsapp',
+    label: 'Start Whatsapp',
     color: '#34d399', // green
     textColor: '#34d399',
     isBackgroundFill: false,
@@ -2214,12 +2214,20 @@ async function askForConfirmation(booking_list_id, booking_number, customer_name
 
     const manyChatResult = await updateManyChatCustomFields(buttonId, manyChat_payload);
 
-
     if (manyChatResult && manyChatResult.status === 'success') {
       console.log('✓ ManyChat API call successful - Confirmation request sent');
 
+      const flow_now = 'content20251203061608_590381';
+      const flow_ahead = 'content20251104022229_625213';
+      const time_created = item ? item.time_created : null;
+      const dine_dateTime = item ? item.dine_dateTime : null;
+      const is_web_booking_now = time_created === dine_dateTime;
+
       // Flow 실행 (필요시)
-      const flowResult = await executeFlow(buttonId, { subscriber_id: item.subscriber_id, flow_ns: 'content20251104022229_625213' });
+      const flowResult = await executeFlow(buttonId, { 
+        subscriber_id: item.subscriber_id, 
+        flow_ns: is_web_booking_now ? flow_now : flow_ahead
+      });
       console.log('🔄 executeFlow result:', flowResult);
 
       if (flowResult && flowResult.status === 'success') {
