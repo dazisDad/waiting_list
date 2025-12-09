@@ -156,7 +156,7 @@ function add_to_history_chat($booking_list_id, $qna, $qna_id) {
  * @return bool - Returns true if pax is within limit, false otherwise
  * @throws Exception on database errors
  */
-function validatePax($store_id, $pax) {
+function validatePax($store_id, $pax, $is_return_pax_limit = false) {
     global $isPreparedStmt;
     
     $cfg = get_db_config();
@@ -225,6 +225,10 @@ function validatePax($store_id, $pax) {
 
     $pax_limit = intval($row['pax_limit']);
     $pax_int = intval($pax);
+
+    if ($is_return_pax_limit) {
+        return $pax_limit;
+    }
 
     // Return true if pax is within limit, false if it exceeds
     return $pax_int <= $pax_limit;
@@ -828,16 +832,16 @@ function is_booking_loop($booking_ahead) {
  * Returns an associative array (JSON-like) with keys:
  *   - success (bool), false_reason (string), is_booking_loop (int), rows_affected (optional)
  */
-function change_pax($booking_list_id, $new_pax) {
+function change_pax($booking_list_id, $new_pax, $is_booking_loop, $store_id) {
     $id = intval($booking_list_id);
 
     // Retrieve existing booking
     $retrieved = get_booking_detail('booking_list_id', $id);
     if (count($retrieved) === 0) {
         return [
-            'success' => false,
-            'false_reason' => 'not_found',
-            'is_booking_loop' => 1
+            'success' => 0,
+            'reply_msg' => 'Booking Id not found',
+            'is_booking_loop' => $is_booking_loop
         ];
     }
 
@@ -845,24 +849,24 @@ function change_pax($booking_list_id, $new_pax) {
     $pax_new = intval($new_pax);
 
     // Read allowed pax limit from env (or default to 10)
-    $allowedPaxLimit = 10;
+    $allowedPaxLimit = validatePax($store_id, $new_pax, true);
 
     // If pax is unchanged OR pax_new exceeds allowed limit, change is not allowed
     $isChangePaxAllowed = !($pax_current === $pax_new || $pax_new > $allowedPaxLimit);
     // Reject zero pax explicitly
     if ($pax_new === 0) {
         return [
-            'success' => false,
-            'false_reason' => 'Your number of pax is invalid. Please enter a valid number of pax.',
-            'is_booking_loop' => 1
+            'success' => 0,
+            'reply_msg' => 'Your number of pax is invalid, please enter a valid number of pax',
+            'is_booking_loop' => $is_booking_loop
         ];
     }
     if (!$isChangePaxAllowed) {
-        $reason = ($pax_current === $pax_new) ? 'You have entered the same pax number. We will keep it for your booking.' : 'The number of pax exceeds our seating capacity. One of our staff will call for confirmation. Please hold.';
+        $reason = ($pax_current === $pax_new) ? 'You have entered the same pax number, we will keep the same pax for your booking' : 'The number of pax exceeds our seating capacity, one of our staff will call for confirmation';
         return [
-            'success' => false,
-            'false_reason' => $reason,
-            'is_booking_loop' => 1
+            'success' => 1,
+            'reply_msg' => $reason,
+            'is_booking_loop' => $is_booking_loop
         ];
     }
 
@@ -870,16 +874,16 @@ function change_pax($booking_list_id, $new_pax) {
     try {
         $affected = update_booking_list($id, 'pax', $pax_new);
         return [
-            'success' => true,
-            'false_reason' => '',
-            'is_booking_loop' => 1
+            'success' => 1,
+            'reply_msg' => 'Pax number updated successfully',
+            'is_booking_loop' => $is_booking_loop
         ];
     } catch (Exception $e) {
         return [
-            'success' => false,
-            'false_reason' => 'Database update error. Please contact staff for assistance.',
+            'success' => 0,
+            'reply_msg' => 'Database update error. Please contact staff for assistance',
             'error_message' => $e->getMessage(),
-            'is_booking_loop' => 1
+            'is_booking_loop' => $is_booking_loop
         ];
     }
 }
@@ -916,7 +920,7 @@ function cancel_booking($booking_list_id) {
     if (!empty($retrieved[0]['time_cleared'])) {
         return [
             'success' => false,
-            'false_reason' => 'Your waitlist booking has already been cleared.',
+            'false_reason' => 'Your waitlist booking has already been cleared',
             'is_booking_loop' => 0
         ];
     }
@@ -979,22 +983,35 @@ function flow_execution ($inputDataSet) {
               update_booking_list($booking_list_id, 'booking_number', $booking_number);
               $booking_ahead = count($booking_list) - 1; // 자료 입력단계에서만 이 방식으로 계산
 
-              $success = true;
+              $success = 1;
               $isBookingLoop = is_booking_loop($booking_ahead);
-              if(validatePax($store_id, $inputDataSet['pax']) === false){
-                  // If pax exceeds limit, staff confirmation is needed
-                  $success = false;   //success 가 false여도 레코드는 생성됨, 단 staff 확인 필요
+              
+              // Check if pax is a valid integer (not a decimal)
+              $pax_raw = $inputDataSet['pax'];
+              if (!is_numeric($pax_raw) || intval($pax_raw) != $pax_raw) {
+                  $success = 0;
                   $isBookingLoop = 0;
+                  $reply_msg = 'Invalid number of pax entered, please enter a whole number';
+              } elseif(validatePax($store_id, $inputDataSet['pax']) === false){
+                  // If pax exceeds limit, staff confirmation is needed
+                  $success = 1;   //success 가 false여도 레코드는 생성됨, 단 staff 확인 필요
+                  $isBookingLoop = 0;
+                  $reply_msg = 'The number of pax exceeds our seating capacity, one of our staff will call for confirmation';
+              } else {
+                  // Valid pax, booking created successfully
+                  $success = 1;   //success 가 false여도 레코드는 생성됨, 단 staff 확인 필요
+                  $isBookingLoop = $isBookingLoop;
+                  $reply_msg = 'Your booking has been confirmed successfully';
               }
 
               $return_json = [
-                  'success' => 1, // flow 1.2 true 대신 1 사용
+                  'success' => $success, // flow 1.2 true 대신 1 사용
                   'booking_list_id' => intval($booking_list_id),
                   'booking_ahead' => $booking_ahead,
                   'estimate_waiting_time' => estimate_waiting_time($booking_ahead),
                   'is_booking_loop' => $isBookingLoop,
                   'booking_number' => $booking_number,
-                  'false_reason' => NULL
+                  'reply_msg' => $reply_msg ?? NULL
               ];
               return $return_json;
           case 1.9: // 로컬(WEB)에서 새 레코드 입력 시
@@ -1033,16 +1050,23 @@ function flow_execution ($inputDataSet) {
           case 2.2:
               // Change Pax — delegate to change_pax function
               $booking_list_id = isset($inputDataSet['booking_list_id']) ? intval($inputDataSet['booking_list_id']) : 0;
-              $pax_new = isset($inputDataSet['pax_new']) ? intval($inputDataSet['pax_new']) : null;
-              // if pax_new is not provided, respond with error
-              if ($pax_new === null) {
+              $pax_new_raw = $inputDataSet['pax_new'] ?? null;
+              
+              $booking_list = get_booking_list($store_id);
+              $booking_ahead = calculate_booking_ahead($booking_list, $inputDataSet['booking_list_id']);
+              $is_booking_loop = is_booking_loop($booking_ahead);
+
+              // Check if pax_new is not provided or not a valid integer
+              if ($pax_new_raw === null || !is_numeric($pax_new_raw) || intval($pax_new_raw) != $pax_new_raw) {
                   return [
-                      'success' => false,
-                      'false_reason' => 'Invalid number of pax entered.',
-                      'is_booking_loop' => 1
+                      'success' => 0,
+                      'reply_msg' => 'Invalid number of pax entered',
+                      'is_booking_loop' => $is_booking_loop
                   ];
               }
-              return change_pax($booking_list_id, $pax_new);
+              
+              $pax_new = intval($pax_new_raw);
+              return change_pax($booking_list_id, $pax_new, $is_booking_loop, $store_id);
           case 2.3:
               // Cancel Booking — delegate to cancel_booking()
               $booking_list_id = isset($inputDataSet['booking_list_id']) ? intval($inputDataSet['booking_list_id']) : 0;
@@ -1578,7 +1602,7 @@ function decodeTimestamp($encryptedTimestamp) {
         'age_seconds' => $ageSeconds,
         'age_minutes' => round($ageSeconds / 60, 1),
         'random_string' => $randomString,
-        'is_expired' => $ageSeconds > 180, // Consider expired after 180 seconds
+        'is_expired' => $ageSeconds > 60, // Consider expired after 60 seconds
         'decoded_at' => date('Y-m-d H:i:s')
     ];
 }
