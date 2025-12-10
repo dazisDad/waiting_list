@@ -4765,3 +4765,14 @@ window.addEventListener('resize', () => {
   // Re-render to update chat display
   renderWaitlist();
 });
+
+
+/**
+ * Hard refresh handler: Forces a full page reload
+ * Clears all caches and reloads the page from the server
+ */
+function handleHardRefresh() {
+  console.log("ACTION: Hard refresh triggered - reloading page...");
+  // Force reload from server, bypassing cache
+  window.location.reload(true);
+}
