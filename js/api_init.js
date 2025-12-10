@@ -75,6 +75,20 @@ async function updateManyChatCustomFields(btnId, payload) {
   return await httpsRequestAction(btnId, inputDataSet);
 }
 
+async function resetManyChatLooping(btnId, subscriber_id) {
+  const inputDataSet = {
+    requestTo: 'manychat', // This will be used to lookup bearer token from .env
+    url: 'https://api.manychat.com/fb/subscriber/setCustomFields', // Target API URL  
+    payload: {
+      subscriber_id: subscriber_id,
+      fields: [
+        { field_id: 13835108, field_value: 0 } // Reset "is_booking_loop" custom field to 0
+      ]
+    }
+  };
+  return await httpsRequestAction(btnId, inputDataSet);
+}
+
 async function executeFlow(btnId, flow_ns) {
   const inputDataSet = {
     requestTo: 'manychat', // This will be used to lookup bearer token from .env

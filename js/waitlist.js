@@ -1,4 +1,4 @@
-const version = '0.742';
+const version = '0.743';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 const isShowNewPaxBadge = false; // Set to true to show "New Pax" badge (false = only show Pax color change)
@@ -55,12 +55,12 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
     document.head.appendChild(style);
   }
-  
+
   const versionDisplay = document.getElementById('version-display');
   if (versionDisplay) {
     versionDisplay.textContent = `(Ver. ${version})`;
   }
-  
+
   const waitlistTitle = document.getElementById('waitlist-title');
   if (waitlistTitle) {
     // Create span for store_name with custom font
@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     storeNameSpan.style.fontFamily = "'STORE_NAME_FONT', 'Inter', sans-serif";
     storeNameSpan.style.letterSpacing = store_name_letter_spacing;
     storeNameSpan.textContent = store_name;
-    
+
     // Clear and rebuild title with styled store name
     waitlistTitle.textContent = '';
     waitlistTitle.appendChild(storeNameSpan);
@@ -1242,6 +1242,43 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
     return `<button id="${buttonId}" ${finalOnclickHandler} ${disabledAttr} class="${classes}">${buttonDef.label}</button>`;
   }
 
+  // Prepare button content (needed before special handlers)
+  // Special handling for Call button - show phone icon instead of text
+  let buttonContent = buttonDef.label;
+  if (buttonDef.functionName === 'handleCall') {
+    buttonContent = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>`;
+  }
+
+  // Special handling for Arrive button - assign unique ID and pass to handler
+  if (buttonDef.functionName === 'handleArrive') {
+    const buttonId = `arrive-btn-${booking_number}`;
+    const fnCall = `${buttonDef.functionName}(${booking_number}, '${customer_name}', '${buttonId}')`;
+    const onclickHandler = isMobile
+      ? `event.stopPropagation(); ${fnCall}`
+      : `event.stopPropagation(); ${fnCall}; setTimeout(() => this.blur(), 100);`;
+
+    // If disabled, prevent onclick
+    const finalOnclickHandler = isDisabled ? '' : `onclick="${onclickHandler}"`;
+    const disabledAttr = isDisabled ? 'disabled' : '';
+
+    return `<button id="${buttonId}" ${finalOnclickHandler} ${disabledAttr} class="${classes}">${buttonContent}</button>`;
+  }
+
+  // Special handling for Cancel button - assign unique ID and pass to handler
+  if (buttonDef.functionName === 'handleCancel') {
+    const buttonId = `cancel-btn-${booking_number}`;
+    const fnCall = `${buttonDef.functionName}(${booking_number}, '${customer_name}', '${buttonId}')`;
+    const onclickHandler = isMobile
+      ? `event.stopPropagation(); ${fnCall}`
+      : `event.stopPropagation(); ${fnCall}; setTimeout(() => this.blur(), 100);`;
+
+    // If disabled, prevent onclick
+    const finalOnclickHandler = isDisabled ? '' : `onclick="${onclickHandler}"`;
+    const disabledAttr = isDisabled ? 'disabled' : '';
+
+    return `<button id="${buttonId}" ${finalOnclickHandler} ${disabledAttr} class="${classes}">${buttonContent}</button>`;
+  }
+
   // Standard button handling for all other buttons
   const needsEvent = ['handleAsk'].includes(buttonDef.functionName);
   const fnCall = needsEvent
@@ -1257,12 +1294,6 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
   // If disabled, prevent onclick
   const finalOnclickHandler = isDisabled ? '' : `onclick="${onclickHandler}"`;
   const disabledAttr = isDisabled ? 'disabled' : '';
-
-  // Special handling for Call button - show phone icon instead of text
-  let buttonContent = buttonDef.label;
-  if (buttonDef.functionName === 'handleCall') {
-    buttonContent = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>`;
-  }
 
   return `<button ${finalOnclickHandler} ${disabledAttr} class="${classes}">${buttonContent}</button>`;
 }
@@ -2224,8 +2255,8 @@ async function askForConfirmation(booking_list_id, booking_number, customer_name
       const is_web_booking_now = time_created === dine_dateTime;
 
       // Flow 실행 (필요시)
-      const flowResult = await executeFlow(buttonId, { 
-        subscriber_id: item.subscriber_id, 
+      const flowResult = await executeFlow(buttonId, {
+        subscriber_id: item.subscriber_id,
         flow_ns: is_web_booking_now ? flow_now : flow_ahead
       });
       console.log('🔄 executeFlow result:', flowResult);
@@ -2353,6 +2384,9 @@ async function handleReadyInternal(booking_number, customer_name, event, buttonI
 
   // Update database and local data
   try {
+    // 0. Reset looping in manychat
+    await resetManyChatLooping(buttonId,item.subscriber_id);
+
     // 1. Update database first
     const updateResult = await connector.updateDataArr(
       'waitlist', // dbKey
@@ -2848,7 +2882,7 @@ function handleCall(booking_number, customer_name) {
 /**
  * Handles customer actions (Arrive). Updates initialScrollTop and performs scroll.
  */
-async function handleArrive(booking_number, customer_name) {
+async function handleArrive(booking_number, customer_name, buttonId = null) {
   console.log(`🟣 ACTION: handleArrive called for ${customer_name} (#${booking_number})`);
   console.log('🔍 DEBUG: Looking for item with booking_number:', booking_number, 'Type:', typeof booking_number);
   console.log('🔍 DEBUG: Waitlist booking_numbers:', waitlist.map(i => ({ num: i.booking_number, type: typeof i.booking_number })));
@@ -2862,6 +2896,9 @@ async function handleArrive(booking_number, customer_name) {
     const wasActive = item.status === 'Waiting' || item.status === 'Ready';
 
     try {
+      // 0. Reset looping in manychat
+      await resetManyChatLooping(buttonId, item.subscriber_id);
+
       // 1. Update database first
       const currentTime = new Date();
       const formattedTime = currentTime.getFullYear() + '-' +
@@ -2981,7 +3018,7 @@ async function handleArrive(booking_number, customer_name) {
 /**
  * Handles customer actions (Cancel). Updates initialScrollTop and performs scroll.
  */
-async function handleCancel(booking_number, customer_name) {
+async function handleCancel(booking_number, customer_name, buttonId = null) {
   console.log(`🔴 ACTION: handleCancel called for ${customer_name} (#${booking_number})`);
   console.log('🔍 DEBUG: Looking for item with booking_number:', booking_number, 'Type:', typeof booking_number);
   console.log('🔍 DEBUG: Waitlist booking_numbers:', waitlist.map(i => ({ num: i.booking_number, type: typeof i.booking_number })));
@@ -2995,6 +3032,9 @@ async function handleCancel(booking_number, customer_name) {
     const wasActive = item.status === 'Waiting' || item.status === 'Ready';
 
     try {
+      // 0. Reset looping in manychat
+      await resetManyChatLooping(buttonId, item.subscriber_id);
+      
       // 1. Update database first
       const currentTime = new Date();
       const formattedTime = currentTime.getFullYear() + '-' +
