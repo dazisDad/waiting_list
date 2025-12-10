@@ -1,4 +1,4 @@
-const version = '0.744';
+const version = '0.745';
 const isDebugging = false; // Set to true to enable log buffering for mobile debugging
 const isResetLocalStorage = false; // Set to true to reset all badges on every page load
 const isShowNewPaxBadge = false; // Set to true to show "New Pax" badge (false = only show Pax color change)
@@ -23,7 +23,7 @@ const scrollPositionTolerance = 5; // Tolerance (px) for determining if scrolled
  * Flow 2.5: Confirmation after Initiate WhatsApp chat
  * Flow 9.2: Chat response
  */
-const flow_arr_that_can_trigger_handleNewEvent = [1.2, 1.9, 2.2, 2.5, 9.2];
+const flow_arr_that_can_trigger_handleNewEvent = [1.2, 1.8, 1.9, 2.2, 2.5, 9.2];
 
 /**
  * Check if WhatsApp messaging is enabled (within 24 hours of ws_last_interaction)
@@ -148,12 +148,14 @@ function handleNewEvent(obj) {
       //console.log('HANDLE_NEW_EVENT: Counter > 0, processing event...');
     }
 
+    /* // 전화번호 없이 입력한 웹 부킹인 경우를 위해 subscriber_id 체크 제거
     if (!lastItem || !lastItem.subscriber_id) {
       // No valid data, exit without notification
       console.log('HANDLE_NEW_EVENT: No valid data or subscriber_id, exiting');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       return;
     }
+    */
 
     // Check if this is a duplicate event (same timestamp as last processed)
     if (lastItem._force_update && lastItem._force_update === lastProcessedTimestamp) {
@@ -247,7 +249,7 @@ function handleNewEvent(obj) {
         title = '[UPDATED] Waitlist';
         body = `Updated Booking #: ${bookingItem.booking_number}`;
         //console.log('HANDLE_NEW_EVENT: Showing notification:', title, body);
-        showNotification(title, body);
+        //showNotification(title, body);
 
         //console.log('HANDLE_NEW_EVENT: Found updated item in refreshed waitlist:', bookingItem);
 
@@ -1201,13 +1203,20 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
     }
   } else if (buttonDef.functionName === 'handleInitiateWhatsapp') {
     // Special handling for Initiate Whatsapp button - spans width of Ready + Ask + gap
-    // Show as disabled if status is 'Awaiting Confirmation'
+    // Show as disabled if status is 'Awaiting Confirmation' or no phone number
     if (item) {
-      if (item.status === 'Awaiting Confirmation') {
+      if (item.status === 'Awaiting Confirmation' || item.customer_phone == 0) {
         isDisabled = true;
         const disabledBtnClass = isMobile ? 'mobile-btn-disabled' : 'btn-disabled';
         classes = `${baseClasses} ${disabledBtnClass} ${flexClass}`;
       }
+    }
+  } else if (buttonDef.functionName === 'handleCall') {
+    // Disable Call button if no phone number
+    if (item && item.customer_phone == 0) {
+      isDisabled = true;
+      const disabledBtnClass = isMobile ? 'mobile-btn-disabled' : 'btn-disabled';
+      classes = `${baseClasses} ${disabledBtnClass} ${flexClass}`;
     }
   }
 
@@ -1243,10 +1252,16 @@ function generateButtonHTML(buttonDef, booking_number, customer_name, isMobile) 
   }
 
   // Prepare button content (needed before special handlers)
-  // Special handling for Call button - show phone icon instead of text
+  // Special handling for Call button - show phone icon instead of text and handle disabled state
   let buttonContent = buttonDef.label;
   if (buttonDef.functionName === 'handleCall') {
     buttonContent = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>`;
+    
+    // If disabled, return button with disabled state
+    if (isDisabled) {
+      const buttonId = `call-btn-${booking_number}`;
+      return `<button id="${buttonId}" disabled class="${classes}">${buttonContent}</button>`;
+    }
   }
 
   // Special handling for Arrive button - assign unique ID and pass to handler

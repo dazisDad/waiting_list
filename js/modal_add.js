@@ -45,7 +45,7 @@ function handleAdd() {
           <h2 id="modal-title" class="text-xl font-semibold text-slate-100">Add Web Booking</h2>
           <div onclick="toggleModalMode(event)" id="toggle-modal-mode" class="cursor-pointer flex items-center">
             <div class="toggle-switch-container w-12 h-6 bg-slate-600 rounded-full relative transition duration-200">
-              <div class="toggle-switch absolute left-1 top-1 w-4 h-4 bg-slate-300 rounded-full transition-all duration-200" style="transform: translateX(0);"></div>
+              <div class="toggle-switch absolute left-1.5 top-1 w-4 h-4 bg-slate-300 rounded-full transition-all duration-200" style="transform: translateX(0);"></div>
             </div>
           </div>
         </div>
@@ -138,8 +138,15 @@ function handleAdd() {
             <!-- Phone Number -->
             <div>
               <label class="block text-sm font-medium text-slate-300 mb-2">Phone Number</label>
-              <div class="flex gap-2">
-                <div class="px-4 py-2 rounded-lg bg-slate-900 border border-slate-600 text-slate-100 flex items-center font-medium">
+              <div class="flex gap-2 w-full">
+                <!-- Phone Toggle Button -->
+                <div onclick="togglePhoneInput()" id="toggle-phone-input" class="cursor-pointer flex items-center justify-center w-12 h-10 rounded-lg bg-slate-800 border border-slate-600 transition flex-shrink-0">
+                  <div class="toggle-switch-container w-8 h-4 bg-amber-400 rounded-full relative transition duration-200">
+                    <div class="toggle-switch absolute left-1.5 top-0.5 w-3 h-3 bg-slate-900 rounded-full transition-all duration-200" style="transform: translateX(12px);"></div>
+                  </div>
+                </div>
+                
+                <div id="phone-prefix" class="px-4 py-2 rounded-lg bg-slate-900 border border-slate-600 text-slate-100 flex items-center font-medium flex-shrink-0">
                   +60
                 </div>
                 <input 
@@ -147,11 +154,12 @@ function handleAdd() {
                   id="phone-number-input" 
                   placeholder="12-345-6789"
                   oninput="updatePhoneDisplay()"
-                  class="flex-1 px-4 py-2 rounded-lg bg-slate-900 border border-slate-600 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition"
+                  class="flex-1 min-w-0 px-4 py-2 rounded-lg bg-slate-900 border border-slate-600 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition"
                 />
                 <button 
                   onclick="copyFromClipboard()" 
-                  class="w-10 h-10 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 border border-slate-600 flex items-center justify-center transition"
+                  id="paste-phone-btn"
+                  class="w-10 h-10 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 border border-slate-600 flex items-center justify-center transition flex-shrink-0"
                   title="Paste from clipboard"
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -170,7 +178,7 @@ function handleAdd() {
                 <div onclick="toggleSplitTable()" id="toggle-split-table" class="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-600 cursor-pointer flex items-center justify-between">
                   <span class="toggle-state-text text-slate-300 font-medium">No</span>
                   <div class="toggle-switch-container w-12 h-6 bg-slate-600 rounded-full relative transition duration-200">
-                    <div class="toggle-switch absolute left-1 top-1 w-4 h-4 bg-slate-300 rounded-full transition-all duration-200" style="transform: translateX(0);"></div>
+                    <div class="toggle-switch absolute left-1.5 top-1 w-4 h-4 bg-slate-300 rounded-full transition-all duration-200" style="transform: translateX(0);"></div>
                   </div>
                 </div>
               </div>
@@ -181,7 +189,7 @@ function handleAdd() {
                 <div onclick="toggleSharingTable()" id="toggle-sharing-table" class="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-600 cursor-pointer flex items-center justify-between">
                   <span class="toggle-state-text text-slate-300 font-medium">No</span>
                   <div class="toggle-switch-container w-12 h-6 bg-slate-600 rounded-full relative transition duration-200">
-                    <div class="toggle-switch absolute left-1 top-1 w-4 h-4 bg-slate-300 rounded-full transition-all duration-200" style="transform: translateX(0);"></div>
+                    <div class="toggle-switch absolute left-1.5 top-1 w-4 h-4 bg-slate-300 rounded-full transition-all duration-200" style="transform: translateX(0);"></div>
                   </div>
                 </div>
               </div>
@@ -300,6 +308,7 @@ function resetModalForm() {
   modalSharingTable = false;
   modalIsWebBooking = false;
   modalWebBookingTime = null;
+  modalPhoneEnabled = true;
 
   // Reset pax counter display
   const paxCounter = document.getElementById('pax-counter');
@@ -317,8 +326,32 @@ function resetModalForm() {
   const phoneInput = document.getElementById('phone-number-input');
   if (phoneInput) {
     phoneInput.value = '';
-    phoneInput.classList.remove('border-red-500', 'focus:ring-red-500');
-    phoneInput.classList.add('border-slate-600', 'focus:ring-amber-400');
+    phoneInput.disabled = false;
+    phoneInput.classList.remove('border-red-500', 'focus:ring-red-500', 'bg-slate-800', 'cursor-not-allowed', 'text-slate-500');
+    phoneInput.classList.add('border-slate-600', 'focus:ring-amber-400', 'bg-slate-900', 'text-slate-100');
+  }
+
+  // Reset phone toggle button
+  const phoneToggle = document.getElementById('toggle-phone-input');
+  if (phoneToggle) {
+    const switchContainer = phoneToggle.querySelector('.toggle-switch-container');
+    const switchCircle = phoneToggle.querySelector('.toggle-switch');
+    if (switchContainer) {
+      switchContainer.classList.add('bg-amber-400');
+      switchContainer.classList.remove('bg-slate-600');
+    }
+    if (switchCircle) {
+      switchCircle.classList.add('bg-slate-900');
+      switchCircle.classList.remove('bg-slate-300');
+      switchCircle.style.transform = 'translateX(12px)';
+    }
+  }
+
+  // Reset paste button
+  const pasteBtn = document.getElementById('paste-phone-btn');
+  if (pasteBtn) {
+    pasteBtn.disabled = false;
+    pasteBtn.classList.remove('opacity-50', 'cursor-not-allowed');
   }
 
   // Reset seating buttons
@@ -399,8 +432,8 @@ async function submitAddModal(btnId) {
   const phoneNumberRaw = phoneNumberInput.value.trim();
 
   const pax = parseInt(document.getElementById('pax-counter').textContent);
-  const customerNameRaw = document.getElementById('customer-name-input').value.trim();
-  const customerName = customerNameRaw || 'Web User'; // Default to 'Web User' if empty
+  const customerNameInput = document.getElementById('customer-name-input');
+  const customerNameRaw = customerNameInput.value.trim();
   const seating = modalSeating; // null, 'inside', or 'outside'
   const isSplitTableAllowed = modalSplitTable;
   const isSharingTableAllowed = modalSharingTable;
@@ -409,123 +442,145 @@ async function submitAddModal(btnId) {
   let subscriber_id;
   let last_interaction_time = null;
 
-  // Validate phone number
-  let digits = phoneNumberRaw.replace(/\D/g, '');
-
-  // Remove leading zeros only if there are more digits after them
-  const originalDigits = digits;
-  if (digits.length > 1 && digits.startsWith('0')) {
-    digits = digits.replace(/^0+/, '');
-  }
-
-  // Check if phone number is empty or invalid
-  const isPhoneEmpty = phoneNumberRaw === '';
-  const isPhoneInvalid = digits.length > 0 && !digits.startsWith('1') && originalDigits !== '0';
-  const isPhoneTooShort = digits.length < 9; // Minimum 9 digits required (excluding leading 0)
-
-  if (isPhoneEmpty || isPhoneInvalid || isPhoneTooShort) {
-    // Highlight phone number input with error state
-    phoneNumberInput.classList.remove('border-slate-600', 'focus:ring-amber-400');
-    phoneNumberInput.classList.add('border-red-500', 'focus:ring-red-500');
-    phoneNumberInput.focus();
+  // Validate customer name first
+  if (customerNameRaw === '') {
+    // Highlight name input with error state
+    customerNameInput.classList.remove('border-slate-600', 'focus:ring-amber-400');
+    customerNameInput.classList.add('border-red-500', 'focus:ring-red-500');
+    customerNameInput.focus();
 
     // Show visual feedback with a brief animation
-    phoneNumberInput.classList.add('animate-pulse');
+    customerNameInput.classList.add('animate-pulse');
     setTimeout(() => {
-      phoneNumberInput.classList.remove('animate-pulse');
+      customerNameInput.classList.remove('animate-pulse');
     }, 1000);
 
     return; // Don't close modal
   }
 
-  // Process phone number: remove non-digits, add prefix based on starting digit
-  let phoneNumber = phoneNumberRaw.replace(/\D/g, ''); // Remove non-digits
-  if (phoneNumber.startsWith('0')) {
-    phoneNumber = '6' + phoneNumber;
-  } else if (phoneNumber.startsWith('1')) {
-    phoneNumber = '60' + phoneNumber;
-  }
+  const customerName = customerNameRaw; // Name is guaranteed to exist at this point
 
+  // Skip phone validation and ManyChat API calls if phone is disabled
+  let phoneNumber = null;
+  if (modalPhoneEnabled) {
+    // Validate phone number
+    let digits = phoneNumberRaw.replace(/\D/g, '');
 
-
-  //console.log('GET_INFO: Calling createSubscriber with payload:', createSubscriberPayload);
-
-  try {
-    const getInfoByPhoneNumberResponse = await getInfoByPhoneNumber(btnId, phoneNumber);
-    console.log('GET_INFO: getInfoByPhoneNumber response:', getInfoByPhoneNumberResponse);
-
-    // Subscriber does not exist, create new subscriber
-    if (getInfoByPhoneNumberResponse.data.length === 0) {
-
-      const createSubscriberPayload = {
-        whatsapp_phone: phoneNumber,
-        opt_in_whatsapp: true,
-        consent_phrase: `I agree to receive messages from ${trading_name} on WhatsApp.`,
-      };
-
-      const subscriberResponse = await createSubscriber(btnId, createSubscriberPayload);
-      console.log('CREATE_SUBSCRIBER: createSubscriber response:', subscriberResponse);
-
-      // Extract subscriber_id from response
-      subscriber_id = subscriberResponse?.data?.id;
-      console.log('CREATE_SUBSCRIBER: Created with subscriber_id:', subscriber_id);
-
-      if (!subscriber_id) {
-        console.error('CREATE_SUBSCRIBER: Failed to extract subscriber_id from response');
-        return;
-      }
-
-      // Update whatsapp number in custom fields for new subscriber
-      const updatePhoneNumber = await updateManyChatCustomFields(btnId, {
-        subscriber_id,
-        fields: [
-          { field_id: 13974135, field_value: phoneNumber }
-        ]
-      });
-
-      if (updatePhoneNumber && updatePhoneNumber.status === 'success') {
-        console.log('✓ ManyChat API call successful - Phone in Custom fields updated for subscriber:', subscriber_id);
-      }
-
-
-
-      // Subscriber exists, retrieve subscriber info
-    } else {
-      subscriber_id = getInfoByPhoneNumberResponse.data[0].id;
-      console.log('GET_INFO: Retrieved subscriber_id:', subscriber_id);
-
-      const retrieved_custom_fields = getInfoByPhoneNumberResponse.data[0].custom_fields;
-      //console.log('GET_INFO: Retrieved custom fields:', retrieved_custom_fields);
-
-      const last_interaction = retrieved_custom_fields.find(field => field.name === 'last_interaction');
-      last_interaction_time = last_interaction ? last_interaction.value : null;
-
-      // Convert UTC time to local time and remove fractional seconds
-      if (last_interaction_time) {
-        // Remove fractional seconds (e.g., '2025-12-03 04:10:56.604861' -> '2025-12-03 04:10:56')
-        last_interaction_time = last_interaction_time.split('.')[0];
-
-        // Parse as UTC and convert to local time
-        const utcDate = new Date(last_interaction_time + 'Z'); // Add 'Z' to indicate UTC
-
-        // Format to 'YYYY-MM-DD HH:MM:SS' in local timezone
-        const year = utcDate.getFullYear();
-        const month = String(utcDate.getMonth() + 1).padStart(2, '0');
-        const day = String(utcDate.getDate()).padStart(2, '0');
-        const hours = String(utcDate.getHours()).padStart(2, '0');
-        const minutes = String(utcDate.getMinutes()).padStart(2, '0');
-        const seconds = String(utcDate.getSeconds()).padStart(2, '0');
-
-        last_interaction_time = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-      }
-
-      console.log('GET_INFO: Retrieved last_interaction_time (local):', last_interaction_time);
-
+    // Remove leading zeros only if there are more digits after them
+    const originalDigits = digits;
+    if (digits.length > 1 && digits.startsWith('0')) {
+      digits = digits.replace(/^0+/, '');
     }
 
-  } catch (error) {
-    console.error('GET_INFO: createSubscriber error:', error);
-    return;
+    // Check if phone number is empty or invalid
+    const isPhoneEmpty = phoneNumberRaw === '';
+    const isPhoneInvalid = digits.length > 0 && !digits.startsWith('1') && originalDigits !== '0';
+    const isPhoneTooShort = digits.length < 9; // Minimum 9 digits required (excluding leading 0)
+
+    if (isPhoneEmpty || isPhoneInvalid || isPhoneTooShort) {
+      // Highlight phone number input with error state
+      phoneNumberInput.classList.remove('border-slate-600', 'focus:ring-amber-400');
+      phoneNumberInput.classList.add('border-red-500', 'focus:ring-red-500');
+      phoneNumberInput.focus();
+
+      // Show visual feedback with a brief animation
+      phoneNumberInput.classList.add('animate-pulse');
+      setTimeout(() => {
+        phoneNumberInput.classList.remove('animate-pulse');
+      }, 1000);
+
+      return; // Don't close modal
+    }
+
+    // Process phone number: remove non-digits, add prefix based on starting digit
+    phoneNumber = phoneNumberRaw.replace(/\D/g, ''); // Remove non-digits
+    if (phoneNumber.startsWith('0')) {
+      phoneNumber = '6' + phoneNumber;
+    } else if (phoneNumber.startsWith('1')) {
+      phoneNumber = '60' + phoneNumber;
+    }
+
+    //console.log('GET_INFO: Calling createSubscriber with payload:', createSubscriberPayload);
+
+    try {
+      const getInfoByPhoneNumberResponse = await getInfoByPhoneNumber(btnId, phoneNumber);
+      console.log('GET_INFO: getInfoByPhoneNumber response:', getInfoByPhoneNumberResponse);
+
+      // Subscriber does not exist, create new subscriber
+      if (getInfoByPhoneNumberResponse.data.length === 0) {
+
+        const createSubscriberPayload = {
+          whatsapp_phone: phoneNumber,
+          opt_in_whatsapp: true,
+          consent_phrase: `I agree to receive messages from ${trading_name} on WhatsApp.`,
+        };
+
+        const subscriberResponse = await createSubscriber(btnId, createSubscriberPayload);
+        console.log('CREATE_SUBSCRIBER: createSubscriber response:', subscriberResponse);
+
+        // Extract subscriber_id from response
+        subscriber_id = subscriberResponse?.data?.id;
+        console.log('CREATE_SUBSCRIBER: Created with subscriber_id:', subscriber_id);
+
+        if (!subscriber_id) {
+          console.error('CREATE_SUBSCRIBER: Failed to extract subscriber_id from response');
+          return;
+        }
+
+        // Update whatsapp number in custom fields for new subscriber
+        const updatePhoneNumber = await updateManyChatCustomFields(btnId, {
+          subscriber_id,
+          fields: [
+            { field_id: 13974135, field_value: phoneNumber }
+          ]
+        });
+
+        if (updatePhoneNumber && updatePhoneNumber.status === 'success') {
+          console.log('✓ ManyChat API call successful - Phone in Custom fields updated for subscriber:', subscriber_id);
+        }
+
+        // Subscriber exists, retrieve subscriber info
+      } else {
+        subscriber_id = getInfoByPhoneNumberResponse.data[0].id;
+        console.log('GET_INFO: Retrieved subscriber_id:', subscriber_id);
+
+        const retrieved_custom_fields = getInfoByPhoneNumberResponse.data[0].custom_fields;
+        //console.log('GET_INFO: Retrieved custom fields:', retrieved_custom_fields);
+
+        const last_interaction = retrieved_custom_fields.find(field => field.name === 'last_interaction');
+        last_interaction_time = last_interaction ? last_interaction.value : null;
+
+        // Convert UTC time to local time and remove fractional seconds
+        if (last_interaction_time) {
+          // Remove fractional seconds (e.g., '2025-12-03 04:10:56.604861' -> '2025-12-03 04:10:56')
+          last_interaction_time = last_interaction_time.split('.')[0];
+
+          // Parse as UTC and convert to local time
+          const utcDate = new Date(last_interaction_time + 'Z'); // Add 'Z' to indicate UTC
+
+          // Format to 'YYYY-MM-DD HH:MM:SS' in local timezone
+          const year = utcDate.getFullYear();
+          const month = String(utcDate.getMonth() + 1).padStart(2, '0');
+          const day = String(utcDate.getDate()).padStart(2, '0');
+          const hours = String(utcDate.getHours()).padStart(2, '0');
+          const minutes = String(utcDate.getMinutes()).padStart(2, '0');
+          const seconds = String(utcDate.getSeconds()).padStart(2, '0');
+
+          last_interaction_time = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
+        console.log('GET_INFO: Retrieved last_interaction_time (local):', last_interaction_time);
+
+      }
+
+    } catch (error) {
+      console.error('GET_INFO: createSubscriber error:', error);
+      return;
+    }
+  } else {
+    // Phone is disabled - skip ManyChat API calls
+    console.log('Phone input disabled - skipping ManyChat API calls');
+    subscriber_id = 0; // Set subscriber_id to 0 when phone is disabled
   }
 
   // Format current time as yyyy-mm-dd hh:mm:ss
@@ -555,11 +610,11 @@ async function submitAddModal(btnId) {
   // Create form data object
   // formData structure 수정 시 local_receiver.php도 함께 수정 필요
   const formData = {
-    booking_flow: 1.9,
+    booking_flow: modalPhoneEnabled ? 1.9 : 1.8, // 1.9 = with phone, 1.8 = without phone
     store_id: store_id,
     booking_from: 'WEB',
     subscriber_id: subscriber_id,
-    customer_name: customerName,
+    customer_name: modalPhoneEnabled ? customerName : `${customerName} (No Phone)`, // Append phone to name if phone is disabled
     customer_phone: phoneNumber,
     pax: pax,
     time_created: timeCreated,
@@ -669,6 +724,7 @@ let modalSplitTable = false;
 let modalSharingTable = false;
 let modalIsWebBooking = false; // false = Waitlist, true = Web Booking
 let modalWebBookingTime = null; // Selected webBooking time
+let modalPhoneEnabled = true; // true = phone input enabled, false = disabled
 
 /**
  * Increment pax counter
@@ -1024,6 +1080,59 @@ async function copyFromClipboard() {
       phoneInput.classList.add('border-slate-600', 'focus:ring-amber-400');
       phoneInput.placeholder = originalPlaceholder;
     }, 2000);
+  }
+}
+
+/**
+ * Toggle phone input enabled/disabled
+ */
+function togglePhoneInput() {
+  modalPhoneEnabled = !modalPhoneEnabled;
+  const toggleBtn = document.getElementById('toggle-phone-input');
+  const switchContainer = toggleBtn.querySelector('.toggle-switch-container');
+  const switchCircle = toggleBtn.querySelector('.toggle-switch');
+  const phoneInput = document.getElementById('phone-number-input');
+  const pasteBtn = document.getElementById('paste-phone-btn');
+  const phonePrefix = document.getElementById('phone-prefix');
+
+  if (modalPhoneEnabled) {
+    // ON state (right position)
+    switchContainer.classList.add('bg-amber-400');
+    switchContainer.classList.remove('bg-slate-600');
+    switchCircle.classList.add('bg-slate-900');
+    switchCircle.classList.remove('bg-slate-300');
+    switchCircle.style.transform = 'translateX(12px)';
+    
+    // Enable phone input and paste button
+    phoneInput.disabled = false;
+    phoneInput.classList.remove('bg-slate-800', 'cursor-not-allowed', 'text-slate-500');
+    phoneInput.classList.add('bg-slate-900', 'text-slate-100');
+    pasteBtn.disabled = false;
+    pasteBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    
+    // Enable phone prefix styling
+    phonePrefix.classList.remove('bg-slate-800', 'text-slate-500');
+    phonePrefix.classList.add('bg-slate-900', 'text-slate-100');
+  } else {
+    // OFF state (left position)
+    switchContainer.classList.add('bg-slate-600');
+    switchContainer.classList.remove('bg-amber-400');
+    switchCircle.classList.add('bg-slate-300');
+    switchCircle.classList.remove('bg-slate-900');
+    switchCircle.style.transform = 'translateX(0)';
+    
+    // Disable phone input and paste button
+    phoneInput.disabled = true;
+    phoneInput.classList.add('bg-slate-800', 'cursor-not-allowed', 'text-slate-500');
+    phoneInput.classList.remove('bg-slate-900', 'text-slate-100');
+    pasteBtn.disabled = true;
+    pasteBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    
+    // Grey out phone prefix
+    phonePrefix.classList.add('bg-slate-800', 'text-slate-500');
+    phonePrefix.classList.remove('bg-slate-900', 'text-slate-100');
+    
+    // TODO: Additional logic when phone is disabled will be added here
   }
 }
 

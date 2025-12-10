@@ -76,6 +76,12 @@ async function updateManyChatCustomFields(btnId, payload) {
 }
 
 async function resetManyChatLooping(btnId, subscriber_id) {
+  // Skip if subscriber_id is 0
+  if (subscriber_id == 0) {
+    console.log('resetManyChatLooping: subscriber_id is 0, skipping API call');
+    return;
+  }
+  
   const inputDataSet = {
     requestTo: 'manychat', // This will be used to lookup bearer token from .env
     url: 'https://api.manychat.com/fb/subscriber/setCustomFields', // Target API URL  

@@ -1015,6 +1015,20 @@ function flow_execution ($inputDataSet) {
                   'reply_msg' => $reply_msg ?? NULL
               ];
               return $return_json;
+          case 1.8: // 로컬(WEB)에서 새 레코드 입력 시 (전화번호 없는 경우 무조건 입력)
+              // New Booking
+              $booking_list_id = insert_to_booking_list_from_local($inputDataSet);
+              $booking_list = get_booking_list($store_id);
+              $booking_number = generate_booking_number($inputDataSet['pax'],$booking_list_id);
+              update_booking_list($booking_list_id, 'booking_number', $booking_number);
+
+              $success = true;
+              $return_json = [
+                  'success' => $success,
+                  'booking_list_id' => intval($booking_list_id),
+                  'booking_number' => $booking_number
+              ];
+              return $return_json;
           case 1.9: // 로컬(WEB)에서 새 레코드 입력 시
               $retrieved = get_booking_detail('subscriber_id', $inputDataSet['subscriber_id'], true);
               if (count($retrieved) > 0) {
