@@ -53,35 +53,77 @@ function handleAdd() {
         <!-- Content -->
         <div class="flex-1 p-6 overflow-y-auto">
           <div class="space-y-6">
-            <!-- Web Booking Time (only visible in webBooking mode) -->
+            <!-- Web Booking Date & Time (only visible in webBooking mode) -->
             <div id="webBooking-time-section" style="display: none;">
-              <label class="block text-sm font-medium text-slate-300 mb-2">Web Booking Time</label>
-              <div class="flex gap-3 items-center justify-center">
+              <label class="block text-sm font-medium text-slate-300 mb-2">Web Booking Date & Time</label>
+              <div class="flex gap-2 items-center justify-center">
+                <!-- Date Picker -->
+                <div class="flex flex-col items-center">
+                  <div class="relative w-12 h-20 overflow-hidden rounded-lg bg-slate-900 border border-slate-600">
+                    <div class="absolute inset-0 pointer-events-none z-10">
+                      <div class="absolute top-0 left-0 right-0 h-5 bg-gradient-to-b from-slate-900 to-transparent"></div>
+                      <div class="absolute top-5 left-0 right-0 h-10 border-y-2 border-amber-400"></div>
+                      <div class="absolute bottom-0 left-0 right-0 h-5 bg-gradient-to-t from-slate-900 to-transparent"></div>
+                    </div>
+                    <div id="date-picker" class="overflow-y-scroll h-full snap-y snap-mandatory scrollbar-hide" style="scroll-padding: 20px;">
+                      <!-- Date options will be populated dynamically -->
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Month Picker -->
+                <div class="flex flex-col items-center">
+                  <div class="relative w-12 h-20 overflow-hidden rounded-lg bg-slate-900 border border-slate-600">
+                    <div class="absolute inset-0 pointer-events-none z-10">
+                      <div class="absolute top-0 left-0 right-0 h-5 bg-gradient-to-b from-slate-900 to-transparent"></div>
+                      <div class="absolute top-5 left-0 right-0 h-10 border-y-2 border-amber-400"></div>
+                      <div class="absolute bottom-0 left-0 right-0 h-5 bg-gradient-to-t from-slate-900 to-transparent"></div>
+                    </div>
+                    <div id="month-picker" class="overflow-y-scroll h-full snap-y snap-mandatory scrollbar-hide" style="scroll-padding: 20px;">
+                      <!-- Month options will be populated dynamically -->
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Year Picker -->
+                <div class="flex flex-col items-center mr-6">
+                  <div class="relative w-14 h-20 overflow-hidden rounded-lg bg-slate-900 border border-slate-600">
+                    <div class="absolute inset-0 pointer-events-none z-10">
+                      <div class="absolute top-0 left-0 right-0 h-5 bg-gradient-to-b from-slate-900 to-transparent"></div>
+                      <div class="absolute top-5 left-0 right-0 h-10 border-y-2 border-amber-400"></div>
+                      <div class="absolute bottom-0 left-0 right-0 h-5 bg-gradient-to-t from-slate-900 to-transparent"></div>
+                    </div>
+                    <div id="year-picker" class="overflow-y-scroll h-full snap-y snap-mandatory scrollbar-hide" style="scroll-padding: 20px;">
+                      <!-- Year options will be populated dynamically -->
+                    </div>
+                  </div>
+                </div>
+                
                 <!-- Hour Picker -->
                 <div class="flex flex-col items-center">
-                  <div class="relative w-16 h-24 overflow-hidden rounded-lg bg-slate-900 border border-slate-600">
+                  <div class="relative w-12 h-20 overflow-hidden rounded-lg bg-slate-900 border border-slate-600">
                     <div class="absolute inset-0 pointer-events-none z-10">
-                      <div class="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-slate-900 to-transparent"></div>
-                      <div class="absolute top-6 left-0 right-0 h-12 border-y-2 border-amber-400"></div>
-                      <div class="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-slate-900 to-transparent"></div>
+                      <div class="absolute top-0 left-0 right-0 h-5 bg-gradient-to-b from-slate-900 to-transparent"></div>
+                      <div class="absolute top-5 left-0 right-0 h-10 border-y-2 border-amber-400"></div>
+                      <div class="absolute bottom-0 left-0 right-0 h-5 bg-gradient-to-t from-slate-900 to-transparent"></div>
                     </div>
-                    <div id="hour-picker" class="overflow-y-scroll h-full snap-y snap-mandatory scrollbar-hide" style="scroll-padding: 24px;">
+                    <div id="hour-picker" class="overflow-y-scroll h-full snap-y snap-mandatory scrollbar-hide" style="scroll-padding: 20px;">
                       <!-- Hour options will be populated dynamically -->
                     </div>
                   </div>
                 </div>
                 
-                <span class="text-xl text-slate-100 font-bold">:</span>
+                <span class="text-lg text-slate-100 font-bold">:</span>
                 
                 <!-- Minute Picker -->
                 <div class="flex flex-col items-center">
-                  <div id="minute-picker-container" class="relative w-16 h-24 overflow-hidden rounded-lg bg-slate-900 border border-slate-600 transition-colors">
+                  <div id="minute-picker-container" class="relative w-12 h-20 overflow-hidden rounded-lg bg-slate-900 border border-slate-600 transition-colors">
                     <div class="absolute inset-0 pointer-events-none z-10">
-                      <div class="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-slate-900 to-transparent"></div>
-                      <div class="absolute top-6 left-0 right-0 h-12 border-y-2 border-amber-400"></div>
-                      <div class="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-slate-900 to-transparent"></div>
+                      <div class="absolute top-0 left-0 right-0 h-5 bg-gradient-to-b from-slate-900 to-transparent"></div>
+                      <div class="absolute top-5 left-0 right-0 h-10 border-y-2 border-amber-400"></div>
+                      <div class="absolute bottom-0 left-0 right-0 h-5 bg-gradient-to-t from-slate-900 to-transparent"></div>
                     </div>
-                    <div id="minute-picker" class="overflow-y-scroll h-full snap-y snap-mandatory scrollbar-hide" style="scroll-padding: 24px;">
+                    <div id="minute-picker" class="overflow-y-scroll h-full snap-y snap-mandatory scrollbar-hide" style="scroll-padding: 20px;">
                       <!-- Minute options will be populated dynamically -->
                     </div>
                   </div>
@@ -779,7 +821,7 @@ function toggleModalMode(event) {
 }
 
 /**
- * Populate webBooking time picker with scroll wheel style
+ * Populate webBooking date and time pickers with scroll wheel style
  */
 function populateWebBookingTimes() {
   const now = new Date();
@@ -801,29 +843,109 @@ function populateWebBookingTimes() {
   // Store minimum time for validation
   window.minWebBookingTime = minWebBookingTime;
 
+  // Month names in 3-letter format
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  // Populate date picker (1-31)
+  const datePicker = document.getElementById('date-picker');
+  datePicker.innerHTML = '<div class="h-5"></div>';
+  for (let day = 1; day <= 31; day++) {
+    const dayDiv = document.createElement('div');
+    dayDiv.className = 'h-10 flex items-center justify-center text-slate-100 text-sm font-semibold snap-center cursor-pointer hover:text-amber-400 transition';
+    dayDiv.textContent = day.toString().padStart(2, '0');
+    dayDiv.dataset.value = day;
+    datePicker.appendChild(dayDiv);
+  }
+  datePicker.innerHTML += '<div class="h-5"></div>';
+  datePicker.scrollTop = (now.getDate() - 1) * 40; // Start at current date
+
+  // Populate month picker (12 months)
+  const monthPicker = document.getElementById('month-picker');
+  monthPicker.innerHTML = '<div class="h-5"></div>';
+  for (let month = 0; month < 12; month++) {
+    const monthDiv = document.createElement('div');
+    monthDiv.className = 'h-10 flex items-center justify-center text-slate-100 text-sm font-semibold snap-center cursor-pointer hover:text-amber-400 transition';
+    monthDiv.textContent = monthNames[month];
+    monthDiv.dataset.value = month;
+    monthPicker.appendChild(monthDiv);
+  }
+  monthPicker.innerHTML += '<div class="h-5"></div>';
+  monthPicker.scrollTop = now.getMonth() * 40; // Start at current month
+
+  // Populate year picker (current year and next year)
+  const yearPicker = document.getElementById('year-picker');
+  yearPicker.innerHTML = '<div class="h-5"></div>';
+  for (let i = 0; i < 2; i++) {
+    const year = now.getFullYear() + i;
+    const yearDiv = document.createElement('div');
+    yearDiv.className = 'h-10 flex items-center justify-center text-slate-100 text-sm font-semibold snap-center cursor-pointer hover:text-amber-400 transition';
+    yearDiv.textContent = year.toString();
+    yearDiv.dataset.value = year;
+    yearPicker.appendChild(yearDiv);
+  }
+  yearPicker.innerHTML += '<div class="h-5"></div>';
+  yearPicker.scrollTop = 0; // Start at current year
+
+  // Add scroll event listeners for date pickers
+  let dateScrollTimeout;
+  datePicker.addEventListener('scroll', () => {
+    clearTimeout(dateScrollTimeout);
+    dateScrollTimeout = setTimeout(() => {
+      const scrollTop = datePicker.scrollTop;
+      const itemHeight = 40;
+      const index = Math.round(scrollTop / itemHeight);
+      datePicker.scrollTo({ top: index * itemHeight, behavior: 'smooth' });
+      updateWebBookingTime();
+    }, 150);
+  });
+
+  let monthScrollTimeout;
+  monthPicker.addEventListener('scroll', () => {
+    clearTimeout(monthScrollTimeout);
+    monthScrollTimeout = setTimeout(() => {
+      const scrollTop = monthPicker.scrollTop;
+      const itemHeight = 40;
+      const index = Math.round(scrollTop / itemHeight);
+      monthPicker.scrollTo({ top: index * itemHeight, behavior: 'smooth' });
+      updateWebBookingTime();
+    }, 150);
+  });
+
+  let yearScrollTimeout;
+  yearPicker.addEventListener('scroll', () => {
+    clearTimeout(yearScrollTimeout);
+    yearScrollTimeout = setTimeout(() => {
+      const scrollTop = yearPicker.scrollTop;
+      const itemHeight = 40;
+      const index = Math.round(scrollTop / itemHeight);
+      yearPicker.scrollTo({ top: index * itemHeight, behavior: 'smooth' });
+      updateWebBookingTime();
+    }, 150);
+  });
+
   // Populate hour picker (24 hours starting from minimum hour)
   const hourPicker = document.getElementById('hour-picker');
   hourPicker.innerHTML = '';
 
   // Add padding items at top and bottom for better UX
-  hourPicker.innerHTML += '<div class="h-6"></div>';
+  hourPicker.innerHTML += '<div class="h-5"></div>';
 
   for (let i = 0; i < 24; i++) {
     const hour = (startHour + i) % 24;
     const hourDiv = document.createElement('div');
-    hourDiv.className = 'h-12 flex items-center justify-center text-slate-100 text-lg font-semibold snap-center cursor-pointer hover:text-amber-400 transition';
+    hourDiv.className = 'h-10 flex items-center justify-center text-slate-100 text-sm font-semibold snap-center cursor-pointer hover:text-amber-400 transition';
     hourDiv.textContent = hour.toString().padStart(2, '0');
     hourDiv.dataset.value = hour;
     hourPicker.appendChild(hourDiv);
   }
 
-  hourPicker.innerHTML += '<div class="h-6"></div>';
+  hourPicker.innerHTML += '<div class="h-5"></div>';
 
   // Populate minute picker based on webBooking_interval_minutes
   const minutePicker = document.getElementById('minute-picker');
   minutePicker.innerHTML = '';
 
-  minutePicker.innerHTML += '<div class="h-6"></div>';
+  minutePicker.innerHTML += '<div class="h-5"></div>';
 
   // Generate minute options based on interval
   const minuteOptions = [];
@@ -833,13 +955,13 @@ function populateWebBookingTimes() {
 
   minuteOptions.forEach(min => {
     const minDiv = document.createElement('div');
-    minDiv.className = 'h-12 flex items-center justify-center text-slate-100 text-lg font-semibold snap-center cursor-pointer hover:text-amber-400 transition';
+    minDiv.className = 'h-10 flex items-center justify-center text-slate-100 text-sm font-semibold snap-center cursor-pointer hover:text-amber-400 transition';
     minDiv.textContent = min.toString().padStart(2, '0');
     minDiv.dataset.value = min;
     minutePicker.appendChild(minDiv);
   });
 
-  minutePicker.innerHTML += '<div class="h-6"></div>';
+  minutePicker.innerHTML += '<div class="h-5"></div>';
 
   // Set initial scroll positions
   hourPicker.scrollTop = 0;
@@ -850,7 +972,7 @@ function populateWebBookingTimes() {
     startMinuteIndex = 0;
   }
 
-  minutePicker.scrollTop = startMinuteIndex * 48; // 48px per item (h-12)
+  minutePicker.scrollTop = startMinuteIndex * 40; // 40px per item (h-10)
 
   // Add scroll event listeners to snap to center
   let hourScrollTimeout;
@@ -858,7 +980,7 @@ function populateWebBookingTimes() {
     clearTimeout(hourScrollTimeout);
     hourScrollTimeout = setTimeout(() => {
       const scrollTop = hourPicker.scrollTop;
-      const itemHeight = 48;
+      const itemHeight = 40;
       const index = Math.round(scrollTop / itemHeight);
       hourPicker.scrollTo({ top: index * itemHeight, behavior: 'smooth' });
       updateWebBookingTime();
@@ -870,7 +992,7 @@ function populateWebBookingTimes() {
     clearTimeout(minuteScrollTimeout);
     minuteScrollTimeout = setTimeout(() => {
       const scrollTop = minutePicker.scrollTop;
-      const itemHeight = 48;
+      const itemHeight = 40;
       const index = Math.round(scrollTop / itemHeight);
       minutePicker.scrollTo({ top: index * itemHeight, behavior: 'smooth' });
       updateWebBookingTime();
@@ -882,30 +1004,36 @@ function populateWebBookingTimes() {
 }
 
 /**
- * Update selected webBooking time based on picker positions
+ * Update selected webBooking date and time based on picker positions
  */
 function updateWebBookingTime() {
+  const datePicker = document.getElementById('date-picker');
+  const monthPicker = document.getElementById('month-picker');
+  const yearPicker = document.getElementById('year-picker');
   const hourPicker = document.getElementById('hour-picker');
   const minutePicker = document.getElementById('minute-picker');
 
-  const hourIndex = Math.round(hourPicker.scrollTop / 48);
-  const minuteIndex = Math.round(minutePicker.scrollTop / 48);
+  const dateIndex = Math.round(datePicker.scrollTop / 40);
+  const monthIndex = Math.round(monthPicker.scrollTop / 40);
+  const yearIndex = Math.round(yearPicker.scrollTop / 40);
+  const hourIndex = Math.round(hourPicker.scrollTop / 40);
+  const minuteIndex = Math.round(minutePicker.scrollTop / 40);
 
+  const dateItems = datePicker.querySelectorAll('div[data-value]');
+  const monthItems = monthPicker.querySelectorAll('div[data-value]');
+  const yearItems = yearPicker.querySelectorAll('div[data-value]');
   const hourItems = hourPicker.querySelectorAll('div[data-value]');
   const minuteItems = minutePicker.querySelectorAll('div[data-value]');
 
-  if (hourItems[hourIndex] && minuteItems[minuteIndex]) {
+  if (dateItems[dateIndex] && monthItems[monthIndex] && yearItems[yearIndex] && hourItems[hourIndex] && minuteItems[minuteIndex]) {
+    const selectedDate = parseInt(dateItems[dateIndex].dataset.value);
+    const selectedMonth = parseInt(monthItems[monthIndex].dataset.value);
+    const selectedYear = parseInt(yearItems[yearIndex].dataset.value);
     const selectedHour = parseInt(hourItems[hourIndex].dataset.value);
     const selectedMinute = parseInt(minuteItems[minuteIndex].dataset.value);
 
-    const now = new Date();
-    const webBookingDate = new Date(now);
-    webBookingDate.setHours(selectedHour, selectedMinute, 0, 0);
-
-    // If selected time is in the past, add one day
-    if (webBookingDate < now) {
-      webBookingDate.setDate(webBookingDate.getDate() + 1);
-    }
+    // Create date object with selected values
+    const webBookingDate = new Date(selectedYear, selectedMonth, selectedDate, selectedHour, selectedMinute, 0, 0);
 
     modalWebBookingTime = webBookingDate.toISOString();
 
