@@ -71,7 +71,10 @@ function get_booking_list($store_id, $isToday = true, $dateSearch = null) {
         throw new Exception('Query error: ' . $err);
     }
 
-    $rows = $result->fetch_all(MYSQLI_ASSOC);
+    $rows = [];
+    while ($row = $result->fetch_assoc()) {
+        $rows[] = $row;
+    }
     $result->free();
     $mysqli->close();
     return $rows;
@@ -748,7 +751,10 @@ function get_booking_detail($key, $value, $isToday = null) {
         throw new Exception('Getting result failed: ' . $err);
     }
 
-    $rows = $result->fetch_all(MYSQLI_ASSOC);
+    $rows = [];
+    while ($row = $result->fetch_assoc()) {
+        $rows[] = $row;
+    }
     $result->free();
     $stmt->close();
     } else {
@@ -781,7 +787,10 @@ function get_booking_detail($key, $value, $isToday = null) {
             throw new Exception('Query failed: ' . $err);
         }
 
-        $rows = $result->fetch_all(MYSQLI_ASSOC);
+        $rows = [];
+        while ($row = $result->fetch_assoc()) {
+            $rows[] = $row;
+        }
         $result->free();
     }
     
